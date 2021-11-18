@@ -13,3 +13,4 @@ library(blouch)
 Please visiting the package website.
 
 # References
+A line I wrote on my local computer  
