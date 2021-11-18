@@ -20,7 +20,6 @@ Data Prep
 ```{r}
 cervid.tree<-read.nexus("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Data/Antler Dataset/cervidae_renamed.tre")
 
-
 cervid.dataset<-read.csv("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Data/Antler Dataset/deer_mean_dat.csv")
 
 
@@ -61,9 +60,7 @@ max(branching.times(cervid.trdata$phy))
 Slouch Results for Comparison
 Adaptation model
 ```{r}
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
-#devtools::load_all()
-#library(slouch)
+library(slouch)
 
 #OU Model of Evolution
 slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
@@ -82,10 +79,6 @@ summary(slouch.OU)
 ```
 Constraint Model
 ```{r}
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
-#devtools::load_all()
-#library(slouch)
-
 #OU Model of Evolution
 slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
                               species = cervid.trdata$phy$tip.label,
@@ -102,25 +95,19 @@ slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
 summary(slouch.OU)
 ```
 
-
 Get bias correct coefficients
 ```{r}
 slouch.OU$beta_primary$coefficients_bias_corr
 
 ```
 
-
-
 Running Blouch Data Setup Function - 1st trait is adapting to 2
 ```{r}
 par(mfrow = c(1,1))
 
-
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1/Blouch Setup Files/blouchOU.setup.v1.R")
-
 source("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/Blouch Setup Files/blouchOU.setup.v1.R")
 
-#Data must be logged before entry into blouch.setup
+#Data must be logged before entry into blouchOU.setup
 #names.traits = c(response, predictor, me.response, me.predictor)
 stan_data<-blouchOU.setup.v1(cervid.trdata,names.traits)
 
