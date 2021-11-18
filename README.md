@@ -13,4 +13,3 @@ library(blouch)
 Please visiting the package website.
 
 # References
-TEST
