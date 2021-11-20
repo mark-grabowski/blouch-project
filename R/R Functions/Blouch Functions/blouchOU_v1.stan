@@ -43,15 +43,17 @@ functions {
   
   for (i in 1:Z)
     beta1sq[i] = beta1[i]^2;
-    if (a < 1e-14){
-    if(sum(random_cov) == 0){ //Direct covariates and small a
-        Vt = sigma2_y * ta;
-    }else{
-      s1 = sum(sigma_squared_x * beta1sq);
-      Vt = sigma2_y * ta + s1 * ta .* ((ta .* ta) ./ 12 + tja .* (tja') ./ 4);
-    }
-  }
-  else{ //Random + Direct covariates, or just random
+//    if (a < 1e-14){ //Original Bjorn code - is this causing weird Slouch numbers?
+//      if(sum(random_cov) == 0){ //Direct covariates and small a
+//        Vt = sigma2_y * ta;
+//        print("Direct - small a");
+//      }else{
+//        s1 = sum(sigma_squared_x * beta1sq);
+//        print("Random - small a");
+//        Vt = sigma2_y * ta + s1 * ta .* ((ta .* ta) ./ 12 + tja .* (tja') ./ 4);
+//      }
+//    }
+//  else{ //Random + Direct covariates, or just random
     if(sum(random_cov) != 0){
       s1 = sum(sigma_squared_x * beta1sq);
       ti = rep_matrix(T_term,N);
@@ -59,15 +61,18 @@ functions {
       term0 = ((s1 + sigma2_y) / (2 * a)) * (1 - exp( -2 * a * ta)) .* exp(-a * tij);
       term1 = (1 - exp(-a * ti)) ./ (a * ti); 
       term2 = exp(-a * tja) .* (1 - exp(-a * ti)) ./ (a * ti);
-
+      //print((1 - exp(-a * ta))[1,3],(a * ta)[1,3]);
+    
       Vt = term0 + s1 * (ta .* term1 .* (term1') - ((1 - exp(-a * ta)) ./ a) .* (term2 + (term2')));
+      //Vt = term0 + s1 * ta .* (term1 .* (term1') - ((1 - exp(-a * ta)) ./ (a * ta)) .* (term2 + (term2')));    
+        
       //print("Random Only");
     }
     else{ //Direct covariates only
       //print("Direct Only")
       Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij));
     }
-  }    
+//  }    
   
   
   return(Vt);
@@ -76,7 +81,7 @@ functions {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //V_me function
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-matrix varcov_measurement(int N, int Z, matrix ta, matrix direct_cov, matrix mv_direct_cov, matrix mv_random_cov, matrix sigma_squared_x, vector beta){
+matrix varcov_measurement(int N, int Z, matrix ta,  matrix direct_cov, matrix mv_direct_cov, matrix mv_random_cov, matrix sigma_squared_x, vector beta){
   //matrix[N,N] Vxt[Z];
   matrix[N,N] Vxtr;
   matrix[N,N] Vxtd;
@@ -145,17 +150,22 @@ data {
   matrix[1,Z] sigma_squared_x;
   real ols_intercept;
   real ols_slope;
-
-
+  real mean_log;
+  real sd_log;
+  real intercept_sd;
+  real slope_sd;
+  real sigma2_y_scale;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 parameters {
-  //real <lower = 0> a; //Lower based on a little more than a for a hl of 3*tree height - 6.93 * tree height
-  real <lower = 0> hl;
+  real <lower = 0> a; //Lower = hl = 4, upper = hl = 0.0010
+  //real <lower = 0.1386294,upper=693.1472> a; //Lower = hl = 5, upper = hl = 0.001
+  //real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
   real <lower = 0> sigma2_y;
+  //real <lower = 0> sigma2_y;
   real alpha; //OU alpha
   vector[Z] beta; //OU beta
 
@@ -172,7 +182,8 @@ transformed parameters {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 model {
 //Declare variables
-  real a;
+  //real a;
+  //real sigma2_y;
   vector[N] mu;
   matrix[N,N] V;
   matrix[N,N] Vt;
@@ -181,23 +192,15 @@ model {
   matrix[N, N] L_V;
   
 //Priors
-  //a ~ lognormal(0.25,1.5);
-  //a ~ cauchy(0,3);
-  //a ~ normal(0.09902103,4);
-  //sigma2_y ~ exponential(10.0); //Simualations
-  sigma2_y ~ cauchy(0,1.0);
-  //hl ~ cauchy(0,0.5); //Tree length = 1;
-  hl ~ lognormal(-1.29,1.0); //Tree length = 1 Ma
-  alpha ~ normal(ols_intercept,0.1); //Simulations
-  //alpha ~ normal(ols_intercept,0.1); //Simulations
-  //alpha ~ normal(ols_intercept,1.0); //Changed from 0.5 for MBM ms, Cervidae
-  //beta ~ normal(ols_slope,ols_slope*0.5); //Simulations - scales with size of intercept
-  //beta ~ normal(ols_slope,hl*ols_slope); //Simulations - scales with size of s
-  beta ~ normal(ols_slope,0.1); //Simulations
+  a ~ lognormal(mean_log,sd_log); 
+  sigma2_y ~ exponential(sigma2_y_scale);
+  alpha ~ normal(ols_intercept,intercept_sd); //Simulations PREVIOUS CODE 0.1 for both
+  beta ~ normal(ols_slope, slope_sd); //Simulations
 
-  //beta ~ normal(ols_slope,0.5); //Changed to 0.5 for MBM ms, Cervidae - latter because OLS slope is like 6, so needs more
   //////////////////////////////////////////////////////////////////////////////////////////////////////
-  a = log(2)/hl;
+  //a = log(2)/hl;
+  //sigma2_y = vy*(2*a);
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 //Regression - either constraint for direct cov or adaptive for random cov
 //
@@ -205,7 +208,7 @@ model {
   X = design_matrix( N,  0,  a,  T_term, direct_cov,random_cov, Z);
   
 //Set up V matix
-  Vt = varcov_model(N,  tij,  tja,  ta,  random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
+  Vt = varcov_model(N,  tij,  tja,  ta, random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
   if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
     V_me = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov,mv_random_cov, sigma_squared_x, beta);
   }
@@ -218,6 +221,7 @@ model {
   
 //OU with random covariates
   mu = X*beta+alpha;
+  //mu = X*beta;
   Y ~ multi_normal_cholesky(mu , L_V);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,8 +233,9 @@ model {
 
 generated quantities {
   real <lower = 0> vy;
-  //real <lower = 0> hl;
-  real <lower = 0> a;
+  //real <lower = 0> sigma2_y;
+  real <lower = 0> hl;
+  //real <lower = 0> a;
   vector[N] pred_mean;
   real grand_mean;
   real sst;
@@ -247,14 +252,15 @@ generated quantities {
   vector[Z] beta_evol;
   
 //////////
-  //hl = log(2)/a;
-  a = log(2)/hl;
+  hl = log(2)/a;
+  //a = log(2)/hl;
   vy = sigma2_y/(2*a);
+  //sigma2_y = vy*(2*a);
   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Calculate r2 based on constraint or adaptive regression
   X_opt = design_matrix(N,  0,  a,  T_term, direct_cov,random_cov, Z);
-  Vt_final = varcov_model(N,  tij,  tja,  ta,  random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
+  Vt_final = varcov_model(N,  tij,  tja,  ta, random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
   if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
     V_me_final = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta);
     }
@@ -271,7 +277,7 @@ generated quantities {
   r_squared = (sst - sse) / sst;
   
   
-//#############################################################################################################################
+//
 //Calculate evolutionary regression slope
   X_evol = design_matrix(N,  1,  a,  T_term, direct_cov,random_cov, Z);
   beta_evol = inverse(X_evol'*inverse(V_final)*X_evol)*X_evol'*inverse(V_final)*Y; //Hansen et al. 2008

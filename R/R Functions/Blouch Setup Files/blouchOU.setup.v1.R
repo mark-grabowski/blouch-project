@@ -24,7 +24,7 @@ sigma.X.estimate <-
   }
 
 
-blouchOU.setup.v1<-function(trdata,names.traits){
+blouchOU.setup.v1<-function(trdata,names.traits,dist.values){
   #Trait names are in the order trait 1 is adapting to trait 2, data should already be logged
   #Names.traits = trait 1, trait 2, mv trait 1, mv trait 2
   #Define tree parameters  
@@ -78,7 +78,13 @@ blouchOU.setup.v1<-function(trdata,names.traits){
                              brownian_mean = brownian_mean,
                              sigma_squared_x = sigma_squared_x,
                              ols_intercept = ols.intercept,
-                             ols_slope = ols.slope)
+                             ols_slope = ols.slope,
+                             mean_log = dist.values$mean_log,
+                             sd_log = dist.values$sd_log,
+                             intercept_sd = dist.values$intercept_sd,
+                             slope_sd = dist.values$slope_sd,
+                             sigma2_y_scale = dist.values$sigma2_y_scale
+                             )
   
   #############################################################################################
   #Setting up data - random covariates
@@ -98,8 +104,13 @@ blouchOU.setup.v1<-function(trdata,names.traits){
                            brownian_mean = brownian_mean,
                            sigma_squared_x = sigma_squared_x,
                            ols_intercept = ols.intercept,
-                           ols_slope = ols.slope)
-  
+                           ols_slope = ols.slope,
+                           mean_log = dist.values$mean_log,
+                           sd_log = dist.values$sd_log,
+                           intercept_sd = dist.values$intercept_sd,
+                           slope_sd = dist.values$slope_sd,
+                           sigma2_y_scale = dist.values$sigma2_y_scale
+                           )
   
   return(list(stan_constraint_data,stan_adaptive_data))
 }
