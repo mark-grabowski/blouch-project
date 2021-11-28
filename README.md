@@ -10,6 +10,6 @@ devtools::install_github("Mark-Grabowski/blouch")
 library(blouch)
 
 # Documentation
-Please visiting the package website.
+Please visit the website.
 
 # References
