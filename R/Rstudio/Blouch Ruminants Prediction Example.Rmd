@@ -288,7 +288,7 @@ brain.predictions.extant<-apply(posterior.fit.fos.direct$Y_pred_extant_means,2,m
 
 extant.data<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[-fos.index],log_brain = ruminant.trdata$dat$brain_mass_g_log_mean[-fos.index],log_brain_pred = brain.predictions.extant,log_body = ruminant.trdata$dat$bodycentered[-fos.index],Status="Extant")
 
-fos.predictions<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[fos.index], log_brain= ruminant.trdata$dat$brain_mass_g_log_mean[fos.index], log_brain_pred = brain.predictions[fos.index],log_body=ruminant.trdata$dat$bodycentered[fos.index],Status="Extinct")
+fos.predictions<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[fos.index], log_brain= NA, log_brain_pred = brain.predictions[fos.index],log_body=ruminant.trdata$dat$bodycentered[fos.index],Status="Extinct")
          
 merged.data<-rbind(extant.data,fos.predictions)                   
 
