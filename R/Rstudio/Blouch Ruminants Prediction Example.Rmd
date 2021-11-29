@@ -303,8 +303,8 @@ geom_point(aes(y=log_brain_pred,color=Status),size=2.5,alpha=0.8)+
 geom_abline(intercept=mean(posterior.fit.fos.direct$alpha),slope = mean(posterior.fit.fos.direct$beta),lty=2)+
 theme_bw()+
 theme(legend.position="bottom")+ #5X5
-xlab("log Brain Mass (g)")+
-  ylab("log Neocortex Area (mm2)")
+xlab("log Body Mass (g)")+
+  ylab("log Brain Mass (g)")
 
 #+theme(legend. position = "none")
 brbo.plot+scale_color_aaas()
