@@ -72,7 +72,7 @@ ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_
 ```
 
 Rescale Tree to Height =1
-```{r Scale Tree}
+```{r Scale Tree 2}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
 max(branching.times(ruminant.trdata$phy))
