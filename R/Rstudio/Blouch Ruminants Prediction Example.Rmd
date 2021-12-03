@@ -1,0 +1,391 @@
+---
+title: "Blouch Ruminants Prediction"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+Data Prep
+```{r}
+rm(list=ls())
+# Load necessary packages
+library(ape)
+library(slouch)
+library(rstan)
+library(treeplyr)
+
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+#options(mc.cores = parallel::detectCores())
+options(mc.cores = 2)
+rstan_options(auto_write = TRUE)
+
+#remotes::install_github("stan-dev/rstan", ref = "develop", subdir = "rstan/rstan")
+```
+
+
+For the purposes of illustrating the software, we will use a dataset of ruminant neocortices bundled with the Slouch package and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the neocortex data and associated annotation data.
+
+```{r}
+## Load the phylogenetic tree with annotation data
+data(artiodactyla)
+phy <- artiodactyla
+
+## Load the neocortex dataset
+data(neocortex)
+
+## Plot the tree
+plot(ladderize(phy), cex = 0.6)
+```
+# Data Prep
+Here we will assign one taxa as the fossil species to be predicted, and use Classical Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil X based on its Y.
+
+```{r}
+ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
+
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_mass_g_log_mean)) & !(is.na(body_mass_g_log_mean)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(body_se_squared)))
+
+ruminant.trdata #Full dataset
+
+ruminant.trdata$dat$Status<-"Extant" #Label all species as extant
+ruminant.trdata$dat$Status[1]<-"Extinct" #Make one extinct
+n.fos<-1
+
+#Classical Regression - Predicting X using regression of Y on X
+ruminant.trdata$dat$body_mass_g_log_mean[1]<-0 #Assign this species fake body mass
+ruminant.trdata$dat$body_se_squared[1]<-0 #And ME
+
+ruminant.extant.trdata<-filter(ruminant.trdata, (Status == "Extant")) #Only non-fossil species
+
+#Mean Standardized based on whether fossil is included in dataset
+
+#Classical regression - predicting brain size - X
+ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean[-n.fos])
+ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_log_mean-mean(ruminant.extant.trdata$dat$body_mass_g_log_mean)
+
+```
+
+Rescale Tree to Height =1
+```{r}
+l.tree<-max(branching.times(ruminant.trdata$phy))
+ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.trdata$phy))
+
+l.tree<-max(branching.times(ruminant.extant.trdata$phy))
+ruminant.extant.trdata$phy$edge.length<-ruminant.extant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.extant.trdata$phy))
+
+```
+
+
+Running Blouch Data Setup Function - 1st trait is adapting to 2
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Setup Files/blouchOUPredict.setup.v1.R")
+
+#names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
+names.traits<-c("brain_mass_g_log_mean","bodycentered","brain_se_squared","body_se_squared") #With ME
+
+#Data must be logged before entry into blouch.setup
+#names.traits = c(response, predictor, me.response, me.predictor) - classical = 0 for inverse regression
+stan_data<-blouchOUPredict.setup.v1(ruminant.extant.trdata,ruminant.trdata,names.traits,classical=1)
+
+stan_constraint_data<-stan_data[[1]]
+stan_adaptive_data<-stan_data[[2]]
+
+```
+
+Constraint Model for Prediction
+```{r}
+#setwd("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1")
+#stanc("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOUPredict_test.stan")
+
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOUPredict_test.stan")
+  
+#stan_model <- stan_model("blouchOUPredict_v1.stan")
+stan_model <- stan_model("blouchOUPredict_test.stan")
+
+#fit.direct<- stan(file = stan_model,data = stan_constraint_data,chains = 1,iter = 400,control=list(adapt_delta=0.95))
+fit.fos.direct<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),save_warmup=FALSE)
+
+```
+
+```{r}
+print(fit.fos.direct,pars = c("a","hl","alpha","beta","r_squared","sigma2_y","RMSE","RMSE_mu","X_pred_fos_means"))
+
+posterior.fit.fos.direct <- rstan::extract(fit.fos.direct)
+
+```
+
+
+```{r}
+par(mfrow = c(1,3))
+  
+traceplot(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
+stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
+#3 X 8
+```
+
+
+Make plots for Figure
+```{r}
+library(ggsci)
+library(ggplot2)
+library(plotly)
+
+```
+
+Classical Regression
+```{r}
+old.par <- par(mar = c(0, 0, 0, 0))
+par(old.par)
+
+fos.index<-which(ruminant.trdata$dat$Status=="Extinct")
+print(paste("Fossil Species #",fos.index))
+extant.index<-which(ruminant.trdata$dat$Status=="Extant")
+
+body.predictions<-apply(posterior.fit.fos.direct$X_pred_fos_means,2,mean)
+body.predictions.extant<-apply(posterior.fit.fos.direct$X_pred_extant_means,2,mean)
+
+extant.data<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[-fos.index],log_brain = ruminant.trdata$dat$brain_mass_g_log_mean[-fos.index],log_body_pred = body.predictions.extant,log_body = ruminant.trdata$dat$bodycentered[-fos.index],Status="Extant")
+
+fos.predictions<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[fos.index],log_brain = ruminant.trdata$dat$brain_mass_g_log_mean[fos.index], log_body_pred = body.predictions[fos.index],log_body=NA,Status="Extinct")
+         
+merged.data<-rbind(extant.data,fos.predictions)                   
+
+```
+
+
+```{r}
+brbo.plot<-ggplot(merged.data,aes(y=log_brain))+
+geom_point(aes(x=log_body_pred,color=Status),size=2.5,alpha=0.8)+
+geom_point(aes(x=log_body),size=2.0,alpha=0.4)+
+geom_abline(intercept=mean(posterior.fit.fos.direct$alpha),slope = mean(posterior.fit.fos.direct$beta),lty=2)+
+theme_bw()+
+theme(legend.position="bottom")+ #5X5
+ylab("log Brain Mass (g)")+
+  xlab("log Body Mass (g)")
+
+#+theme(legend. position = "none")
+brbo.plot+scale_color_aaas()
+#Export 5.25X5 PDF
+
+```
+# Inverse Regression
+Here we will assign one taxa as the fossil species to be predicted, and use Inverse Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil Y based on its X.
+
+Here we will assign one taxa as the fossil species to be predicted
+```{r}
+ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
+
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_mass_g_log_mean)) & !(is.na(body_mass_g_log_mean)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(body_se_squared)))
+
+ruminant.trdata #Full dataset
+
+ruminant.trdata$dat$Status<-"Extant" #Label all species as extant
+ruminant.trdata$dat$Status[1]<-"Extinct" #Make one extinct
+n.fos<-1
+
+#Inverse Regression - Predicting Y using regression of Y on X
+ruminant.trdata$dat$brain_mass_g_log_mean[1]<-0 #Assign this species fake body mass
+ruminant.trdata$dat$brain_se_squared[1]<-0 #And ME
+
+ruminant.extant.trdata<-filter(ruminant.trdata, (Status == "Extant")) #Only non-fossil species
+
+#Mean Standardized based on whether fossil is included in dataset
+ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean[-n.fos])
+ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_log_mean-mean(ruminant.extant.trdata$dat$body_mass_g_log_mean)
+
+```
+
+Rescale Tree to Height =1
+```{r}
+l.tree<-max(branching.times(ruminant.trdata$phy))
+ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.trdata$phy))
+
+l.tree<-max(branching.times(ruminant.extant.trdata$phy))
+ruminant.extant.trdata$phy$edge.length<-ruminant.extant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.extant.trdata$phy))
+
+```
+
+
+Running Blouch Data Setup Function - 1st trait is adapting to 2
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Setup Files/blouchOUPredict.setup.v1.R")
+
+#names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
+names.traits<-c("brain_mass_g_log_mean","bodycentered","brain_se_squared","body_se_squared") #With ME
+
+#Data must be logged before entry into blouch.setup
+#names.traits = c(response, predictor, me.response, me.predictor) - classical = 0 for inverse regression
+stan_data<-blouchOUPredict.setup.v1(ruminant.extant.trdata,ruminant.trdata,names.traits,classical=0)
+
+stan_constraint_data<-stan_data[[1]]
+stan_adaptive_data<-stan_data[[2]]
+
+```
+
+Constraint Model for Prediction
+```{r}
+#setwd("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1")
+#stanc("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOUPredict_test.stan")
+
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOUPredict_test.stan")
+  
+#stan_model <- stan_model("blouchOUPredict_v1.stan")
+stan_model <- stan_model("blouchOUPredict_test.stan")
+
+#fit.direct<- stan(file = stan_model,data = stan_constraint_data,chains = 1,iter = 400,control=list(adapt_delta=0.95))
+fit.fos.direct<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),save_warmup=FALSE)
+
+```
+
+```{r}
+print(fit.fos.direct,pars = c("a","hl","alpha","beta","r_squared","sigma2_y","RMSE","RMSE_mu","Y_pred_fos_means"))
+
+posterior.fit.fos.direct <- rstan::extract(fit.fos.direct)
+
+```
+
+
+```{r}
+par(mfrow = c(1,3))
+  
+traceplot(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
+stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
+#3 X 8
+```
+
+
+Make plots for Figure
+```{r}
+library(ggsci)
+library(ggplot2)
+library(plotly)
+
+```
+
+Plot including predictions for extant species
+SI HW Prediction Means - 5X5 pdf
+Inverse Regression
+
+Inverse Regression
+```{r}
+old.par <- par(mar = c(0, 0, 0, 0))
+par(old.par)
+
+fos.index<-which(ruminant.trdata$dat$Status=="Extinct")
+print(paste("Fossil Species #",fos.index))
+extant.index<-which(ruminant.trdata$dat$Status=="Extant")
+
+brain.predictions<-apply(posterior.fit.fos.direct$Y_pred_fos_means,2,mean)
+brain.predictions.extant<-apply(posterior.fit.fos.direct$Y_pred_extant_means,2,mean)
+
+extant.data<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[-fos.index],log_brain = ruminant.trdata$dat$brain_mass_g_log_mean[-fos.index],log_brain_pred = brain.predictions.extant,log_body = ruminant.trdata$dat$bodycentered[-fos.index],Status="Extant")
+
+fos.predictions<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[fos.index], log_brain= NA, log_brain_pred = brain.predictions[fos.index],log_body=ruminant.trdata$dat$bodycentered[fos.index],Status="Extinct")
+         
+merged.data<-rbind(extant.data,fos.predictions)                   
+
+```
+
+
+```{r}
+
+brbo.plot<-ggplot(merged.data,aes(x=log_body))+
+geom_point(aes(y=log_brain),size=2.0,alpha=0.4)+
+geom_point(aes(y=log_brain_pred,color=Status),size=2.5,alpha=0.8)+
+geom_abline(intercept=mean(posterior.fit.fos.direct$alpha),slope = mean(posterior.fit.fos.direct$beta),lty=2)+
+theme_bw()+
+theme(legend.position="bottom")+ #5X5
+xlab("log Body Mass (g)")+
+  ylab("log Brain Mass (g)")
+
+#+theme(legend. position = "none")
+brbo.plot+scale_color_aaas()
+#Export 5.25X5 PDF
+
+```
+
+
+Slouch Results for Comparison
+Adaptation model
+```{r}
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              #mv.response = ruminant.trdata$dat$neocortex_se_squared,
+                              #mv.random.cov = ruminant.trdata$dat$brain_se_squared,
+                              hl_values = seq(0.00001, 0.3, length.out = 50),
+                              vy_values = seq(0.00001, 0.1, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Adaptation model - w/ ME
+```{r}
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              mv.response = ruminant.trdata$dat$neocortex_se_squared,
+                              mv.random.cov = ruminant.trdata$dat$brain_se_squared,
+                              hl_values = seq(0.00001, 0.2, length.out = 50),
+                              vy_values = seq(0.00001, 0.1, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Constraint Model
+```{r}
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$braincentered,
+                              mv.response = ruminant.trdata$dat$neocortex_se_squared,
+                              mv.direct.cov = ruminant.trdata$dat$brain_se_squared,
+                              hl_values = seq(0.00001, 5, length.out = 50),
+                              vy_values = seq(0.00001, 0.5, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Constraint Model w/o ME
+```{r}
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$braincentered,
+                              #mv.response = ruminant.trdata$dat$neocortex_se_squared,
+                              #mv.direct.cov = ruminant.trdata$dat$brain_se_squared,
+                              hl_values = seq(0.00001, 5, length.out = 50),
+                              vy_values = seq(0.00001, 0.5, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+

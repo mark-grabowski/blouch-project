@@ -4,17 +4,14 @@ functions {
 //This version only recreates Slouch output, with no fossil prediction or within species data
 //To be renamed Blouch_OU for ms
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Design Matrix Code
+//Design Matrix Code - Adaptive
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  matrix design_matrix(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z){
+    matrix design_matrix(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z){
     matrix[N,Z] rho;
     matrix[N,Z] X;
-    if(evol==0) {
-      rho = to_matrix(1 - (1 - exp(-a * T_term))./(a * T_term)); //For OU model
-    }
-    else{
-      rho=to_matrix(rep_vector(1.0,N)); //For Evolutionary regression
-    }
+
+    rho = to_matrix(1 - (1 - exp(-a * T_term))./(a * T_term)); //For OU model
+
     if(sum(random_cov)==0){
       X = direct_cov;
       }
@@ -26,6 +23,29 @@ functions {
     //print("Design Matrix",X);
     return(X);
     }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Design Matrix Code - Evolutionary
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    matrix design_matrix_evol(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z){
+    matrix[N,Z] rho;
+    matrix[N,Z+1] X;
+   
+    rho=to_matrix(rep_vector(1,N)); //For Evolutionary regression
+    
+    if(sum(random_cov)==0){
+      X = append_col(rep_vector(1,N), direct_cov);
+      }
+    else if(sum(direct_cov)==0){
+      X = append_col(rep_vector(1,N), random_cov .* rho);
+
+    }else{
+      X = append_col(rep_vector(1,N),direct_cov);
+      X = append_col(X,random_cov .* rho);
+      }
+    //print("Design Matrix",X);
+    return(X);
+    }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Vt function
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,11 +196,9 @@ data {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 parameters {
-  real <lower = 0.0001,upper=1000> a; //Lower = hl = 5, upper = hl = 0.006931472
-  //real <lower = 0.0001,upper=4.0> hl;
-  //real hl;
+  real <lower = 0> a;
+  real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
   //real <lower = 0> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
-  real <lower = 0,upper = variance(Y)*2> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
   real alpha; //OU alpha
   vector[Z] beta; //OU beta
 
@@ -190,7 +208,32 @@ parameters {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 transformed parameters {
-  
+  matrix[N,Z+1] X_evol;
+  vector[Z+1] beta_evol;
+  matrix[N,N] V_ev;
+  matrix[N,N] V_me_ev;
+  matrix[N,N] Vt_ev;
+
+  Vt_ev = varcov_model(N,  tij,  tja,  ta, random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
+  if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
+    //print("sum!=0");
+    V_me_ev = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta);
+    V_ev = Vt_ev + V_me_ev + diag_matrix(mv_response);
+
+    }
+  else{
+    //print("sum=0");
+    V_me_ev = rep_matrix(0,N,N);
+    V_ev = Vt_ev;
+    }
+  //Calculate evolutionary regression slope
+  X_evol = design_matrix_evol(N,  1,  a,  T_term, direct_cov,random_cov, Z);
+  //X_evol = random_cov;
+  //ev.beta1.var <- pseudoinverse(t(X0)%*%V.inverse%*%X0)
+
+  //ev.beta1 <- ev.beta1.var%*%(t(X0)%*%V.inverse%*%Y)
+  beta_evol = inverse(X_evol'*inverse(V_ev)*X_evol)*(X_evol'*inverse(V_ev)*Y); //Hansen et al. 2008
+  //beta_evol = inverse(X_evol'*inverse(V_final)*X_evol)*X_evol'*inverse(V_final)*Y; //Hansen et al. 2008
   }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -208,10 +251,9 @@ model {
 //Priors
 //Priors
   a ~ lognormal(1.0,1.0); //Possibly better for half-lives, but slow for smaller half-lives
-  //alpha ~ normal(ols_intercept,1.0); //Changed from 0.5 for MBM ms
-  alpha ~ normal(ols_intercept,1.0); //Changed from 0.5 for MBM ms
-  //beta ~ normal(ols_slope,1.0); //Changed to 0.5 for MBM ms, Cervidae - latter because OLS slope is like 6, so needs more
-  beta ~ normal(ols_slope,1.0); //Changed to 0.5 for MBM ms, Cervidae - latter because OLS slope is like 6, so needs more
+  //sigma2_y ~ exponential(0.1);
+  alpha ~ normal(ols_intercept,0.5); //Changed from 0.5 for MBM ms
+  beta ~ normal(ols_slope,0.4); //Changed to 0.5 for MBM ms, Cervidae - latter because OLS slope is like 6, so needs more
 //////////////////////////////////////////////////////////////////////////////////////////////////////
   //a = log(2)/hl;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,13 +277,13 @@ model {
 //OU with random covariates
   mu = X*beta+alpha;
   Y ~ multi_normal_cholesky(mu , L_V);
-
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-}
+
 
 generated quantities {
   real <lower = 0> vy;
@@ -259,9 +301,7 @@ generated quantities {
   matrix[N,N] V_final;
   matrix[N,N] V_me_final;
   matrix[N,N] Vt_final;
-  matrix[N,Z] X_evol;
-  vector[Z] beta_evol;
-  
+
   ///////////////////////////////////////////////////////////
   //Fossil Predictions
   matrix[N_fos,N_fos] V_fos;
@@ -335,13 +375,8 @@ generated quantities {
   r_squared = (sst - sse) / sst;
   
   
-//#############################################################################################################################
-//Calculate evolutionary regression slope
-  X_evol = design_matrix(N,  1,  a,  T_term, direct_cov,random_cov, Z);
-  beta_evol = inverse(X_evol'*inverse(V_final)*X_evol)*X_evol'*inverse(V_final)*Y; //Hansen et al. 2008
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Mean Extant prediction
+//Mean Extant prediction - always use evolutionary regression for prediction
   if(classical==1){ //For classical vs. inverse regression - predicting X vs. predicting Y
    if(sum(direct_cov) != 0){//X_mu = mean body mass predictions
     X_mu_extant = inverse(beta[1] * inverse(V_final) * beta[1]) * beta[1] * inverse(V_final) * (Y - alpha); //Non-evolutionary for regression
@@ -349,7 +384,7 @@ generated quantities {
 
   }else{
     //X_mu_extant = inverse(beta_evol[1] * inverse(V_final) * beta_evol[1]') * beta_evol[1] * inverse(V_final) * (Y - alpha); //Evolutionary regression for optimal analysis
-    X_mu_extant = inverse(beta_evol[1] * inverse(V_final) * beta_evol[1]) * beta_evol[1] * inverse(V_final) * (Y - alpha); //Evolutionary regression for optimal analysis
+    X_mu_extant = inverse(beta_evol[2] * inverse(V_final) * beta_evol[2]) * beta_evol[2] * inverse(V_final) * (Y - alpha); //Evolutionary regression for optimal analysis
 
   }
   }
@@ -411,7 +446,7 @@ generated quantities {
   MSE_mu=sum(e_mu_MSE)/(N-2);
   RMSE_mu =sqrt(MSE_mu);
 
-//########################################################################################################################  
+//
 //Fossil species mean prediction code
   //X_fos = design_matrix(N_fos,  evol,  a,  T_term_fos, direct_cov_fos,random_cov_fos, Z);
   Vt_fos = varcov_model(N_fos,  tij_fos,  tja_fos,  ta_fos,  random_cov, Z,  sigma2_y,  a, brownian_mean_fos,  sigma_squared_x_fos,  beta,  T_term_fos);
@@ -428,9 +463,13 @@ generated quantities {
 
     X_mu_fos = X_mu_evol[fos_index];
     X_mu_extant = X_mu_evol[extant_index]; //Mean of Y/body suze for non missing species (including missing species?)
+    Y_mu_evol = rep_vector(0,N_fos);
+    Y_mu_fos = rep_vector(0,N_fos_only);
+    Y_mu_extant = rep_vector(0,N); //Mean of Y/body suze for non missing species (including missing species?)
+
   }else{
     //X_mu_evol = inverse(beta_evol[1] * inverse(V_fos) * beta_evol[1]') * beta_evol[1] * inverse(V_fos) * (Y_fos_means - alpha); //Evolutionary regression for optimal analysis
-    X_mu_evol = inverse(beta_evol[1] * inverse(V_fos) * beta_evol[1]) * beta_evol[1] * inverse(V_fos) * (Y_fos_means - alpha); //Evolutionary regression for optimal analysis
+    X_mu_evol = inverse(beta_evol[2] * inverse(V_fos) * beta_evol[2]) * beta_evol[2] * inverse(V_fos) * (Y_fos_means - alpha); //Evolutionary regression for optimal analysis
 
     X_mu_fos = X_mu_evol[fos_index];
     X_mu_extant = X_mu_evol[extant_index]; //Mean of Y/body suze for non missing species (including missing species?)
@@ -458,9 +497,11 @@ generated quantities {
   
     if(classical == 1){ //For classical vs. inverse regression - predicting X vs. predicting Y
       X_fos_new = to_matrix(X_mu_fos) + fos_extant_V * inverse(extant_V) * (direct_cov - to_matrix(X_mu_extant));
+      Y_fos_new = rep_vector(0,N_fos_only);
     }
     else{//Inverse regression
       Y_fos_new = (Y_mu_fos) + fos_extant_V * inverse(extant_V) * (Y - (Y_mu_extant));
+      X_fos_new = rep_matrix(0,N_fos_only,Z);
     }
   
   if(N_fos_only == 1){
@@ -472,7 +513,9 @@ generated quantities {
   
   L_V_fos = cholesky_decompose(fos_V_new);
   if(classical == 1){ //For classical vs. inverse regression - predicting X vs. predicting Y
-  X_pred_fos_means = multi_normal_cholesky_rng(to_vector(X_fos_new),L_V_fos);}
+    X_pred_fos_means = multi_normal_cholesky_rng(to_vector(X_fos_new),L_V_fos);
+    Y_pred_fos_means = rep_vector(0,N_fos_only);}
   else{
-  Y_pred_fos_means = multi_normal_cholesky_rng(to_vector(Y_fos_new),L_V_fos);}
+    Y_pred_fos_means = multi_normal_cholesky_rng(to_vector(Y_fos_new),L_V_fos);
+    X_pred_fos_means = rep_vector(0,N_fos_only);}
 }

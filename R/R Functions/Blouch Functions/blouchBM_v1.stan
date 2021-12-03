@@ -147,8 +147,8 @@ model {
 
 //Priors
   //sigma2_y ~ exponential(0,1.0);
-  alpha ~ normal(ols_intercept,0.1); //Simulations
-  beta ~ normal(ols_slope,0.075); //Simulatiomns
+  alpha ~ normal(ols_intercept,0.5); //Intercept
+  beta ~ normal(ols_slope,0.4); //Slope
   
   
   //Set up X matrix

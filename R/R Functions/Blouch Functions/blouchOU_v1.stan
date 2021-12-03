@@ -4,17 +4,14 @@ functions {
 //This version only recreates Slouch output, with no fossil prediction or within species data
 //To be renamed Blouch_OU for ms
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Design Matrix Code
+//Design Matrix Code - Adaptive
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  matrix design_matrix(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z){
+    matrix design_matrix(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z){
     matrix[N,Z] rho;
     matrix[N,Z] X;
-    if(evol==0) {
-      rho = to_matrix(1 - (1 - exp(-a * T_term))./(a * T_term)); //For OU model
-    }
-    else{
-      rho=to_matrix(rep_vector(1.0,N)); //For Evolutionary regression
-    }
+
+    rho = to_matrix(1 - (1 - exp(-a * T_term))./(a * T_term)); //For OU model
+
     if(sum(random_cov)==0){
       X = direct_cov;
       }
@@ -22,6 +19,28 @@ functions {
       X = random_cov .* rho;
     }else{
       X = append_col(direct_cov, random_cov .* rho);
+      }
+    //print("Design Matrix",X);
+    return(X);
+    }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Design Matrix Code - Evolutionary
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    matrix design_matrix_evol(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z){
+    matrix[N,Z] rho;
+    matrix[N,Z+1] X;
+   
+    rho=to_matrix(rep_vector(1,N)); //For Evolutionary regression
+    
+    if(sum(random_cov)==0){
+      X = append_col(rep_vector(1,N), direct_cov);
+      }
+    else if(sum(direct_cov)==0){
+      X = append_col(rep_vector(1,N), random_cov .* rho);
+
+    }else{
+      X = append_col(rep_vector(1,N),direct_cov);
+      X = append_col(X,random_cov .* rho);
       }
     //print("Design Matrix",X);
     return(X);
@@ -43,17 +62,7 @@ functions {
   
   for (i in 1:Z)
     beta1sq[i] = beta1[i]^2;
-//    if (a < 1e-14){ //Original Bjorn code - is this causing weird Slouch numbers?
-//      if(sum(random_cov) == 0){ //Direct covariates and small a
-//        Vt = sigma2_y * ta;
-//        print("Direct - small a");
-//      }else{
-//        s1 = sum(sigma_squared_x * beta1sq);
-//        print("Random - small a");
-//        Vt = sigma2_y * ta + s1 * ta .* ((ta .* ta) ./ 12 + tja .* (tja') ./ 4);
-//      }
-//    }
-//  else{ //Random + Direct covariates, or just random
+
     if(sum(random_cov) != 0){
       s1 = sum(sigma_squared_x * beta1sq);
       ti = rep_matrix(T_term,N);
@@ -129,7 +138,7 @@ matrix varcov_measurement(int N, int Z, matrix ta,  matrix direct_cov, matrix mv
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//Data Block
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 data {
   //Extant data
@@ -150,21 +159,16 @@ data {
   matrix[1,Z] sigma_squared_x;
   real ols_intercept;
   real ols_slope;
-  real mean_log;
-  real sd_log;
-  real intercept_sd;
-  real slope_sd;
-  real sigma2_y_scale;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//Parameter Block
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 parameters {
-  real <lower = 0> a; //Lower = hl = 4, upper = hl = 0.0010
+  real <lower = 0> a;
   //real <lower = 0.1386294,upper=693.1472> a; //Lower = hl = 5, upper = hl = 0.001
-  //real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
-  real <lower = 0> sigma2_y;
+  real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
   //real <lower = 0> sigma2_y;
   real alpha; //OU alpha
   vector[Z] beta; //OU beta
@@ -172,30 +176,57 @@ parameters {
   
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//Transformed Parameter Block
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 transformed parameters {
-  
+  matrix[N,Z+1] X_evol;
+  vector[Z+1] beta_evol;
+  matrix[N,N] V_ev;
+  matrix[N,N] V_me_ev;
+  matrix[N,N] Vt_ev;
+
+  Vt_ev = varcov_model(N,  tij,  tja,  ta, random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
+  if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
+    //print("sum!=0");
+    V_me_ev = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta);
+    V_ev = Vt_ev + V_me_ev + diag_matrix(mv_response);
+
+    }
+  else{
+    //print("sum=0");
+    V_me_ev = rep_matrix(0,N,N);
+    V_ev = Vt_ev;
+    }
+  //Calculate evolutionary regression slope
+  X_evol = design_matrix_evol(N,  1,  a,  T_term, direct_cov,random_cov, Z);
+  //X_evol = random_cov;
+  //ev.beta1.var <- pseudoinverse(t(X0)%*%V.inverse%*%X0)
+
+  //ev.beta1 <- ev.beta1.var%*%(t(X0)%*%V.inverse%*%Y)
+  beta_evol = inverse(X_evol'*inverse(V_ev)*X_evol)*(X_evol'*inverse(V_ev)*Y); //Hansen et al. 2008
+  //beta_evol = inverse(X_evol'*inverse(V_final)*X_evol)*X_evol'*inverse(V_final)*Y; //Hansen et al. 2008
   }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//Model Block
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 model {
 //Declare variables
   //real a;
   //real sigma2_y;
-  vector[N] mu;
   matrix[N,N] V;
   matrix[N,N] Vt;
   matrix[N,N] V_me;
+  vector[N] mu;
   matrix[N,Z] X;
   matrix[N, N] L_V;
-  
+  //matrix[N,Z] X_evol;
+  //vector[Z] beta_evol;
+
 //Priors
-  a ~ lognormal(mean_log,sd_log); 
-  sigma2_y ~ exponential(sigma2_y_scale);
-  alpha ~ normal(ols_intercept,intercept_sd); //Simulations PREVIOUS CODE 0.1 for both
-  beta ~ normal(ols_slope, slope_sd); //Simulations
+  a ~ lognormal(1.0,1.0); //a = log(2)/half-life
+  //sigma2_y ~ exponential(0.1); //
+  alpha ~ normal(ols_intercept,0.5); //Intercept
+  beta ~ normal(ols_slope, 0.4); //Slope
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   //a = log(2)/hl;
@@ -205,18 +236,19 @@ model {
 //Regression - either constraint for direct cov or adaptive for random cov
 //
 //Set up X matrix
-  X = design_matrix( N,  0,  a,  T_term, direct_cov,random_cov, Z);
+  X = design_matrix(N,  0,  a,  T_term, direct_cov,random_cov, Z);
   
 //Set up V matix
   Vt = varcov_model(N,  tij,  tja,  ta, random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
   if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
     V_me = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov,mv_random_cov, sigma_squared_x, beta);
+    V = Vt + V_me + diag_matrix(mv_response);
+
   }
   else{
     V_me = rep_matrix(0,N,N);
+    V = Vt;
   }
-  //print(Vt,V_me,diag_matrix(mv_response));
-  V = Vt + V_me + diag_matrix(mv_response);
   L_V = cholesky_decompose(V);
   
 //OU with random covariates
@@ -224,13 +256,12 @@ model {
   //mu = X*beta;
   Y ~ multi_normal_cholesky(mu , L_V);
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Generated Quantities Block
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 generated quantities {
   real <lower = 0> vy;
   //real <lower = 0> sigma2_y;
@@ -248,8 +279,6 @@ generated quantities {
   matrix[N,N] V_final;
   matrix[N,N] V_me_final;
   matrix[N,N] Vt_final;
-  matrix[N,Z] X_evol;
-  vector[Z] beta_evol;
   
 //////////
   hl = log(2)/a;
@@ -259,26 +288,26 @@ generated quantities {
   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Calculate r2 based on constraint or adaptive regression
+
   X_opt = design_matrix(N,  0,  a,  T_term, direct_cov,random_cov, Z);
   Vt_final = varcov_model(N,  tij,  tja,  ta, random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term);
   if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
+    //print("sum!=0");
     V_me_final = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta);
+    V_final = Vt_final + V_me_final + diag_matrix(mv_response);
+
     }
   else{
+    //print("sum=0");
     V_me_final = rep_matrix(0,N,N);
+    V_final = Vt_final;
     }
 
-  V_final = Vt_final + V_me_final + diag_matrix(mv_response);
   
   pred_mean = (X_opt*beta+alpha);
   grand_mean = ((rep_vector(1,N))' * inverse(V_final) * Y) / sum(inverse(V_final));
   sst = ((Y - grand_mean)' * inverse(V_final) * (Y - grand_mean));
   sse = ((Y - pred_mean)' * inverse(V_final) * (Y - pred_mean));
   r_squared = (sst - sse) / sst;
-  
-  
-//
-//Calculate evolutionary regression slope
-  X_evol = design_matrix(N,  1,  a,  T_term, direct_cov,random_cov, Z);
-  beta_evol = inverse(X_evol'*inverse(V_final)*X_evol)*X_evol'*inverse(V_final)*Y; //Hansen et al. 2008
+
 }
