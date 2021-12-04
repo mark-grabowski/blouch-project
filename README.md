@@ -20,6 +20,7 @@ library(blouch)
 
 # Documentation
 Please visit the package website here.
+https://github.com/Mark-Grabowski/blouch.git
 
 # References
 Hansen et al. (2008)
