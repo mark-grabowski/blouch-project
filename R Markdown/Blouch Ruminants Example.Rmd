@@ -1,0 +1,381 @@
+---
+title: "Blouch Example Cervid Analysis - Example"
+output:
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+
+```{r}
+rm(list=ls())
+# Load necessary packages
+library(ape)
+library(slouch)
+library(rstan)
+library(treeplyr)
+
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+#options(mc.cores = parallel::detectCores())
+options(mc.cores = 2)
+rstan_options(auto_write = TRUE)
+
+#remotes::install_github("stan-dev/rstan", ref = "develop", subdir = "rstan/rstan")
+
+```
+For the purposes of illustrating the software, we will use a dataset of ruminant neocortices bundled with the Slouch package and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the neocortex data and associated annotation data.
+```{r}
+## Load the phylogenetic tree with annotation data
+data(artiodactyla)
+phy <- artiodactyla
+
+## Load the neocortex dataset
+data(neocortex)
+
+## Plot the tree
+plot(ladderize(phy), cex = 0.6)
+```
+
+
+Data Prep
+```{r}
+ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
+
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(neocortex_area_mm2_log_mean)) & !(is.na(brain_mass_g_log_mean)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(neocortex_se_squared)) & !(is.na(brain_se_squared)))
+ruminant.trdata
+
+#Mean Standardized
+ruminant.trdata$dat$braincentered<-ruminant.trdata$dat$brain_mass_g_log_mean-mean(ruminant.trdata$dat$brain_mass_g_log_mean)
+
+
+
+
+```
+
+Rescale Tree to Height =1
+```{r}
+l.tree<-max(branching.times(ruminant.trdata$phy))
+ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.trdata$phy))
+
+```
+
+Running Blouch Data Setup Function - 1st trait is adapting to 2
+
+Here we will create a R object called stan_data which has all the data we are sending to Blouch in the Stan format. This includes data setups for both the direct effect (constraint) and adaptive models we will run below. These are further discussed in Hansen et al. (2008) and Grabowski et al. (2016).
+
+
+First we will run Blouch including Measurement Error. Measurement error is estimation error in species averages following Hansen and Bartoszek (2012), and Blouch can handle measurement error in both the predictor and response variables. Following Grabowski et al. (2016), measurement error is the average of the sample variances, weighted by the sample size of each species. This procedure allows for the species with larger sample size to be weighted more, and this average measurement variance is then divided by the sample size of each species. See Grabowski et al (2016) for further discussion. 
+```{r}
+par(mfrow = c(1,1))
+
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Setup Files/blouchOU.setup.v1.R")
+
+#Not including Measurement Error
+#names.traits<-c("neocortex_area_mm2_log_mean","braincentered",NA,NA)
+
+#Including Measurement Error, where the last two named traits are the measurement error of the first two traits
+#Setup: names.traits = c(response, predictor, me.response, me.predictor)
+names.traits<-c("neocortex_area_mm2_log_mean","braincentered","neocortex_se_squared","brain_se_squared")
+
+#Data must be logged before entry into blouchOU.setup
+stan_data<-blouchOU.setup.v1(ruminant.trdata,names.traits)
+
+stan_constraint_data<-stan_data[[1]]
+stan_adaptive_data<-stan_data[[2]]
+
+```
+
+
+# Explore Priors: Slope and intercept
+Priors must be set manually in the Stan Blouch code (e.g. blouchOU_v1.stan). This is not a big deal, but we have to explore how our data leads to weak or stong prors beforehand. Do not use the default priors of Blouch as these are only appropriate for a smaller range of datasets.
+
+First lets look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.
+```{r}
+library(ggsci)
+library(ggplot2)
+intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_adaptive_data$ols_slope,1.0)
+
+slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  scale_color_npg()
+
+slope.prior.plot
+
+```
+This first prior is far two wide, so let's use a stronger prior
+```{r}
+intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_adaptive_data$ols_slope,0.4)
+
+slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  scale_color_npg()
+
+slope.prior.plot
+```
+This looks pretty good. To enter these priors in Blouch, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the intercept (alpha) and slope (beta) to have the best priors found above.
+
+//Priors
+  a ~ lognormal(1.0,1.0); 
+  //sigma2_y ~ exponential(0.1);
+  alpha ~ normal(ols_intercept,0.5); //Intercept
+  beta ~ normal(ols_slope, 0.4); //Slope
+  
+
+# Explore Priors: Half-life
+Since our tree is unit length = 1, and the original phylogeny is ~27 Ma, we would like our half-life prior to be allow for very quick adaotation (e.g < 1 Ma, which equals < 0.04 in tree units), and very slow adaptation (e.g. > 27 Ma, which equals 1 in tree units). Thus, we will the 10% quantile of the distrubution at 0.04 and 90% at 1.
+
+We can explore how changing our parameters on the priors affect half life using the code below. The values 1.25 and 1.25 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.
+
+```{r}
+###########################################
+#Log-normal prior for half-life - based on alpha
+par.alpha <- list(meanlog=1.25, sdlog=1.25) 
+
+samp <- rlnorm(10000, mean=par.alpha$meanlog, sd=par.alpha$sdlog)
+samp<-samp[samp>=0]
+
+hist(samp, breaks=10000, main="Prior density of alpha",xlim=c(0,3))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+log(2)/min(samp)
+log(2)/max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75,0.90,0.95, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(log(2)/samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist((log(2)/samp), breaks=10000, main="Prior density of half-life",xlim=c(0,3))
+abline(v=(c(0.04,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (27 Ma) - 
+########################################
+```
+This looks pretty good. Again to enter these priors, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the priors on a, log mean and log sd to 
+
+//Priors
+  a ~ lognormal(1.0,1.0); //a = log(2)/half-life
+  //sigma2_y ~ exponential(0.1); //
+  alpha ~ normal(ols_intercept,0.5); //Intercept
+  beta ~ normal(ols_slope, 0.4); //Slope
+
+The other parameter we have to set is the sigma2_y parameter, but in the default case it is simply a uniform distribution with a lower limt of 0 and an upper limit equal to 4 times the variance of Y. In Stan, uniform priors are defined in the parmeters block and given their limits in this block:
+
+parameters {
+  real <lower = 0> a;
+  real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance
+  real alpha; //OU alpha
+  vector[Z] beta; //OU beta
+
+In the Priors code within the model block, they are then not given a prior distribution.
+//Priors
+  a ~ lognormal(1.0,1.0); //a = log(2)/half-life
+  //sigma2_y ~ exponential(0.1); //
+  alpha ~ normal(ols_intercept,0.5); //Intercept
+  beta ~ normal(ols_slope, 0.4); //Slope
+
+If we wanted to explore how sigma2_y prior compares to our expectations we could use the code below, but for the example we will use a uniform prior as discussed above.
+
+```{r}
+library(extraDistr)
+###########################################
+#Normal - based on alpha
+par.sigma2y <- list(sigma=0.1)
+
+samp <- rhcauchy(10000, sigma=par.sigma2y$sigma)
+
+hist(samp, breaks=10000, main="Prior density of Sigma2y",xlim=c(0,3))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+log(2)/min(samp)
+log(2)/max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75, 0.90, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist(samp/(2*2), breaks=10000, main="Prior density of Vy",xlim=c(0,3))
+#abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+########################################
+
+```
+
+# Direct Effect Models
+Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch using the R package Stan. Stan (Carpenter et al., 2017),  allows estimation of Bayesian models using Markov chain Monte Carlo (MCMC) methods based on the Hamilton Monte Carlo sampler. 
+
+Now lets do a simple analysis. Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.
+
+Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_v1.stan")
+
+stan_model <- stan_model("blouchOU_v1.stan")
+
+fit.direct<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
+```
+
+Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
+```{r}
+#Lets look at the parameter estimates
+print(fit.direct,pars = c("a","hl","alpha","beta","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.direct <- rstan::extract(fit.direct)
+
+```
+Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
+
+#Trace and Density Plots for estimated parameters
+We can look at how our procedures using the standard trace and density plots from Rstan 
+
+```{r}
+par(mfrow = c(1,3))
+
+traceplot(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
+stan_dens(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
+#3X8
+```
+These look good.
+
+#Adaptive Model
+Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.
+
+Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_v1.stan")
+
+stan_model <- stan_model("blouchOU_v1.stan")
+
+fit.adaptive<- rstan::sampling(object = stan_model,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+
+```
+
+Again, lets look at the parameter estimates
+```{r}
+print(fit.adaptive,pars = c("a","hl","alpha","beta","beta_evol","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.adaptive <- rstan::extract(fit.adaptive)
+
+```
+And explore the trance and density plots
+```{r}
+par(mfrow = c(1,3))
+
+traceplot(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
+stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
+#3X8
+```
+
+# Model Comparison using Bayes Factors
+While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package (CITATION).
+
+```{r}
+library(bridgesampling)
+
+lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
+lml.fit.adaptive<-bridge_sampler(fit.adaptive,silent=TRUE)
+BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.adaptive)
+BF_att
+
+```
+
+We find that the data is 5.2 more likely under a model that assumes a direct effect model rather than af adaptive model.
+
+# Brownian Model
+Blouch can also fit a Brownian motion model to the data, which can then be compared to the other models using Bayes Factors. Note that while this is possible with Blouch, it is assuming your data follows this model of evolution, rather than testing for it using the Direct Effect or Adaptive models above. Here we again use the stan_constraint_data type but a new Stan function. Note that priors on the intercept and slope should be set as previously, but sigma2_y no longer has an upper range of values in its declairation.
+
+
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchBM_v1.stan")
+stan_model <- stan_model("blouchBM_v1.stan")
+
+fit.BM<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+
+#For downstream analysis and plots
+ext.fit.BM <- rstan::extract(fit.BM)
+
+```
+
+```{r}
+print(fit.BM,pars = c("alpha","beta","r_squared","sigma2_y"))
+
+```
+
+And explore the trance and density plots
+```{r}
+par(mfrow = c(1,3))
+
+traceplot(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
+stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
+#3X8
+```
+
+Looking Good!
+
+# Direct vs. BM Model Comparison using BF
+```{r}
+library(bridgesampling)
+lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
+lml.fit.BM<-bridge_sampler(fit.BM,silent=TRUE)
+
+BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.BM)
+BF_att
+
+```
+Here the direct fit model has a Bayes Factor of 0.7 over the BM model, which makes sense for this data as the estimated phylogenetic half life is quite long, 65% the length of the phylogeny.
+
+Let's make some 
+
+Make plot
+```{r}
+library(ggsci)
+library(ggplot2)
+
+```
+
+```{r}
+ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+  #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  geom_abline(intercept=mean(ext.fit.direct$alpha),slope = mean(ext.fit.direct$beta[,1]),lty=1)+
+  geom_point(size=2.0,alpha=0.8)+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  ggtitle("Direct Effect Model")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  scale_color_npg()
+```
+```{r}
+ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+  #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  geom_abline(intercept=mean(ext.fit.adaptive$alpha),slope = mean(ext.fit.adaptive$beta[,1]),lty=1)+
+  geom_abline(intercept=mean(ext.fit.adaptive$alpha),slope = mean(ext.fit.adaptive$beta_evol[,2]),lty=2)+
+  geom_point(size=2.0,alpha=0.8)+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  ggtitle("Adaptive Model")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  scale_color_npg()
+```
+
