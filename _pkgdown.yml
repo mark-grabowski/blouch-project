@@ -1,3 +1,9 @@
+title: blouch  
+url: https://mark-grabowski.github.io/blouch/index.html
+template:  
+  params:  
+    bootswatch: cerulean  
+
 navbar:
   structure:
     left:
