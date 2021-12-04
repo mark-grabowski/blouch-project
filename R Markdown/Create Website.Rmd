@@ -1,0 +1,19 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+https://pkgdown.r-lib.org/
+
+```{r}
+# Install released version from CRAN
+install.packages("pkgdown")
+library(pkgdown)
+# Run once to configure your package to use pkgdown
+usethis::use_pkgdown()
+
+pkgdown::build_site()
+
+```
+
