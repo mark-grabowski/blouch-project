@@ -17,11 +17,22 @@ knitr::opts_chunk$set(
 
 ```{r Setup}
 rm(list=ls())
+library(devtools)
+#devtools::install_github("Mark-Grabowski/blouch")
+#library(blouch)
+
+devtools::install_github("Mark-Grabowski/blouch"
+                         ,ref="master"
+                         ,auth_token = "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"
+                         )
+library(blouch)
+
 # Load necessary packages
 library(ape)
 library(slouch)
 library(rstan)
 library(treeplyr)
+library(ggplot2)
 
 #For execution on a local, multicore CPU with excess RAM we recommend calling
 #options(mc.cores = parallel::detectCores())
@@ -32,7 +43,7 @@ rstan_options(auto_write = TRUE)
 
 ```
 For the purposes of illustrating the software, we will use a dataset of ruminant neocortices bundled with the Slouch package and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the neocortex data and associated annotation data.
-```{r}
+```{r load data}
 ## Load the phylogenetic tree with annotation data
 data(artiodactyla)
 phy <- artiodactyla
@@ -46,7 +57,7 @@ plot(ladderize(phy), cex = 0.6)
 
 
 Data Prep
-```{r}
+```{r Data Prep}
 ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
 
 ruminant.trdata<-filter(ruminant.trdata,!(is.na(neocortex_area_mm2_log_mean)) & !(is.na(brain_mass_g_log_mean)))
@@ -62,7 +73,7 @@ ruminant.trdata$dat$braincentered<-ruminant.trdata$dat$brain_mass_g_log_mean-mea
 ```
 
 Rescale Tree to Height =1
-```{r}
+```{r Scale Tree}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
 max(branching.times(ruminant.trdata$phy))
@@ -75,10 +86,10 @@ Here we will create a R object called stan_data which has all the data we are se
 
 
 First we will run Blouch including Measurement Error. Measurement error is estimation error in species averages following Hansen and Bartoszek (2012), and Blouch can handle measurement error in both the predictor and response variables. Following Grabowski et al. (2016), measurement error is the average of the sample variances, weighted by the sample size of each species. This procedure allows for the species with larger sample size to be weighted more, and this average measurement variance is then divided by the sample size of each species. See Grabowski et al (2016) for further discussion. 
-```{r}
+```{r Blouch setup}
 par(mfrow = c(1,1))
 
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Setup Files/blouchOU.setup.v1.R")
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Setup Files/blouchOU.setup.v1.R")
 
 #Not including Measurement Error
 #names.traits<-c("neocortex_area_mm2_log_mean","braincentered",NA,NA)
@@ -88,7 +99,7 @@ source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch
 names.traits<-c("neocortex_area_mm2_log_mean","braincentered","neocortex_se_squared","brain_se_squared")
 
 #Data must be logged before entry into blouchOU.setup
-stan_data<-blouchOU.setup.v1(ruminant.trdata,names.traits)
+stan_data<-blouch::blouchOU.setup.v1(ruminant.trdata,names.traits)
 
 stan_constraint_data<-stan_data[[1]]
 stan_adaptive_data<-stan_data[[2]]
@@ -100,7 +111,7 @@ stan_adaptive_data<-stan_data[[2]]
 Priors must be set manually in the Stan Blouch code (e.g. blouchOU_v1.stan). This is not a big deal, but we have to explore how our data leads to weak or stong prors beforehand. Do not use the default priors of Blouch as these are only appropriate for a smaller range of datasets.
 
 First lets look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.
-```{r}
+```{r Explore Priors}
 library(ggsci)
 library(ggplot2)
 intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
@@ -119,7 +130,7 @@ slope.prior.plot
 
 ```
 This first prior is far two wide, so let's use a stronger prior
-```{r}
+```{r Explore Priors 2}
 intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
 #slope_test<-rnorm(100,ols.slope,0.5)
 slope_test<-rnorm(100,stan_adaptive_data$ols_slope,0.4)
@@ -268,8 +279,8 @@ Blouch also implements the model of adaptive evolution introduced by Hansen et a
 
 Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
 ```{r}
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_v1.stan")
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_v1.stan")
 
 stan_model <- stan_model("blouchOU_v1.stan")
 
@@ -361,6 +372,8 @@ library(ggsci)
 library(ggplot2)
 
 ```
+
+
 
 ```{r}
 ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
