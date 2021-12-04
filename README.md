@@ -23,6 +23,8 @@ Please visit the package website.
 
 # References
 Hansen et al. (2008)
+
 Stan Development Team. 2021. Stan Modeling Language Users Guide and Reference Manual, VERSION. https://mc-stan.org
+
 Stan Development Team (2020). “RStan: the R interface to Stan.” R package version 2.21.2, http://mc-stan.org/.
 
