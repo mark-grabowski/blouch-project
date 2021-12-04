@@ -1,61 +1,30 @@
+# BLOUCH
+Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH) fits adaptive models of continuous trait evolution in a Bayesian framework based on categorical or continuous predictors, and incorporates measurement error. Blouch can also make phylogenetically informed predictions of known or unknown traits from any clade, given a dataset of comparative measurements and a phylogeny including the taxa of interest.
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+# Getting Started
+If you are just getting started with blouch I recommend starting with the tutorial vignettes available on the package website. Blouch is based on an article currently in review:
 
-# blouch
++ Grabowski, M (in review). Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH). (arXiv preprint, code on GitHub)
 
-<!-- badges: start -->
-<!-- badges: end -->
-
-The goal of blouch is to …
-
-## Installation
-
-You can install the released version of blouch from
-[CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("blouch")
+# Install Instructions
+To install the R and Stan functions associated with Blouch from github, first install the package devtools:
+```{r}
+install.packages("devtools")
+library(devtools)
 ```
-
-And the development version from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
+Then install blouch
+```{r}
 devtools::install_github("Mark-Grabowski/blouch")
-```
-
-## Example
-
-This is a basic example which shows you how to solve a common problem:
-
-``` r
 library(blouch)
-## basic example code
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+# Documentation
+Please visit the package website here.
 
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
+# References
+Hansen et al. (2008)
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this. You could also
-use GitHub Actions to re-render `README.Rmd` every time you push. An
-example workflow can be found here:
-<https://github.com/r-lib/actions/tree/master/examples>.
+Stan Development Team. 2021. Stan Modeling Language Users Guide and Reference Manual, VERSION. https://mc-stan.org
 
-You can also embed plots, for example:
+Stan Development Team (2020). “RStan: the R interface to Stan.” R package version 2.21.2, http://mc-stan.org/.
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
