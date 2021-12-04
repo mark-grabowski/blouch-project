@@ -1,9 +1,9 @@
 # BLOUCH
+TEST
 Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH) fits adaptive models of continuous trait evolution in a Bayesian framework based on categorical or continuous predictors, and incorporates measurement error. Blouch can also make phylogenetically informed predictions of known or unknown traits from any clade, given a dataset of comparative measurements and a phylogeny including the taxa of interest.
 
 # Getting Started
 If you are just getting started with blouch I recommend starting with the tutorial vignettes available on the package website. Blouch is based on an article currently in review:
-TEST
 
 + Grabowski, M (in review). Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH). (arXiv preprint, code on GitHub)
 
