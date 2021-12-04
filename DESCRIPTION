@@ -29,3 +29,7 @@ LinkingTo:
 SystemRequirements: GNU make
 URL: https://github.com/Mark-Grabowski/blouch
 BugReports: https://github.com/Mark-Grabowski/blouch/issues
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
