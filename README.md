@@ -3,11 +3,13 @@ Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH) fi
 
 # Install Instructions
 To install the R functions associated with Blouch from github, first install the package devtools:
+```{r}
 install.packages("devtools")
 library(devtools)
 
 devtools::install_github("Mark-Grabowski/blouch")
 library(blouch)
+```
 
 # Documentation
 Please visit the website.

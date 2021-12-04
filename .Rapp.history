@@ -1,0 +1,270 @@
+1-exp(-2.77/73)
+1-exp((log(2)*-0.035)/73)
+1-exp(-1.03/73)
+1-exp(-1.03)
+1-exp(-1.5)
+1-exp(-1.5/73)
+1-exp(1.62/73)
+exp(1.62/73)
+exp(1.62)
+exp(0.86)
+exp(0.86/73)
+1-exp(log(2)*-0.245)
+1-exp(log(2)*-0.245/73)
+exp(-0.49)
+1-exp(-0.49)
+exp(-1.0- -1.75)
+0.07*73
+exp(2)
+exp(2)+exp(6)
+exp(8)
+exp(2)*exp(6)
+exp(-0.23 - -1.32)
+exp(-1.09)
+exp(1.09)
+exp(1.09/73)
+1-exp(-2.74/73)
+1-exp(-2.74)
+1-exp((log(2)*-0.035)/73)
+1-exp(-1.05)
+1-exp(-1.05/73)
+1-exp(-1.96/73)
+1-exp(-1.96)
+0.09*73
+0.06*73
+exp(-0.87- -1.72)
+1-exp(-0.6627616)
+1-exp(-0.6627616/73)
+0.25*(1.5)^2-0.25*(0.5)^2
+0.25*(1.5)^2
+1-(0.25*(1.5)^2)
+1-exp(-1.06)
+1-exp(-1.06/73)
+1-exp(-0.36)
+1-exp(-0.36/73)
+1-exp(-0.66/73)
+1-exp(-0.66)
+exp(1.52)
+exp(1.52/73)
+Sys.setenv(DOWNLOAD_STATIC_LIBV8 = 1) # only necessary for Linux without the nodejs library / headers#
+install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+example(stan_model, package = "rstan", run.dontrun = TRUE)
+0.25^2
+0.25^2*0.25^3
+0.25^2*0.25^3/5
+7/640
+190000+90000-380000/3-80000/3
+3/380000
+380000/3
+1/12666.7
+1/126666.7
+26^3/3
+26^3
+20^3
+17576-8000
+9576*26
+2*26^3
+9576*20
+2*20^3
+248976/3
+248976/3+35152-191520/3-16000
+248976/3+35152-191520/3-16000*(3/380000)
+248976/3+35152-191520/3-16000
+(248976/3+35152-191520/3-16000)/380000
+248976/3+35152-191520/3-16000*(3/380000)
+(248976/3+35152-191520/3-16000)*(3/380000)
+30^3
+20^3
+19000/380000
+3/38000
+5^-1
+-4/3+16/5-2
+-4/3+16/5+2
+-4/3+16/5-2
+16/5
+exp(0.21)
+exp(0.19)
+exp(0.29)
+exp(0.25)
+1/8-1/9
+6*(1/8-1/9)
+6*(1/8-1/9-1/12+1/15)
+1/6+6*(1/8-1/9-1/12+1/15)
+1/12
+1/6+6*(1/8-1/9-1/12+1/1 8)
+1/6+6*(1/8-1/9-1/12+1/18)
+6*(1/8-1/9-1/12+1/18)
+1/12
+6*(1/8-1/9-1/12+1/18)
+1/6+6*(1/8-1/9-1/12+1/18)
+1/6-6*(1/8-1/9-1/12+1/18)
+exp(1)
+exp(1)*exp(-2)
+exp(1.09)
+30/15
+1-exp((log(2)*-0.035))
+exp(1.62)
+exp(1.62/73)
+exp(0.86)
+0.004*73
+log(2)/0.004*73
+log(2)/(0.004*73)
+log(2)/0.004
+log(2)/(0.0015*73)
+log(2)/(0.015*73)
+0.2*0.5
+0.2*0.3
+0.5*0.3
+0.3*0.3
+65/2
+65+25
+90/2
+65+40
+105/2
+47.5-50
+(47.5-50)+(47.5-45)
+(47.5-50)^2+(47.5-45)^2
+(32.5-25)^2+(32.5-40)^2
+(25-45)^2+(65-45)^2
+(40-32.5)^2+(25-32.5)^2
+(40-52.5)^2+(65-52.5)^2
+(65-45)^2+(25-45)^2
+(40-52.5)^2+(65-52.5)^2
+0.04+0.09+0.025
+0.04+0.09+0.25
+25*0.04+32.5*0.2+45*0.12+40*0.25+52.5*0.3+65*0.09
+25*0.2+45*0.5+65*0.3
+40*0.2+45*0.3+50*0.5
+25*0.2+45*0.5+65*0.3
+25*0.04+32.5*0.2+45*0.12+40*0.25+52.5*0.3+65*0.09
+112.5*0.2+312.5*0.3+800*0.12
+10*9*8/6
+120*(0.8^3)*(0.2^7)
+120*(0.8^3)*(0.2^7)/10
+10!
+factorial(2)
+factorial(6)
+factorial(3)
+factorial(10)/(factorial(3)*factorial(7))
+120*(0.8^3)*(0.2^7)
+4-3/2
+(4-3/2)/0.25
+(4-3/2)/0.24
+(4-3.2)/0.24
+1-0.996
+0.04/4
+0.04/8
+0.5987-0.4013
+-0.2/0.2121
+0.9938-0.0062
+49.75-49.8
+(49.75-49.8)/0.1
+(50.25-49.8)/0.1
+27*200+125*250+512*100
+27^2*100+125^2*12^2+512^2*64
+0.5^2
+0.25*20^2
+1/3^2
+(1/3)^2
+(1/3)^2&(21^2)
+(1/3)^2*(21^2)
+(1/3)^2*(21^2)*3
+147+200
+sqrt(347)
+-1/347
+20-21
+1/4*20^2
+100+100+3*(1/9*21^2)
+1/9*3/5^2
+1/9*3/5^2*3
+1/9*3/5^2*3+(1/4*4^2)*2
+1/9*3.5^2*3+(1/4*4^2)*2
+(1/9*3.5^2)*3+(1/4*4^2)*2
+1/4*4^2
+1/4*(4^2)
+1/4*(4^2)+1/4*(4^2)+1/9*(3.5^2)+1/9*(3.5^2)+1/9*(3.5^2)
+1/4*(4)+1/4*(4)+1/9*(3.5)+1/9*(3.5)+1/9*(3.5)
+sqrt(3.167)
+1/sqrt(3.167)
+1-0.7123
+5^0
+-exp(-5)
+-exp(-6)
+-exp(-7)
+-exp(-1)
+-exp(-2)
+-exp(-3)
+-exp(-4)
+-exp(-5)
+-exp(-6)
+-exp(-2)
+exp(-2)
+exp(-5)
+log(0)
+3753/33
+(146+82)/2
+432015/33
+432015/33+(113.7273^2)
+432015/33+(113.7273^2/33)
+sqrt(432015/33+(113.7273^2/33))
+sqrt(432015/33+(113.7273^2))
+sqrt(432015/33-(113.7273^2))
+(103+156+118+89+125+147+122+109+138+99)/10
+120.6*10000
+order(103+156+118+89+125+147+122+109+138+99)
+order(2,1)
+6+6+7+6+7+5+5+8+8+6
+make uninstall
+install.packages("/Users/markgrabowski/Downloads/bayou - June 2018", #
+repos = NULL, #
+type = "source")
+library(bayou)
+install.packages("/Users/markgrabowski/Downloads/fitdistrplus", #
+repos = NULL, #
+type = "source")
+library(bayou)
+install.packages("bayou.so")
+1-exp(-66)
+1-exp(-0.66)
+8.48-2.160*0.79/(sqrt(14))
+8.48-2.160*0.79*sqrt(1+1/14)
+94.32-95
+(94.32-95)/(1.2/4)
+install.packages(c('Rcpp', 'RcppArmadillo'))
+Rcpp::sourceCpp('/Users/markgrabowski/Downloads/helloworld.cpp')
+install.packages("remotes")#
+          remotes::install_github("stan-dev/rstan", ref = "develop", subdir = "rstan/rstan")
+remove.packages("rstan")#
+if (file.exists(".RData")) file.remove(".RData")
+install.packages(c('Rcpp', 'RcppArmadillo'))
+Rcpp::sourceCpp('/Users/markgrabowski/Downloads/helloworld.cpp')
+remove.packages("rstan")#
+if (file.exists(".RData")) file.remove(".RData")
+Sys.setenv(DOWNLOAD_STATIC_LIBV8 = 1) # only necessary for Linux without the nodejs library / headers#
+install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+example(stan_model, package = "rstan", run.dontrun = TRUE)
+remove.packages(c("StanHeaders", "rstan"))#
+install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))#
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+library(rstan)
+example(stan_model, package = "rstan", run.dontrun = TRUE)
+remove.packages(c("StanHeaders", "rstan"))#
+install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))#
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+library(rstan)
+example(stan_model, package = "rstan", run.dontrun = TRUE)
+remove.packages(c("StanHeaders", "rstan"))#
+install.packages("StanHeaders", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))#
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+if (!require("remotes")) {#
+  install.packages("remotes")#
+}#
+remotes::install_github("stan-dev/rstantools")
+devtools::install_github("hadley/pkgdown")#
+library(pkgdown)
+# Run once to configure your package to use pkgdown#
+usethis::use_pkgdown()
+pkgdown::build_site()
+remotes::install_github("rstudio/rmarkdown")
+pkgdown::build_site()
+devtools::install_github('r-lib/pkgdown')

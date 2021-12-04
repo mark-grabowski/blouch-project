@@ -8,8 +8,10 @@ https://pkgdown.r-lib.org/
 
 ```{r}
 # Install released version from CRAN
-install.packages("pkgdown")
+
+devtools::install_github("hadley/pkgdown")
 library(pkgdown)
+
 # Run once to configure your package to use pkgdown
 usethis::use_pkgdown()
 
