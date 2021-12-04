@@ -6,7 +6,3 @@ home:
 authors:
   Mark Grabowski:
     href: https://www.ljmu.ac.uk/about-us/staff-profiles/faculty-of-science/school-of-biological-and-environmental-sciences/mark-grabowski
-  
-template:
-  bootstrap: 5
-  bootswatch: materia
