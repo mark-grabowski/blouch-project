@@ -3,6 +3,7 @@ Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH) fi
 
 # Getting Started
 If you are just getting started with blouch I recommend starting with the tutorial vignettes available on the package website. Blouch is based on an article currently in review:
+TEST
 
 + Grabowski, M (in review). Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH). (arXiv preprint, code on GitHub)
 
