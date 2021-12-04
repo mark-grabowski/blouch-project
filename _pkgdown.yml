@@ -1,0 +1,4 @@
+url: https://mark-grabowski.github.io/blouch/index.html
+template:
+  bootstrap: 5
+  bootswatch: cerulean
