@@ -9,13 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
----
-title: "Blouch Ruminants Prediction"
-output: html_notebook
-editor_options: 
-  chunk_output_type: inline
----
-
 
 Data Prep
 
@@ -30,7 +23,7 @@ devtools::install_github("Mark-Grabowski/blouch"
                          ,auth_token = "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"
                          )
 library(blouch)
-#load_all()
+load_all()
 # Load necessary packages
 library(ape)
 library(slouch)
