@@ -1,14 +1,8 @@
 url: https://github.com/Mark-Grabowski/blouch
 
 articles:
-- title: OU-Models
-  navbar: OU-Models
+- title: Models
+  navbar: Models
   contents:
   - OU-Models
-  
-- title: OU-Models
-  desc: Vignettes for blouch functioning
-  contents:
-  - OU-Models
-  - OU-Models_Prediction
-
+  - OU-Models-Prediction
