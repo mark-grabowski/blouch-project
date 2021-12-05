@@ -1,8 +1,8 @@
 ---
-title: "Examples"
+title: "OU Models"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Examples}
+  %\VignetteIndexEntry{OU Models}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -26,13 +26,14 @@ devtools::install_github("Mark-Grabowski/blouch"
                          ,auth_token = "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"
                          )
 library(blouch)
-
+load_all()
 # Load necessary packages
 library(ape)
 library(slouch)
 library(rstan)
 library(treeplyr)
 library(ggplot2)
+library(bridgesampling)
 
 #For execution on a local, multicore CPU with excess RAM we recommend calling
 #options(mc.cores = parallel::detectCores())
@@ -56,50 +57,37 @@ plot(ladderize(phy), cex = 0.6)
 ```
 
 
-Data Prep
-```{r Data Prep}
+```{r}
 ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
 
-ruminant.trdata<-filter(ruminant.trdata,!(is.na(neocortex_area_mm2_log_mean)) & !(is.na(brain_mass_g_log_mean)))
-ruminant.trdata<-filter(ruminant.trdata,!(is.na(neocortex_se_squared)) & !(is.na(brain_se_squared)))
-ruminant.trdata
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_mass_g_log_mean)) & !(is.na(body_mass_g_log_mean)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(body_se_squared)))
 
-#Mean Standardized
-ruminant.trdata$dat$braincentered<-ruminant.trdata$dat$brain_mass_g_log_mean-mean(ruminant.trdata$dat$brain_mass_g_log_mean)
+ruminant.trdata #Full dataset
 
-
-
+#Mean Standardize
+ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean)
 
 ```
 
 Rescale Tree to Height =1
-```{r Scale Tree}
+```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
 max(branching.times(ruminant.trdata$phy))
 
 ```
 
+
 Running Blouch Data Setup Function - 1st trait is adapting to 2
+```{r}
 
-Here we will create a R object called stan_data which has all the data we are sending to Blouch in the Stan format. This includes data setups for both the direct effect (constraint) and adaptive models we will run below. These are further discussed in Hansen et al. (2008) and Grabowski et al. (2016).
+#names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
+names.traits<-c("brain_mass_g_log_mean","bodycentered","brain_se_squared","body_se_squared") #With ME
 
-
-First we will run Blouch including Measurement Error. Measurement error is estimation error in species averages following Hansen and Bartoszek (2012), and Blouch can handle measurement error in both the predictor and response variables. Following Grabowski et al. (2016), measurement error is the average of the sample variances, weighted by the sample size of each species. This procedure allows for the species with larger sample size to be weighted more, and this average measurement variance is then divided by the sample size of each species. See Grabowski et al (2016) for further discussion. 
-```{r Blouch setup}
-par(mfrow = c(1,1))
-
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Setup Files/blouchOU.setup.v1.R")
-
-#Not including Measurement Error
-#names.traits<-c("neocortex_area_mm2_log_mean","braincentered",NA,NA)
-
-#Including Measurement Error, where the last two named traits are the measurement error of the first two traits
-#Setup: names.traits = c(response, predictor, me.response, me.predictor)
-names.traits<-c("neocortex_area_mm2_log_mean","braincentered","neocortex_se_squared","brain_se_squared")
-
-#Data must be logged before entry into blouchOU.setup
-stan_data<-blouch::blouchOU.setup.v1(ruminant.trdata,names.traits)
+#Data must be logged before entry into blouch.setup
+#names.traits = c(response, predictor, me.response, me.predictor) - classical = 0 for inverse regression
+stan_data<-blouchOU.setup.v1(ruminant.trdata,names.traits)
 
 stan_constraint_data<-stan_data[[1]]
 stan_adaptive_data<-stan_data[[2]]
@@ -118,7 +106,7 @@ intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
 #slope_test<-rnorm(100,ols.slope,0.5)
 slope_test<-rnorm(100,stan_adaptive_data$ols_slope,1.0)
 
-slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   geom_point()+
   geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
   theme_bw()+
@@ -135,7 +123,7 @@ intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
 #slope_test<-rnorm(100,ols.slope,0.5)
 slope_test<-rnorm(100,stan_adaptive_data$ols_slope,0.4)
 
-slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   geom_point()+
   geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
   theme_bw()+
@@ -243,12 +231,7 @@ Now lets do a simple analysis. Blouch implements the model of constrained evolut
 
 Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
 ```{r}
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_v1.stan")
-
-stan_model <- stan_model("blouchOU_v1.stan")
-
-fit.direct<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
+fit.direct<- rstan::sampling(stanmodels$blouchOU_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 ```
 
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
@@ -279,12 +262,7 @@ Blouch also implements the model of adaptive evolution introduced by Hansen et a
 
 Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
 ```{r}
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
-#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_v1.stan")
-
-stan_model <- stan_model("blouchOU_v1.stan")
-
-fit.adaptive<- rstan::sampling(object = stan_model,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+fit.adaptive<- rstan::sampling(stanmodels$blouchOU_v1,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 
 ```
 
@@ -309,7 +287,6 @@ stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package (CITATION).
 
 ```{r}
-library(bridgesampling)
 
 lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
 lml.fit.adaptive<-bridge_sampler(fit.adaptive,silent=TRUE)
@@ -325,19 +302,15 @@ Blouch can also fit a Brownian motion model to the data, which can then be compa
 
 
 ```{r}
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchBM_v1.stan")
-stan_model <- stan_model("blouchBM_v1.stan")
-
-fit.BM<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
-
-#For downstream analysis and plots
-ext.fit.BM <- rstan::extract(fit.BM)
+fit.BM<- rstan::sampling(stanmodels$blouchBM_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 
 ```
 
 ```{r}
 print(fit.BM,pars = c("alpha","beta","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.BM <- rstan::extract(fit.BM)
 
 ```
 
@@ -374,20 +347,19 @@ library(ggplot2)
 ```
 
 
-
 ```{r}
-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
   geom_abline(intercept=mean(ext.fit.direct$alpha),slope = mean(ext.fit.direct$beta[,1]),lty=1)+
   geom_point(size=2.0,alpha=0.8)+
   theme_bw()+
   theme(legend.position="bottom")+
   ggtitle("Direct Effect Model")+
-  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
   scale_color_npg()
 ```
 ```{r}
-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
   geom_abline(intercept=mean(ext.fit.adaptive$alpha),slope = mean(ext.fit.adaptive$beta[,1]),lty=1)+
   geom_abline(intercept=mean(ext.fit.adaptive$alpha),slope = mean(ext.fit.adaptive$beta_evol[,2]),lty=2)+
@@ -395,7 +367,7 @@ ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentere
   theme_bw()+
   theme(legend.position="bottom")+
   ggtitle("Adaptive Model")+
-  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
   scale_color_npg()
 ```
 
