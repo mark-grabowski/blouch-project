@@ -2,7 +2,7 @@ url: https://github.com/Mark-Grabowski/blouch
 
 articles:
 - title: Models
-  navbar: Models
+  navbar: ~
   contents:
   - OU-Models
   - OU-Models-Prediction
