@@ -1,5 +1,10 @@
 url: https://github.com/Mark-Grabowski/blouch
 
+navbar:
+  structure:
+    left:  [intro, reference, tutorials, news]
+    right: [search, github]
+
 articles:
 - title: Models
   navbar: ~
