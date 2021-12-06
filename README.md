@@ -14,14 +14,16 @@ library(devtools)
 ```
 Then install blouch
 ```{r}
-devtools::install_github("Mark-Grabowski/blouch")
+devtools::install_github("mark-grabowski/blouch")
 library(blouch)
 ```
 
 # Documentation
-Please visit the package website here.
+Please visit the package website <a href="https://mark-grabowski.github.io/blouch/" title="here.">blouch</a>
 
 https://mark-grabowski.github.io/blouch/
+<a href="https://github.com/mark-grabowski/blouch/about.html" title="About Blouch">About Blouch</a>
+
 
 <a href="https://github.com/mark-grabowski/blouch/about.html" title="About Blouch">About Blouch</a>
 
