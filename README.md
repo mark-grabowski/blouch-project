@@ -23,6 +23,9 @@ Please visit the package website here.
 
 https://mark-grabowski.github.io/blouch/
 
+<a href="https://github.com/mark-grabowski/blouch/about.html" title="About Blouch">About Blouch</a>
+<a href="https://github.com/mark-grabowski/blouch/vignettes.html" title="Vignettes">Vignettes</a>
+
 # References
 Hansen et al. (2008)
 
