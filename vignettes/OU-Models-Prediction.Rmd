@@ -43,7 +43,6 @@ rstan_options(auto_write = TRUE)
 #remotes::install_github("stan-dev/rstan", ref = "develop", subdir = "rstan/rstan")
 
 ```
-For the
 For the purposes of illustrating the software, we will use a dataset of ruminant neocortices bundled with the Slouch package and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the neocortex data and associated annotation data.
 
 ```{r}
@@ -58,7 +57,7 @@ data(neocortex)
 plot(ladderize(phy), cex = 0.6)
 ```
 # Data Prep
-Here we will assign one taxa as the fossil species to be predicted, and use Classical Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil X based on its Y.
+Here we will assign one taxa as the fossil species to be predicted, and use Classical Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil X (body size) based on its Y (brain size).
 
 ```{r}
 ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
@@ -68,6 +67,9 @@ ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(bod
 
 ruminant.trdata #Full dataset
 
+```
+# Classical Regression
+```{r}
 ruminant.trdata$dat$Status<-"Extant" #Label all species as extant
 ruminant.trdata$dat$Status[1]<-"Extinct" #Make one extinct
 n.fos<-1
@@ -98,6 +100,7 @@ max(branching.times(ruminant.extant.trdata$phy))
 
 ```
 
+## Blouch Data Setup
 
 Running Blouch Data Setup Function - 1st trait is adapting to 2
 ```{r}
@@ -113,7 +116,7 @@ stan_adaptive_data<-stan_data[[2]]
 
 ```
 
-Constraint Model for Prediction
+## Constraint Model for Prediction
 ```{r}
 fit.fos.direct<- rstan::sampling(stanmodels$blouchOUPredict_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),save_warmup=FALSE)
 
@@ -144,7 +147,7 @@ library(plotly)
 
 ```
 
-Classical Regression
+Data Setup for Plots
 ```{r}
 old.par <- par(mar = c(0, 0, 0, 0))
 par(old.par)
@@ -164,7 +167,7 @@ merged.data<-rbind(extant.data,fos.predictions)
 
 ```
 
-
+Make Plots
 ```{r}
 brbo.plot<-ggplot(merged.data,aes(y=log_brain))+
 geom_point(aes(x=log_body_pred,color=Status),size=2.5,alpha=0.8)+
@@ -180,8 +183,9 @@ brbo.plot+scale_color_aaas()
 #Export 5.25X5 PDF
 
 ```
+
 # Inverse Regression
-Here we will assign one taxa as the fossil species to be predicted, and use Inverse Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil Y based on its X.
+Here we will assign one taxa as the fossil species to be predicted, and use Inverse Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil Y (brain mass) based on its X (body mass).
 
 Here we will assign one taxa as the fossil species to be predicted
 ```{r}
@@ -221,7 +225,7 @@ max(branching.times(ruminant.extant.trdata$phy))
 ```
 
 
-Running Blouch Data Setup Function - 1st trait is adapting to 2
+## Running Blouch Data Setup Function - 1st trait is adapting to 2
 ```{r}
 
 #names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
@@ -236,7 +240,7 @@ stan_adaptive_data<-stan_data[[2]]
 
 ```
 
-Constraint Model for Prediction
+## Constraint Model for Prediction
 ```{r}
 fit.fos.direct<- rstan::sampling(stanmodels$blouchOUPredict_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),save_warmup=FALSE)
 
@@ -259,7 +263,7 @@ stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
 ```
 
 
-Make plots for Figure
+# Make plots for Figure
 ```{r}
 library(ggsci)
 library(ggplot2)

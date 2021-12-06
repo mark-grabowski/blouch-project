@@ -21,20 +21,11 @@ library(blouch)
 # Documentation
 Please visit the package website <a href="https://mark-grabowski.github.io/blouch/" title="here.">blouch</a>
 
-https://mark-grabowski.github.io/blouch/
-<a href="https://github.com/mark-grabowski/blouch/about.html" title="About Blouch">About Blouch</a>
-
-
-<a href="https://github.com/mark-grabowski/blouch/about.html" title="About Blouch">About Blouch</a>
-
-
-
-<a href="https://github.com/mark-grabowski/blouch/vignettes.html" title="Vignettes">Vignettes</a>
 
 # References
-Hansen et al. (2008)
+Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for studying adaptation to a randomly evolving environment. Evolution 62:1965–1977.
 
 Stan Development Team. 2021. Stan Modeling Language Users Guide and Reference Manual, VERSION. https://mc-stan.org
 
-Stan Development Team (2020). “RStan: the R interface to Stan.” R package version 2.21.2, http://mc-stan.org/.
+Stan Development Team. 2020. “RStan: the R interface to Stan.” R package version 2.21.2, http://mc-stan.org/.
 
