@@ -6,8 +6,8 @@ navbar:
   title: blouch
   type: default
   left:
-  - text: Get Started
-    href: blouch/
+  - text: Getting Started
+    href: README.md
   - text: Reference
     href: reference/
   - text: Articles
