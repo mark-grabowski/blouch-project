@@ -7,7 +7,7 @@ navbar:
   type: default
   left:
   - text: Get Started
-    href: README.html
+    href: /
   - text: Reference
     href: reference/
   - text: Articles
