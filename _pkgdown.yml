@@ -7,7 +7,7 @@ navbar:
   type: default
   left:
   - text: Get Started
-    href: /
+    href: blouch/
   - text: Reference
     href: reference/
   - text: Articles
