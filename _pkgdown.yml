@@ -1,5 +1,7 @@
 url: https://github.com/mark-grabowski/blouch
-
+template:
+  params:
+    ganalytics: UA-104182925-1
 navbar:
   structure:
     left:  [intro, reference, tutorials, news]
