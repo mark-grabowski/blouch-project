@@ -13,11 +13,11 @@ navbar:
   - text: Articles
     menu:
     - text: OU-Models
-      href: docs/articles/OU-Models.html
+      href: articles/OU-Models.html
     - text: OU Models with Prediction
       href: adocs/rticles/OU-Models-Prediction.html
     - text: FAQ
-      href: docs/articles/faq.html
+      href: articles/faq.html
   - text: News
     href: news/
   right:
