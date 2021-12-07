@@ -7,17 +7,17 @@ navbar:
   type: default
   left:
   - text: Get Started
-    href: articles/index.html
+    href: docs/articles/index.html
   - text: Reference
     href: reference/
   - text: Articles
     menu:
     - text: OU-Models
-      href: articles/OU-Models.html
+      href: docs/articles/OU-Models.html
     - text: OU Models with Prediction
-      href: articles/OU-Models-Prediction.html
+      href: docs/articles/OU-Models-Prediction.html
     - text: FAQ
-      href: articles/faq.html
+      href: docs/articles/faq.html
   - text: News
     href: news/
   right:
