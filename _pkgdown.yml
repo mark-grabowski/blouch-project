@@ -1,7 +1,6 @@
 url: https://github.com/mark-grabowski/blouch
 template:
-  params:
-    ganalytics: UA-104182925-1
+  bootstrap: 5
 navbar:
   title: blouch
   type: default
