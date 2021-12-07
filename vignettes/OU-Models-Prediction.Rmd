@@ -21,10 +21,10 @@ library(devtools)
 #devtools::install_github("Mark-Grabowski/blouch")
 #library(blouch)
 
-devtools::install_github("Mark-Grabowski/blouch"
-                         ,ref="master"
-                         ,auth_token = "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"
-                         )
+#devtools::install_github("Mark-Grabowski/blouch"
+#                         ,ref="master"
+#                         ,auth_token = "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"
+#                         )
 library(blouch)
 load_all()
 # Load necessary packages
