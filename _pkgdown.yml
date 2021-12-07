@@ -1,12 +1,13 @@
 url: https://github.com/mark-grabowski/blouch
 template:
-  bootstrap: 5
+  params:
+    ganalytics: UA-104182925-1
 navbar:
   title: blouch
   type: default
   left:
   - text: Getting Started
-    href: README.md
+    href: blouch/
   - text: Reference
     href: reference/
   - text: Articles
