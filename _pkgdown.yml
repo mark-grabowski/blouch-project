@@ -6,10 +6,8 @@ navbar:
   structure:
     left:  [intro, reference, tutorials, news]
     right: [search, github]
-
 articles:
 - title: Vignettes
-  navbar: ~
   contents:
   - OU-Models
   - OU-Models-Prediction
