@@ -1,4 +1,4 @@
-url: https://github.com/Mark-Grabowski/blouch
+url: https://github.com/mark-grabowski/blouch
 
 navbar:
   structure:
@@ -6,7 +6,7 @@ navbar:
     right: [search, github]
 
 articles:
-- title: Models
+- title: Vignettes
   navbar: ~
   contents:
   - OU-Models
