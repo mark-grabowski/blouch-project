@@ -3,11 +3,25 @@ template:
   params:
     ganalytics: UA-104182925-1
 navbar:
-  structure:
-    left:  [intro, reference, tutorials, news]
-    right: [search, github]
-articles:
-- title: Vignettes
-  contents:
-  - OU-Models
-  - OU-Models-Prediction
+  title: blouch
+  type: default
+  left:
+  - text: Get Started
+    href: articles/httptest.html
+  - text: Reference
+    href: reference/
+  - text: Articles
+    menu:
+    - text: OU-Models
+      href: articles/OU-Models.html
+    - text: OU Models with Prediction
+      href: articles/OU-Models-Prediction.html
+    - text: FAQ
+      href: articles/faq.html
+  - text: News
+    href: news/
+  right:
+  - icon: fa-github fa-lg
+    href: https://github.com/mark-grabowski/blouch
+  - icon: fa-home fa-lg
+    href: https://github.com/mark-grabowski/blouch
