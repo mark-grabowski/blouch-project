@@ -1,1 +1,4 @@
 url: https://github.com/mark-grabowski/blouch
+
+template:
+  bootstrap: 5
