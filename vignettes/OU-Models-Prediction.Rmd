@@ -14,10 +14,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-## OU Models
-This vignette walks you through the basic streps of running an analysis in Blouch.
+# OU Models with Prediction
+This vignette walks you through the basic steps of running an analysis in Blouch including prediction of unknown/fossil values.
 
-#Setup
+## Setup
+
+Here we load the R packages used to setup the data for blouch, make figures post-analysis, etc.
 ```{r Setup}
 rm(list=ls())
 library(devtools)
@@ -46,6 +48,8 @@ rstan_options(auto_write = TRUE)
 #remotes::install_github("stan-dev/rstan", ref = "develop", subdir = "rstan/rstan")
 
 ```
+
+## Scale Tree
 For the purposes of illustrating the software, we will use a dataset of ruminant brain and body sizes bundled with the Slouch package (Kopperud et al. 2020) and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the brain and body data.
 
 ```{r}
@@ -59,7 +63,7 @@ data(neocortex)
 ## Plot the tree
 plot(ladderize(phy), cex = 0.6)
 ```
-# Data Prep
+## Data Prep
 We will use the treeplyr function make.treedata to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will finlter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. 
 
 
@@ -73,8 +77,7 @@ ruminant.trdata #Full dataset
 
 ```
 
-# Classical Regression
-
+## Classical Regression
 Here we will assign one taxa as the fossil species to be predicted, and use Classical Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil X (body size) based on its Y (brain size). Finally we mean scale the X data (here body mass) so that the average across species is 0.
 
 ```{r}

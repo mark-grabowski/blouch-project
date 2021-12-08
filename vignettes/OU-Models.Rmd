@@ -17,8 +17,8 @@ knitr::opts_chunk$set(
 ## OU Models
 This vignette walks you through the basic streps of running an analysis in Blouch.
 
-#Setup
-
+# Setup
+Here we load the R packages used to setup the data for blouch, make figures post-analysis, etc.
 ```{r Setup}
 rm(list=ls())
 library(devtools)
