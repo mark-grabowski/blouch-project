@@ -2,13 +2,15 @@ url: https://github.com/mark-grabowski/blouch
 
 template:
   bootstrap: 5
-
+  includes:
+    after_body: >
+      <script>if(!sessionStorage.getItem("_swa")&&document.referrer.indexOf(location.protocol+"//"+location.host)!== 0){fetch("https://counter.dev/track?"+new URLSearchParams({referrer:document.referrer,screen:screen.width+"x"+screen.height,user:"mark-grabowski",utcoffset:"0"}))};sessionStorage.setItem("_swa","1");</script>
 navbar:
   title: blouch
   type: default
   left:
   - text: Getting Started
-    href: README.md
+    href: articles/index.html
   - text: Reference
     href: reference/
   - text: Articles
@@ -26,3 +28,7 @@ navbar:
     href: https://github.com/mark-grabowski/blouch
   - icon: fa-home fa-lg
     href: https://mark-grabowski.github.io/blouch/
+    
+    
+    
+    

@@ -98,7 +98,7 @@ ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(
 ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_log_mean-mean(ruminant.extant.trdata$dat$body_mass_g_log_mean)
 
 ```
-
+## Rescale Tree
 Next, we rescale Tree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
@@ -126,7 +126,7 @@ stan_adaptive_data<-stan_data[[2]]
 
 ```
 
-# Explore Priors: Slope and intercept
+## Explore Priors: Slope and intercept
 Priors must be set manually in the Stan Blouch code (e.g. blouchOUPredict_v1.stan), but we use the same priors for this analysis as in the OU-Models vignette. Go back and look at that vignette if you need to explore the effect of your priors - do not use the default values.
 
 ## Direct EFfect Model for Prediction
@@ -163,7 +163,7 @@ stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
 #3 X 8
 ```
 
-# Plots
+## Plots
 
 Let's make some plots of our results
 
@@ -211,7 +211,7 @@ brbo.plot+scale_color_aaas()
 
 ```
 
-# Inverse Regression
+## Inverse Regression
 Here we will assign one taxa as the fossil species to be predicted, and use Inverse Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil Y (brain mass) based on its X (body mass). Finally we mean scale the X data (here body mass) so that the average across species is 0.
 
 ```{r}
@@ -237,7 +237,7 @@ ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(
 ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_log_mean-mean(ruminant.extant.trdata$dat$body_mass_g_log_mean)
 
 ```
-
+## Rescale Tree
 Next, we rescale Tree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))

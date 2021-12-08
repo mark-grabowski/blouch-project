@@ -14,10 +14,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-## OU Models
+# OU Models
 This vignette walks you through the basic streps of running an analysis in Blouch.
 
-# Setup
+## Setup
 Here we load the R packages used to setup the data for blouch, make figures post-analysis, etc.
 ```{r Setup}
 rm(list=ls())
@@ -68,7 +68,7 @@ ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(
 
 ```
 
-Next, we rescale Tree to Height = 1
+## Next, we rescale Tree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
@@ -93,7 +93,7 @@ stan_adaptive_data<-stan_data[[2]]
 ```
 
 
-# Explore Priors: Slope and intercept
+## Explore Priors: Slope and intercept
 Priors must be set manually in the Stan Blouch code (e.g. blouchOU_v1.stan). This is not a big deal, but we have to explore how our data leads to weak or stong prors beforehand. Do not use the default priors of Blouch as these are only appropriate for a smaller range of datasets.
 
 First lets look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.
@@ -144,7 +144,7 @@ This looks pretty good. To enter these priors in Blouch, we would open the Blouc
   beta ~ normal(ols_slope, 0.4); //Slope
   
 
-# Explore Priors: Half-life
+## Explore Priors: Half-life
 Since our tree is scaled to unit length = 1, and the original phylogeny is ~27 Ma, we would like our half-life prior to be allow for very quick adaptation (e.g < 1 Ma, which equals < 0.04 in tree units), and very slow adaptation (e.g. > 27 Ma, which equals 1 in tree units). Thus, we will the 10% quantile of the distrubution at 0.04 and 90% at 1.
 
 We can explore how changing our parameters on the priors affect half-life using the code below. The values 1.25 and 1.25 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.
@@ -227,7 +227,7 @@ hist(samp/(2*2), breaks=10000, main="Prior density of Vy",xlim=c(0,3))
 
 ```
 
-# Direct Effect Models
+## Direct Effect Models
 Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch. 
 
 Now lets do a simple analysis. Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.
@@ -249,7 +249,7 @@ ext.fit.direct <- rstan::extract(fit.direct)
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
-#Trace and Density Plots for estimated parameters
+## Trace and Density Plots for estimated parameters
 We can look at how our procedures using the standard trace and density plots from Rstan 
 
 ```{r}
@@ -261,7 +261,7 @@ stan_dens(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
 ```
 These look good.
 
-#Adaptive Model
+## Adaptive Model
 Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.
 
 Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
@@ -287,7 +287,7 @@ stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 #3X8
 ```
 
-# Model Comparison using Bayes Factors
+## Model Comparison using Bayes Factors
 While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package (CITATION).
 
 ```{r}
@@ -301,7 +301,7 @@ BF_att
 
 We find that the data is 5.2 more likely under a model that assumes a direct effect model rather than af adaptive model.
 
-# Brownian Model
+## Brownian Model
 Blouch can also fit a Brownian motion model to the data, which can then be compared to the other models using Bayes Factors. Note that while this is possible with Blouch, it is assuming your data follows this model of evolution, rather than testing for it using the Direct Effect or Adaptive models above. Here we again use the stan_constraint_data type but a new Stan function. Note that priors on the intercept and slope should be set as previously, but sigma2_y no longer has an upper range of values in its declaration.
 
 
@@ -329,7 +329,7 @@ stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 
 Looking Good!
 
-# Direct vs. BM Model Comparison using BF
+## Direct vs. BM Model Comparison using BF
 ```{r}
 library(bridgesampling)
 lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
@@ -342,7 +342,7 @@ BF_att
 Here the direct fit model has a Bayes Factor of 0.7 over the BM model, which makes sense for this data as the estimated phylogenetic half life is quite long, 65% the length of the phylogeny.
 
 
-# Plots
+## Plots
 Let's make some plots of our results
 
 ```{r}

@@ -36,7 +36,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-2">
       <ul class="navbar-nav me-auto">
 <li class="nav-item">
-  <a class="nav-link" href="../README.html">Getting Started</a>
+  <a class="nav-link" href="../articles/index.html">Getting Started</a>
 </li>
 <li class="nav-item">
   <a class="nav-link" href="../reference/">Reference</a>
@@ -220,6 +220,10 @@
 <span class="co">#Classical regression - predicting brain size - X</span>
 <span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">bodycentered</span><span class="op">&lt;-</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">[</span><span class="op">-</span><span class="va">n.fos</span><span class="op">]</span><span class="op">)</span>
 <span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">bodycentered</span><span class="op">&lt;-</span><span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="rescale-tree">Rescale Tree<a class="anchor" aria-label="anchor" href="#rescale-tree"></a>
+</h2>
 <p>Next, we rescale Tree to Height = 1</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">l.tree</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/branching.times.html" class="external-link">branching.times</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">)</span><span class="op">)</span>
@@ -248,11 +252,11 @@
 <span class="va">stan_constraint_data</span><span class="op">&lt;-</span><span class="va">stan_data</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
 <span class="va">stan_adaptive_data</span><span class="op">&lt;-</span><span class="va">stan_data</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></code></pre></div>
 </div>
-</div>
-<div class="section level1">
-<h1 id="explore-priors-slope-and-intercept">Explore Priors: Slope and intercept<a class="anchor" aria-label="anchor" href="#explore-priors-slope-and-intercept"></a>
-</h1>
+<div class="section level2">
+<h2 id="explore-priors-slope-and-intercept">Explore Priors: Slope and intercept<a class="anchor" aria-label="anchor" href="#explore-priors-slope-and-intercept"></a>
+</h2>
 <p>Priors must be set manually in the Stan Blouch code (e.g. blouchOUPredict_v1.stan), but we use the same priors for this analysis as in the OU-Models vignette. Go back and look at that vignette if you need to explore the effect of your priors - do not use the default values.</p>
+</div>
 <div class="section level2">
 <h2 id="direct-effect-model-for-prediction">Direct EFfect Model for Prediction<a class="anchor" aria-label="anchor" href="#direct-effect-model-for-prediction"></a>
 </h2>
@@ -269,17 +273,17 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;                      mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a                    6.10    0.29 8.81  0.41  1.53  3.12  6.66 32.58   916    1</span>
-<span class="co">#&gt; hl                   0.38    0.01 0.51  0.02  0.10  0.22  0.45  1.71  1730    1</span>
-<span class="co">#&gt; alpha                5.06    0.00 0.04  5.00  5.04  5.06  5.08  5.14  1491    1</span>
-<span class="co">#&gt; beta[1]              0.57    0.00 0.02  0.53  0.56  0.57  0.58  0.61  2045    1</span>
-<span class="co">#&gt; r_squared            0.96    0.00 0.00  0.95  0.96  0.96  0.97  0.97  1171    1</span>
-<span class="co">#&gt; sigma2_y             0.16    0.01 0.23  0.02  0.04  0.08  0.17  0.83   788    1</span>
-<span class="co">#&gt; RMSE                 0.29    0.00 0.03  0.25  0.28  0.29  0.31  0.35  2668    1</span>
-<span class="co">#&gt; RMSE_mu              0.27    0.00 0.02  0.26  0.26  0.26  0.27  0.31   876    1</span>
-<span class="co">#&gt; X_pred_fos_means[1] -0.47    0.00 0.17 -0.81 -0.58 -0.47 -0.36 -0.14  3300    1</span>
+<span class="co">#&gt; a                    5.78    0.28 9.14  0.42  1.45  2.88  6.03 29.73  1095    1</span>
+<span class="co">#&gt; hl                   0.39    0.01 0.55  0.02  0.11  0.24  0.48  1.66  1620    1</span>
+<span class="co">#&gt; alpha                5.06    0.00 0.04  5.00  5.04  5.06  5.08  5.15  2064    1</span>
+<span class="co">#&gt; beta[1]              0.57    0.00 0.02  0.53  0.56  0.57  0.58  0.61  2794    1</span>
+<span class="co">#&gt; r_squared            0.96    0.00 0.00  0.95  0.96  0.96  0.97  0.97  1281    1</span>
+<span class="co">#&gt; sigma2_y             0.15    0.01 0.23  0.02  0.04  0.08  0.16  0.78  1008    1</span>
+<span class="co">#&gt; RMSE                 0.29    0.00 0.03  0.24  0.28  0.29  0.31  0.35  3600    1</span>
+<span class="co">#&gt; RMSE_mu              0.27    0.00 0.02  0.26  0.26  0.26  0.27  0.31  1146    1</span>
+<span class="co">#&gt; X_pred_fos_means[1] -0.47    0.00 0.17 -0.82 -0.58 -0.47 -0.36 -0.14  3277    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec  8 19:00:30 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec  8 21:37:00 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -302,10 +306,9 @@
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#3 X 8</span></code></pre></div>
 </div>
-</div>
-<div class="section level1">
-<h1 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a>
-</h1>
+<div class="section level2">
+<h2 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a>
+</h2>
 <p>Let’s make some plots of our results</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://nanx.me/ggsci/" class="external-link">ggsci</a></span><span class="op">)</span>
@@ -322,6 +325,7 @@
 <span class="co">#&gt; The following object is masked from 'package:graphics':</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;     layout</span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="data-setup-for-plots">Data Setup for Plots<a class="anchor" aria-label="anchor" href="#data-setup-for-plots"></a>
 </h2>
@@ -363,10 +367,9 @@
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#Export 5.25X5 PDF</span></code></pre></div>
 </div>
-</div>
-<div class="section level1">
-<h1 id="inverse-regression">Inverse Regression<a class="anchor" aria-label="anchor" href="#inverse-regression"></a>
-</h1>
+<div class="section level2">
+<h2 id="inverse-regression">Inverse Regression<a class="anchor" aria-label="anchor" href="#inverse-regression"></a>
+</h2>
 <p>Here we will assign one taxa as the fossil species to be predicted, and use Inverse Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil Y (brain mass) based on its X (body mass). Finally we mean scale the X data (here body mass) so that the average across species is 0.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ruminant.trdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/treeplyr/man/make.treedata.html" class="external-link">make.treedata</a></span><span class="op">(</span><span class="va">phy</span>, <span class="va">neocortex</span>,name_column<span class="op">=</span><span class="st">"species"</span><span class="op">)</span>
@@ -417,6 +420,10 @@
 <span class="co">#Mean Standardized based on whether fossil is included in dataset</span>
 <span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">bodycentered</span><span class="op">&lt;-</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">[</span><span class="op">-</span><span class="va">n.fos</span><span class="op">]</span><span class="op">)</span>
 <span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">bodycentered</span><span class="op">&lt;-</span><span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="rescale-tree-1">Rescale Tree<a class="anchor" aria-label="anchor" href="#rescale-tree-1"></a>
+</h2>
 <p>Next, we rescale Tree to Height = 1</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">l.tree</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/branching.times.html" class="external-link">branching.times</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">)</span><span class="op">)</span>
@@ -428,6 +435,7 @@
 <span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">$</span><span class="va">edge.length</span><span class="op">&lt;-</span><span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">$</span><span class="va">edge.length</span><span class="op">/</span><span class="va">l.tree</span> <span class="co">## rescale tree to height 1</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/branching.times.html" class="external-link">branching.times</a></span><span class="op">(</span><span class="va">ruminant.extant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="running-blouch-data-setup-function---1st-trait-is-adapting-to-2-1">Running Blouch Data Setup Function - 1st trait is adapting to 2<a class="anchor" aria-label="anchor" href="#running-blouch-data-setup-function---1st-trait-is-adapting-to-2-1"></a>
 </h2>
@@ -461,17 +469,17 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;                     mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a                   5.38    0.23 8.07 0.40 1.36 2.76 5.92 27.22  1237    1</span>
-<span class="co">#&gt; hl                  0.42    0.01 0.56 0.03 0.12 0.25 0.51  1.74  1733    1</span>
-<span class="co">#&gt; alpha               5.06    0.00 0.04 4.99 5.04 5.06 5.08  5.15  1628    1</span>
-<span class="co">#&gt; beta[1]             0.57    0.00 0.02 0.53 0.56 0.57 0.58  0.61  2421    1</span>
-<span class="co">#&gt; r_squared           0.96    0.00 0.00 0.95 0.96 0.96 0.97  0.97  1214    1</span>
-<span class="co">#&gt; sigma2_y            0.14    0.01 0.21 0.02 0.04 0.07 0.15  0.72  1002    1</span>
-<span class="co">#&gt; RMSE                0.21    0.00 0.03 0.17 0.20 0.21 0.23  0.26  3197    1</span>
-<span class="co">#&gt; RMSE_mu             0.15    0.00 0.01 0.15 0.15 0.15 0.16  0.18  1047    1</span>
-<span class="co">#&gt; Y_pred_fos_means[1] 5.10    0.00 0.13 4.84 5.02 5.10 5.17  5.34  4026    1</span>
+<span class="co">#&gt; a                   6.15    0.27 9.10 0.37 1.40 2.82 6.82 32.92  1129 1.00</span>
+<span class="co">#&gt; hl                  0.41    0.01 0.55 0.02 0.10 0.25 0.50  1.87  1477 1.01</span>
+<span class="co">#&gt; alpha               5.07    0.00 0.04 4.99 5.04 5.06 5.09  5.15  1672 1.00</span>
+<span class="co">#&gt; beta[1]             0.57    0.00 0.02 0.53 0.56 0.57 0.58  0.61  2596 1.00</span>
+<span class="co">#&gt; r_squared           0.96    0.00 0.00 0.95 0.96 0.96 0.97  0.97   987 1.00</span>
+<span class="co">#&gt; sigma2_y            0.16    0.01 0.24 0.02 0.04 0.07 0.17  0.93  1080 1.00</span>
+<span class="co">#&gt; RMSE                0.21    0.00 0.03 0.17 0.20 0.21 0.23  0.27  3658 1.00</span>
+<span class="co">#&gt; RMSE_mu             0.15    0.00 0.01 0.15 0.15 0.15 0.16  0.18  1011 1.00</span>
+<span class="co">#&gt; Y_pred_fos_means[1] 5.10    0.00 0.12 4.85 5.01 5.10 5.18  5.35  3474 1.00</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec  8 19:05:43 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec  8 21:44:49 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -567,7 +575,6 @@
 
   
 
-  
-
-  </body>
+  <script>if(!sessionStorage.getItem("_swa")&&document.referrer.indexOf(location.protocol+"//"+location.host)!== 0){fetch("https://counter.dev/track?"+new URLSearchParams({referrer:document.referrer,screen:screen.width+"x"+screen.height,user:"mark-grabowski",utcoffset:"0"}))};sessionStorage.setItem("_swa","1");</script>
+</body>
 </html>
