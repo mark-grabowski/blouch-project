@@ -67,8 +67,8 @@ ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(bod
 ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean)
 
 ```
-
-## Next, we rescale Tree to Height = 1
+## Rescale Tree
+Next, we rescale Tree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
@@ -76,8 +76,8 @@ max(branching.times(ruminant.trdata$phy))
 
 ```
 
-## Running Blouch Data Setup Function - 1st trait is adapting to 2
-Here we are finally setting up our dataset to run in Blouch, using the blouchOU.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) for more on both of these models.
+## Running Blouch Data Setup Function
+Here we are finally setting up our dataset to run in Blouch, using the blouchOU.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) for more on both of these models. Here the first trait is adapting towards the second.
 ```{r}
 
 #names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME

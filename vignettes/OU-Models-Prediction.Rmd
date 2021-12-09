@@ -64,7 +64,7 @@ data(neocortex)
 plot(ladderize(phy), cex = 0.6)
 ```
 ## Data Prep
-We will use the treeplyr function make.treedata to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will finlter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. 
+We will use the treeplyr function make.treedata to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. 
 
 
 ```{r}
