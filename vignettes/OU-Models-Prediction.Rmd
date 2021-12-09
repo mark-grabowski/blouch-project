@@ -73,7 +73,7 @@ ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
 ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_mass_g_log_mean)) & !(is.na(body_mass_g_log_mean)))
 ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(body_se_squared)))
 
-ruminant.trdata #Full dataset
+#ruminant.trdata #Full dataset
 
 ```
 
