@@ -3,7 +3,7 @@ Title: Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLO
 Version: 1.0.0
 Authors@R: 
     person("Mark", "Grabowski", , "mark.walter.grabowski@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "https://orcid.org/0000-0001-7045-9472"))
 Description: Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH) fits adaptive models of continuous trait evolution in a Bayesian framework based on categorical or continuous predictors, and incorporates measurement error. Blouch can also make phylogenetically informed predictions of known or unknown traits from any clade, given a dataset of comparative measurements and a phylogeny including the taxa of interest.
 License: GPL-2.0 License
 Encoding: UTF-8
