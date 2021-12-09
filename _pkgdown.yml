@@ -10,7 +10,7 @@ navbar:
   type: default
   left:
   - text: Getting Started
-    href: articles/index.html
+    href: index.html
   - text: Reference
     href: reference/
   - text: Articles
