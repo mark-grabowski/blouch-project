@@ -122,7 +122,7 @@ Now lets do a simple analysis. Blouch implements the model of constrained evolut
 Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
 
 ```{r Direct Effect Model}
-fit.direct<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_constraint_data,chains = 2,iter = 100,control=list(adapt_delta=0.95),show_messages=FALSE)
+fit.direct<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 ```
 
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
@@ -155,7 +155,7 @@ Blouch also implements the model of adaptive evolution introduced by Hansen et a
 Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
 
 ```{r Adaptive Model}
-fit.adaptive<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_adaptive_data,chains = 2,iter = 100,control=list(adapt_delta=0.95),show_messages=FALSE)
+fit.adaptive<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 ```
 
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
