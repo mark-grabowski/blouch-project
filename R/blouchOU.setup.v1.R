@@ -1,39 +1,13 @@
+
 # Save this file as `R/blouchOU.setup.v1.R`
 
 #' This is the R setup file for blouchOU_v1.stan
 #' It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).
 #'
-#' @export
 #' @param trdata Data formatted by make.treedata function from the R Pacakge treeplyr
 #' @param names.traits Vector of trait names
 #' @return An object of class list for use in blouchOU_v1.stan
-#'
-
-sigma.X.estimate <-
-  function (phy, ta, predictor, mv.predictor) {
-    predictor <- matrix(predictor, nrow = length(phy$tip.label))
-
-    N <- length(phy$tip.label)
-    v <- ta # Time from root to most recent ancestor
-    w <- matrix(data = 1, nrow = N, ncol = 1)
-    me <- diag(mv.predictor)
-    dat <- predictor
-    beta1 <- solve(t(w) %*% solve(v) %*% w) %*% (t(w) %*% solve(v) %*% dat)
-    e <- dat - c(beta1)
-    sigma_squared <- as.numeric((t(e) %*% solve(v) %*% e) / (N-1))
-    repeat{
-      beta1 <- solve(t(w) %*% solve(v + me/sigma_squared) %*% w) %*% (t(w) %*% solve(v + me/sigma_squared) %*% dat)
-      e <- dat - c(beta1)
-      sigma_squared1 <- (t(e) %*% solve(v + me/sigma_squared) %*% e) / (N-1)
-      if (abs(as.numeric(sigma_squared1) - sigma_squared) <= 0.0000001 * sigma_squared){
-        break
-      }
-      sigma_squared <- as.numeric(sigma_squared1)
-    }
-    return(list(mean = as.numeric(beta1),
-                sigma_squared = as.numeric(sigma_squared)))
-  }
-
+#' @export
 
 blouchOU.setup.v1<-function(trdata,names.traits){
   #blouchOU.setup.v1<-function(trdata,names.traits,dist.values){
@@ -126,5 +100,31 @@ blouchOU.setup.v1<-function(trdata,names.traits){
 
   return(list(stan_constraint_data,stan_adaptive_data))
 }
+
+
+sigma.X.estimate <-
+  function (phy, ta, predictor, mv.predictor) {
+    predictor <- matrix(predictor, nrow = length(phy$tip.label))
+    
+    N <- length(phy$tip.label)
+    v <- ta # Time from root to most recent ancestor
+    w <- matrix(data = 1, nrow = N, ncol = 1)
+    me <- diag(mv.predictor)
+    dat <- predictor
+    beta1 <- solve(t(w) %*% solve(v) %*% w) %*% (t(w) %*% solve(v) %*% dat)
+    e <- dat - c(beta1)
+    sigma_squared <- as.numeric((t(e) %*% solve(v) %*% e) / (N-1))
+    repeat{
+      beta1 <- solve(t(w) %*% solve(v + me/sigma_squared) %*% w) %*% (t(w) %*% solve(v + me/sigma_squared) %*% dat)
+      e <- dat - c(beta1)
+      sigma_squared1 <- (t(e) %*% solve(v + me/sigma_squared) %*% e) / (N-1)
+      if (abs(as.numeric(sigma_squared1) - sigma_squared) <= 0.0000001 * sigma_squared){
+        break
+      }
+      sigma_squared <- as.numeric(sigma_squared1)
+    }
+    return(list(mean = as.numeric(beta1),
+                sigma_squared = as.numeric(sigma_squared)))
+  }
 
 

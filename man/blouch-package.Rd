@@ -6,7 +6,7 @@
 \alias{blouch}
 \title{The 'blouch' package.}
 \description{
-A DESCRIPTION OF THE PACKAGE
+Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH)
 }
 \references{
 Stan Development Team (NA). RStan: the R interface to Stan. R package version 2.26.4. https://mc-stan.org

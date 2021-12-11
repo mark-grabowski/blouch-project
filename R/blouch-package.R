@@ -1,6 +1,6 @@
 #' The 'blouch' package.
 #'
-#' @description A DESCRIPTION OF THE PACKAGE
+#' @description Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH)
 #'
 #' @docType package
 #' @name blouch-package
