@@ -15,10 +15,12 @@ navbar:
     href: reference/
   - text: Articles
     menu:
-    - text: OU-Models
+    - text: OU Models
       href: articles/OU-Models.html
     - text: OU Models with Prediction
       href: articles/OU-Models-Prediction.html
+    - text: OU Models with Regimes
+      href: articles/OU-Models-Regimes.html
     - text: FAQ
       href: articles/faq.html
   - text: News

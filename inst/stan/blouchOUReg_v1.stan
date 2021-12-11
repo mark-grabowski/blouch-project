@@ -47,49 +47,40 @@ matrix calc_optima(real a, int n_regimes, int n_lineages, int max_node_length, m
 return(optima_matrix);
 }
   
-  
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Design Matrix Code
+//Design Matrix Code - Adaptive
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  matrix design_matrix(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z,int n_regimes, int n_lineages, int max_node_length, matrix nodes, matrix nodes_time, matrix t_end, matrix t_beginning,
-  matrix regime_time, int[,] regimes_matrix){
+matrix design_matrix(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z,int n_regimes, int n_lineages, int max_node_length, matrix nodes, matrix nodes_time, matrix t_end, matrix t_beginning,matrix regime_time, int[,] regimes_matrix){
   matrix[N,Z] rho;
   matrix[N,Z+n_regimes] X;
   matrix[N,n_regimes] X_reg;
-  matrix[n_lineages,n_regimes] optima_matrix = rep_matrix(0.0,n_lineages,n_regimes);
 
-    if(n_regimes != 0){
-      X_reg = calc_optima( a,  n_regimes,  n_lineages,  max_node_length,  nodes,  nodes_time,  t_end, t_beginning,  regime_time,  regimes_matrix);
-    }
-    if(evol==0) {
-      rho = to_matrix(1 - (1 - exp(-a * T_term))./(a * T_term)); //For OU model
-    }
-    else{
-      rho=to_matrix(rep_vector(1.0,N)); //For Evolutionary regression
-    }
+  X_reg = calc_optima( a,  n_regimes,  n_lineages,  max_node_length,  nodes,  nodes_time,  t_end, t_beginning,  regime_time,  regimes_matrix);
+  rho = to_matrix(1 - (1 - exp(-a * T_term))./(a * T_term)); //For OU model
+  if(sum(random_cov)==0){
+    X = append_col(X_reg,direct_cov);}
+  else if(sum(direct_cov)==0){
+    X = append_col(X_reg,random_cov .* rho);}
+  return(X);}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Design Matrix Code - Evolutionary
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+matrix design_matrix_evol(int N, int evol, real a, vector T_term, matrix direct_cov, matrix random_cov, int Z,int n_regimes, int n_lineages, int max_node_length, matrix nodes, matrix nodes_time, matrix t_end, matrix t_beginning,matrix regime_time, int[,] regimes_matrix){
+  matrix[N,Z] rho;
+  matrix[N,Z+n_regimes] X;
+  matrix[N,n_regimes] X_reg;
 
-    if(sum(random_cov)==0){
-     if(n_regimes != 0){
-      X = append_col(X_reg,direct_cov);
-     }else{
-      X = direct_cov;
-      }
-    }
-    if(sum(direct_cov)==0){
-      if(n_regimes != 0){
-        X = append_col(X_reg,random_cov .* rho);
-      }else{
-        X = random_cov .* rho;
-      }
-    }
-    return(X);
-    }
+  X_reg = calc_optima( a,  n_regimes,  n_lineages,  max_node_length,  nodes,  nodes_time,  t_end, t_beginning,  regime_time,  regimes_matrix);
+  rho=to_matrix(rep_vector(1,N)); //For Evolutionary regression
+  if(sum(random_cov)==0){
+    X = append_col(X_reg,direct_cov);}
+  else if(sum(direct_cov)==0){
+    X = append_col(X_reg,random_cov .* rho);}
+  return(X);}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Vt function
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
   matrix varcov_model(int N, matrix tij, matrix tja, matrix ta, matrix random_cov,int Z, real sigma2_y, real a, matrix x0, matrix sigma_squared_x, vector beta1, vector T_term,int n_regimes){
-  
   vector[N] sigma2s;
   matrix[N,N] ti;
   matrix[N,N] term0;
@@ -127,13 +118,14 @@ return(optima_matrix);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //V_me function
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-matrix varcov_measurement(int N, int Z, matrix ta, matrix direct_cov, matrix mv_direct_cov, matrix mv_random_cov, matrix sigma_squared_x, vector beta){
+matrix varcov_measurement(int N, int Z, matrix ta, matrix direct_cov, matrix mv_direct_cov, matrix mv_random_cov, matrix sigma_squared_x, vector beta1,int n_regimes){
   //matrix[N,N] Vxt[Z];
   matrix[N,N] Vxtr;
   matrix[N,N] Vxtd;
   matrix[N,N] Vxt;
   matrix[N,N] Vx;
   matrix[N,N] Vu_given_x;
+  vector[Z] beta1sq;
   matrix[N,N] beta2_Vu_given_x;
   matrix[N,N] Vu;
   matrix[N,N] Vur;
@@ -163,15 +155,17 @@ matrix varcov_measurement(int N, int Z, matrix ta, matrix direct_cov, matrix mv_
   Vu_given_x = Vu - Vu * inverse(Vx) * Vu;
 
 //beta2_Vu_given_x
-  beta2_Vu_given_x = Vu_given_x * square(beta[1]);
+  for (i in 1:Z){
+    beta1sq[i] = beta1[i+n_regimes]; //Only betas that are for random covariates
+    beta1sq[i] = beta1sq[i]^2; //Square betas
+    }
     
+  beta2_Vu_given_x = Vu_given_x * beta1sq[1];
   return(beta2_Vu_given_x);
   }
 
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 data {
   //Extant data
@@ -193,7 +187,6 @@ data {
   real ols_intercept;
   real ols_slope;
   
-  
   //Fixed regimes
   int n_regimes;
   int n_lineages;
@@ -210,44 +203,53 @@ data {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 parameters {
-  real <lower = 0.1386294, upper = 100> a; //Lower based on a little more than a for a hl of 3*tree height - 6.93 * tree height
-  //real <lower = 0.001,upper=5.0> hl;
-  //real <lower = 0> hl; //Upper is 4*tree height
-  //real <lower = 0,upper = variance(Y)*2> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
-  //real <lower = 0,upper = variance(Y)*2> vy;
-  real <lower = 0, upper = variance(Y)*2> sigma2_y;  
+  real <lower = 0> a;
+  real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
   vector[Z + n_regimes] beta; //OU beta
   
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//Transformed Parameter Block
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 transformed parameters {
+  matrix[N,Z+1] X_evol;
+  vector[Z+n_regimes] beta_evol;
+  matrix[N,N] V_ev;
+  matrix[N,N] V_me_ev;
+  matrix[N,N] Vt_ev;
 
+  Vt_ev = varcov_model(N,  tij,  tja,  ta,  random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term, n_regimes);
+
+  if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
+    //print("sum!=0");
+    V_me_ev = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta, n_regimes);
+    V_ev = Vt_ev + V_me_ev + diag_matrix(mv_response);
+    }
+  else{
+    //print("sum=0");
+    V_me_ev = rep_matrix(0,N,N);
+    V_ev = Vt_ev;
+    }
+  //Calculate evolutionary regression slope
+  X_evol = design_matrix_evol( N,  1,  a,  T_term, direct_cov,random_cov, Z, n_regimes, n_lineages,max_node_length, nodes, nodes_time, t_end, t_beginning,regime_time,regimes_matrix);
+  beta_evol = inverse(X_evol'*inverse(V_ev)*X_evol)*(X_evol'*inverse(V_ev)*Y); //Hansen et al. 2008
   }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 model {
 //Declare variables
-  //real a;
-  //real hl;
-  //real sigma2_y;
   vector[N] mu;
   matrix[N,N] V;
-  //matrix[N,N] Vt;
-  //matrix[N,N] V_me;
+  matrix[N,N] Vt;
+  matrix[N,N] V_me;
   matrix[N,Z+n_regimes] X;
   matrix[N, N] L_V;
 
 //Priors
-  a ~ lognormal(-0.5,0.75);
-  //hl ~ lognormal(-1.5,1.35); //Tree length = 1 Ma
-  //sigma2_y~exponential(1.0);
-  //sigma2_y~cauchy(0,1.0);
-  //vy ~ exponential(1.0);
-  beta[1:n_regimes] ~ normal(ols_intercept,1.0);
-  beta[n_regimes+1] ~ normal(ols_slope,1.0);
+  a ~ lognormal(1.0,1.0); //a = log(2)/half-life
+  beta[1:n_regimes] ~ normal(ols_intercept,0.5);
+  beta[n_regimes+1] ~ normal(ols_slope,0.4);
   
 //////////////////////////////////////////////////////////////////////////////////////////////////////
   //hl = log(2)/a;
@@ -258,24 +260,20 @@ model {
 //Regression - either constraint for direct cov or adaptive for random cov
 
 //Set up X matrix
-  X = design_matrix( N,  1,  a,  T_term, direct_cov,random_cov, Z, n_regimes, n_lineages,
+  X = design_matrix( N,  0,  a,  T_term, direct_cov,random_cov, Z, n_regimes, n_lineages,
   max_node_length, nodes, nodes_time, t_end, t_beginning,regime_time,regimes_matrix);
 
 //Set up V matix
-  V = varcov_model(N,  tij,  tja,  ta,  random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term, n_regimes);
-  //V_me = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov,mv_random_cov, sigma_squared_x, beta);
-  //V = Vt + V_me + diag_matrix(mv_response);
-  //V=Vt;
+  Vt = varcov_model(N,  tij,  tja,  ta,  random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term, n_regimes);
+  V_me = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov,mv_random_cov, sigma_squared_x, beta, n_regimes);
+  V = Vt + V_me + diag_matrix(mv_response);
+  //V = Vt;
   L_V = cholesky_decompose(V);
-  
 //OU with random covariates
   mu = X*beta;
   Y ~ multi_normal_cholesky(mu , L_V);
-  //print(mu);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 generated quantities {
   real <lower = 0> vy;
   //real <lower = 0> sigma2_y;
@@ -287,10 +285,10 @@ generated quantities {
   real sse;
   real r_squared;
   matrix[N,N] V_final;
-  //matrix[N,N] V_me_final;
+  matrix[N,N] V_me_final;
   matrix[N,N] Vt_final;
-  matrix[N,Z+n_regimes] X_evol;
-  vector[Z+n_regimes] beta_evol;
+  matrix[N,Z+n_regimes] X;
+
 
   //a = log(2)/hl;
   hl = log(2)/a;
@@ -298,30 +296,26 @@ generated quantities {
   //sigma2_y = vy*(2*a);
   
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Set up X matrix
+  X = design_matrix( N,  0,  a,  T_term, direct_cov,random_cov, Z, n_regimes, n_lineages,max_node_length, nodes, nodes_time, t_end, t_beginning,regime_time,regimes_matrix);
+
 //Calculate V matrix
   Vt_final = varcov_model(N,  tij,  tja,  ta,  random_cov, Z,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term, n_regimes);
-  //V_me_final = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta);
-  //V_final = Vt_final + V_me_final + diag_matrix(mv_response);
-  V_final=Vt_final;
-  
-//Calculate evolutionary regression slope
-  X_evol = design_matrix( N,  1,  a,  T_term, direct_cov,random_cov, Z, n_regimes, n_lineages,
-  max_node_length, nodes, nodes_time, t_end, t_beginning,regime_time,regimes_matrix);
+  if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
+    V_me_final = varcov_measurement(N, Z, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta, n_regimes);
+    V_final = Vt_final + V_me_final + diag_matrix(mv_response);
+    }
+  else{
+   V_me_final = rep_matrix(0,N,N);
+   V_final = Vt_final;
+  }
+  //V_final = Vt_final;
 
-  beta_evol = inverse(X_evol'*inverse(V_final)*X_evol)*X_evol'*inverse(V_final)*Y; //Hansen et al. 2008
-//Calculate r2 based on constraint or adaptive regression
-
-  pred_mean = (X_evol*beta_evol);
-  grand_mean = ((rep_vector(1,N))' * (V_final') * Y) / sum(inverse(V_final));
+  //Calculate r2 based on constraint or adaptive regression
+  pred_mean = X*beta;
+  grand_mean = ((rep_vector(1,N))' * inverse(V_final) * Y) / sum(inverse(V_final));
   sst = ((Y - grand_mean)' * inverse(V_final) * (Y - grand_mean));
   sse = ((Y - pred_mean)' * inverse(V_final) * (Y - pred_mean));
   r_squared = (sst - sse) / sst;
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 }
