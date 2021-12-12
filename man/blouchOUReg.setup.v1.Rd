@@ -2,8 +2,7 @@
 % Please edit documentation in R/blouchOUReg.setup.v1.R
 \name{blouchOUReg.setup.v1}
 \alias{blouchOUReg.setup.v1}
-\title{This is the R setup file for blouchOUReg_v1.stan
-It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).}
+\title{This is the R setup file for blouchOUReg_v1.stan}
 \usage{
 blouchOUReg.setup.v1(trdata, names.traits)
 }
@@ -17,5 +16,4 @@ An object of class list for use in blouchOUReg_v1.stan
 }
 \description{
 This is the R setup file for blouchOUReg_v1.stan
-It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).
 }

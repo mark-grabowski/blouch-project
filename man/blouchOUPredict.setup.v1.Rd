@@ -2,8 +2,7 @@
 % Please edit documentation in R/blouchOUPredict.setup.v1.R
 \name{blouchOUPredict.setup.v1}
 \alias{blouchOUPredict.setup.v1}
-\title{This is the R setup file for blouchOUPredict_v1.stan
-It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).}
+\title{This is the R setup file for blouchOUPredict_v1.stan}
 \usage{
 blouchOUPredict.setup.v1(trdata, trdata.fos, names.traits, classical)
 }
@@ -21,5 +20,4 @@ An object of class list for use in blouchOUPredict_v1.stan
 }
 \description{
 This is the R setup file for blouchOUPredict_v1.stan
-It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).
 }
