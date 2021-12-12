@@ -246,22 +246,24 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;                      mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a                    5.85    0.25 8.83  0.43  1.44  2.83  6.47 31.50  1218    1</span>
-<span class="co">#&gt; hl                   0.39    0.01 0.49  0.02  0.11  0.24  0.48  1.63  1909    1</span>
-<span class="co">#&gt; alpha                5.07    0.00 0.04  5.00  5.04  5.06  5.09  5.15  1449    1</span>
-<span class="co">#&gt; beta[1]              0.57    0.00 0.02  0.53  0.56  0.57  0.58  0.61  2169    1</span>
-<span class="co">#&gt; r_squared            0.96    0.00 0.00  0.95  0.96  0.96  0.97  0.97  1083    1</span>
-<span class="co">#&gt; sigma2_y             0.15    0.01 0.23  0.02  0.04  0.07  0.16  0.76  1200    1</span>
-<span class="co">#&gt; RMSE                 0.29    0.00 0.03  0.25  0.28  0.29  0.31  0.35  3252    1</span>
-<span class="co">#&gt; RMSE_mu              0.27    0.00 0.02  0.26  0.26  0.26  0.27  0.32   870    1</span>
-<span class="co">#&gt; X_pred_fos_means[1] -0.48    0.00 0.17 -0.81 -0.59 -0.48 -0.37 -0.14  3624    1</span>
+<span class="co">#&gt; a                    5.38    0.21 7.93  0.41  1.34  2.71  5.74 29.07  1382    1</span>
+<span class="co">#&gt; hl                   0.40    0.01 0.47  0.02  0.12  0.26  0.52  1.69  1839    1</span>
+<span class="co">#&gt; alpha                5.07    0.00 0.04  5.00  5.04  5.06  5.09  5.15  1696    1</span>
+<span class="co">#&gt; beta[1]              0.57    0.00 0.02  0.53  0.56  0.57  0.58  0.61  2286    1</span>
+<span class="co">#&gt; r_squared            0.96    0.00 0.00  0.95  0.96  0.96  0.97  0.97  1128    1</span>
+<span class="co">#&gt; sigma2_y             0.14    0.01 0.21  0.02  0.04  0.07  0.14  0.74  1363    1</span>
+<span class="co">#&gt; RMSE                 0.29    0.00 0.03  0.24  0.28  0.29  0.31  0.35  3371    1</span>
+<span class="co">#&gt; RMSE_mu              0.27    0.00 0.02  0.26  0.26  0.26  0.27  0.32   852    1</span>
+<span class="co">#&gt; X_pred_fos_means[1] -0.47    0.00 0.17 -0.81 -0.59 -0.47 -0.36 -0.14  3080    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 09:31:07 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 10:45:05 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
 
 <span class="va">posterior.fit.fos.direct</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit.fos.direct</span><span class="op">)</span></code></pre></div>
+<p>Here alpha is the intercept and beta is the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y, the root mean square error of the predictions including the effects of phylogeny and adpatation in the predictions RMSE, the root mean square error only based on the prediction using the regression line RMSE_mu, and finally the fossil/unknown prediction mean(s) X_pred_fos_means.</p>
+<p>Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.</p>
 <p>Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.</p>
 </div>
 <div class="section level2">
@@ -441,23 +443,24 @@
 <span class="co">#&gt; 2 chains, each with iter=4000; warmup=2000; thin=1; </span>
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;                     mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a                   5.64    0.26 8.56 0.38 1.36 2.76 6.08 30.28  1116    1</span>
-<span class="co">#&gt; hl                  0.41    0.01 0.51 0.02 0.11 0.25 0.51  1.82  1240    1</span>
-<span class="co">#&gt; alpha               5.07    0.00 0.04 4.99 5.04 5.06 5.09  5.16  1285    1</span>
-<span class="co">#&gt; beta[1]             0.57    0.00 0.02 0.53 0.56 0.57 0.58  0.61  2358    1</span>
-<span class="co">#&gt; r_squared           0.96    0.00 0.00 0.95 0.96 0.96 0.97  0.97   659    1</span>
-<span class="co">#&gt; sigma2_y            0.15    0.01 0.21 0.02 0.04 0.07 0.15  0.75  1108    1</span>
-<span class="co">#&gt; RMSE                0.21    0.00 0.03 0.17 0.20 0.21 0.23  0.27  3462    1</span>
-<span class="co">#&gt; RMSE_mu             0.16    0.00 0.01 0.15 0.15 0.15 0.16  0.18   576    1</span>
-<span class="co">#&gt; Y_pred_fos_means[1] 5.10    0.00 0.13 4.85 5.01 5.09 5.17  5.35  3472    1</span>
+<span class="co">#&gt;                     mean se_mean    sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
+<span class="co">#&gt; a                   6.26    0.34 10.04 0.44 1.43 2.88 6.60 35.61   857    1</span>
+<span class="co">#&gt; hl                  0.38    0.01  0.47 0.02 0.11 0.24 0.48  1.57  1628    1</span>
+<span class="co">#&gt; alpha               5.06    0.00  0.04 5.00 5.04 5.06 5.08  5.14  1757    1</span>
+<span class="co">#&gt; beta[1]             0.57    0.00  0.02 0.53 0.56 0.57 0.58  0.61  2028    1</span>
+<span class="co">#&gt; r_squared           0.96    0.00  0.00 0.95 0.96 0.96 0.97  0.97  1076    1</span>
+<span class="co">#&gt; sigma2_y            0.16    0.01  0.25 0.02 0.04 0.08 0.17  0.93   816    1</span>
+<span class="co">#&gt; RMSE                0.21    0.00  0.03 0.17 0.20 0.21 0.23  0.27  3211    1</span>
+<span class="co">#&gt; RMSE_mu             0.15    0.00  0.01 0.15 0.15 0.15 0.16  0.18  1021    1</span>
+<span class="co">#&gt; Y_pred_fos_means[1] 5.09    0.00  0.13 4.84 5.01 5.09 5.17  5.34  3721    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 09:37:29 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 10:50:39 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
 
 <span class="va">posterior.fit.fos.direct</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit.fos.direct</span><span class="op">)</span></code></pre></div>
+<p>Here alpha is the intercept and beta is the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y, the root mean square error of the predictions including the effects of phylogeny and adpatation in the predictions RMSE, the root mean square error only based on the prediction using the regression line RMSE_mu, and finally the fossil/unknown prediction mean(s) Y_pred_fos_means.</p>
 <p>Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.</p>
 </div>
 <div class="section level2">

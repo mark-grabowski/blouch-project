@@ -139,6 +139,7 @@ print(fit.direct,pars = c("a","hl","beta","vy","r_squared","sigma2_y"))
 ext.fit.direct <- rstan::extract(fit.direct)
 
 ```
+Here beta[1,2,3] are the intercepts/effects of the three regimes, with the fourth, beta[4] being the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
@@ -167,12 +168,15 @@ fit.adaptive<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_adaptive_da
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
 ```{r Adaptive Results}
 #Lets look at the parameter estimates
-print(fit.adaptive,pars = c("a","hl","beta","vy","r_squared","sigma2_y"))
+print(fit.adaptive,pars = c("a","hl","beta","beta_evol","vy","r_squared","sigma2_y"))
 
 #For downstream analysis and plots
 ext.fit.adapive <- rstan::extract(fit.adaptive)
 
 ```
+Here beta[1,2,3] are the intercepts/effects of the three regimes, with the fourth, beta[4] being the optimal slope of the adaptive  relationship between brain mass and body mass. beta_evol[1,2,3] is a repeat of the previous results for each regime but beta_evol[4] is the evolutionary slope between brain mass and body mass.
+
+Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
@@ -227,7 +231,7 @@ ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   scale_color_npg()
 ```
 
-The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the third regime is having an effect on relative brain mass.
+The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the third regime is having an effect on relative brain mass when compared to the other two.
 
 
 ## Adaptive Plot
@@ -244,6 +248,6 @@ ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   scale_color_npg()
 ```
 
-The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the first regime might be having an effect on the adaptive relationship between brain mass and body mass.
+The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the third regime might be having an effect on the adaptive relationship between brain mass and body mass when compared to the other two.
 
 

@@ -150,6 +150,11 @@ posterior.fit.fos.direct <- rstan::extract(fit.fos.direct)
 
 ```
 
+Here alpha is the intercept and beta is the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y, the root mean square error of the predictions including the effects of phylogeny and adpatation in the predictions RMSE, the root mean square error only based on the prediction using the regression line RMSE_mu, and finally the fossil/unknown prediction mean(s) X_pred_fos_means.
+
+
+Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
+
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
 ## Trace and Density Plots for estimated parameters
@@ -284,7 +289,7 @@ print(fit.fos.direct,pars = c("a","hl","alpha","beta","r_squared","sigma2_y","RM
 posterior.fit.fos.direct <- rstan::extract(fit.fos.direct)
 
 ```
-
+Here alpha is the intercept and beta is the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y, the root mean square error of the predictions including the effects of phylogeny and adpatation in the predictions RMSE, the root mean square error only based on the prediction using the regression line RMSE_mu, and finally the fossil/unknown prediction mean(s) Y_pred_fos_means.
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
