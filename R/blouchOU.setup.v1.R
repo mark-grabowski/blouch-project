@@ -2,7 +2,7 @@
 # Save this file as `R/blouchOU.setup.v1.R`
 
 #' This is the R setup file for blouchOU_v1.stan
-#' It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).
+#' 
 #'
 #' @param trdata Data formatted by make.treedata function from the R Pacakge treeplyr
 #' @param names.traits Vector of trait names

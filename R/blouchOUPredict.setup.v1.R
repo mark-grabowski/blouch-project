@@ -2,7 +2,7 @@
 # Save this file as `R/blouchOUPredict.setup.v1.R`
 
 #' This is the R setup file for blouchOUPredict_v1.stan
-#' It includes the function sigma.X.estimate, taken from the R Pacakge Slouch (Kopperud et al. 2020).
+#' 
 #'
 #' @param trdata Data formatted by make.treedata function from the R Pacakge treeplyr - only extant species
 #' @param trdata.fos Data formatted by make.treedata function from the R Pacakge treeplyr - extant and fossil
