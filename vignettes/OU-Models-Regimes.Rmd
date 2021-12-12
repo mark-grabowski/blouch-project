@@ -1,12 +1,17 @@
 ---
 title: "OU-Models-Regimes"
-author: "MG"
-date: "09/12/2021"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{OU-Models-Regimes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
 ```
 
 # OU Models
@@ -147,6 +152,7 @@ traceplot(fit.direct,c("a","hl","beta","vy","sigma2_y"))
 stan_dens(fit.direct,c("a","hl","beta","vy","sigma2_y"))
 #3X8
 ```
+
 These look good.
 
 ## Adaptive Model
@@ -220,6 +226,7 @@ ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
   scale_color_npg()
 ```
+
 The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the third regime is having an effect on relative brain mass.
 
 
@@ -236,6 +243,7 @@ ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
   scale_color_npg()
 ```
+
 The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the first regime might be having an effect on the adaptive relationship between brain mass and body mass.
 
 
