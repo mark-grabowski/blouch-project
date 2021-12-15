@@ -14,11 +14,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# OU Models
 This vignette walks you through the basic streps of running an analysis in Blouch.
 
 ## Setup
-Here we load the R packages used to setup the data for blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
+Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
 ```{r Setup}
 rm(list=ls())
 library(devtools)
@@ -26,7 +25,7 @@ library(devtools)
 
 library(blouch)
 load_all()
-# Load necessary packages
+## Load necessary packages
 library(ape)
 library(slouch)
 library(rstan)
@@ -40,7 +39,10 @@ options(mc.cores = 2)
 rstan_options(auto_write = TRUE)
 
 ```
+
+### Load Data
 For the purposes of illustrating the software, we will use a dataset of ruminant brain and body sizes bundled with the Slouch package (Kopperud et al. 2020) and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the brain and body data.
+
 ```{r load data}
 ## Load the phylogenetic tree with annotation data
 data(artiodactyla)
@@ -53,7 +55,8 @@ data(neocortex)
 plot(ladderize(phy), cex = 0.6)
 ```
 
-Next we will use the treeplyr function make.treedata to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will finlter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. Finally we mean scale the X data (here body mass) so that the average across species is 0.
+### Combine data and tree
+Next we will use the treeplyr package (Uyeda and Harmon, 2014) make.treedata function to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. Finally we mean scale the X data (here body mass) so that the average across species is 0.
 
 ```{r}
 ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
@@ -67,8 +70,9 @@ ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(bod
 ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean)
 
 ```
-## Rescale Tree
-Next, we rescale Tree to Height = 1
+
+### Rescale Tree
+Next, we rescale rree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
@@ -76,10 +80,10 @@ max(branching.times(ruminant.trdata$phy))
 
 ```
 
-## Running Blouch Data Setup Function
-Here we are finally setting up our dataset to run in Blouch, using the blouchOU.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) for more on both of these models. Here the first trait is adapting towards the second.
+### Running Blouch Data Setup Function
+Here we are finally setting up our dataset to run in Blouch, using the blouchOU.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models, adaptive models, and OU1 models. See Grabowski et al. (2016) and below for more on both of these models.  Here the first trait is adapting towards the second for the adaptive model.
 ```{r}
-
+source("/Users/markgrabowski/Documents/Academic/Research/R Packages/blouch/R/blouchOU.setup.v1.R")
 #names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
 names.traits<-c("brain_mass_g_log_mean","bodycentered","brain_se_squared","body_se_squared") #With ME
 
@@ -89,16 +93,17 @@ stan_data<-blouchOU.setup.v1(ruminant.trdata,names.traits)
 
 stan_constraint_data<-stan_data[[1]]
 stan_adaptive_data<-stan_data[[2]]
-
+stan_OU1_data<-stan_data[[3]]
 ```
 
 
-## Explore Priors: Slope and intercept
+## Explore Priors
+### Slope and intercept
 Priors must be set manually in the Stan Blouch code (e.g. blouchOU_v1.stan). This is not a big deal, but we have to explore how our data leads to weak or stong prors beforehand. Do not use the default priors of Blouch as these are only appropriate for a smaller range of datasets.
 
-First lets look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.
+First let's look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.
 
-Here we are using the OLS intercept and slope for the regression of brain on body for our dataset as the mean prior values, but we should look at how our standard deviation (0.5 and 1.0 below) affects the region explored by Blouch.
+In this example we are using the OLS intercept and slope for the regression of brain on body for our dataset as the mean prior values, but we should look at how our standard deviation (0.5 and 1.0 below) affects the region explored by Blouch.
 ```{r Explore Priors}
 library(ggsci)
 library(ggplot2)
@@ -118,7 +123,7 @@ slope.prior.plot
 
 ```
 
-This first prior is far two wide, so let's use a stronger prior (0.5 and 0.4 below).
+This first prior is far too wide, so let's use a stronger prior (0.5 and 0.4 below).
 ```{r Explore Priors 2}
 intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
 #slope_test<-rnorm(100,ols.slope,0.5)
@@ -134,7 +139,8 @@ slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=
 
 slope.prior.plot
 ```
-This looks pretty good. To enter these priors in Blouch, we would open the Blouch Stan code (e.g. blouchOU_v1.stan) and change the Priors code within the model block. Below we have set the intercept (alpha) and slope (beta) to have the best priors found above.
+
+This looks pretty good. To enter these priors in Blouch, we would open the Blouch Stan code (e.g. blouchOU_v1.stan) and change the Priors code within the model block. Below is the block of code from blouchOU_v1.st where we have set the intercept (alpha) and slope (beta) to have the best priors found above.
 
 ### Priors block
 //Priors
@@ -144,15 +150,15 @@ This looks pretty good. To enter these priors in Blouch, we would open the Blouc
   beta ~ normal(ols_slope, 0.4); //Slope
   
 
-## Explore Priors: Half-life
+### Half-life
 Since our tree is scaled to unit length = 1, and the original phylogeny is ~27 Ma, we would like our half-life prior to be allow for very quick adaptation (e.g < 1 Ma, which equals < 0.04 in tree units), and very slow adaptation (e.g. > 27 Ma, which equals 1 in tree units). Thus, we will the 10% quantile of the distrubution at 0.04 and 90% at 1.
 
-We can explore how changing our parameters on the priors affect half-life using the code below. The values 1.25 and 1.25 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.
+We can explore how changing our parameters on the priors affect half-life using the code below. The values 1.0 and 1.0 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.
 
 ```{r}
 ###########################################
 #Log-normal prior for half-life - based on alpha
-par.alpha <- list(meanlog=1.25, sdlog=1.25) 
+par.alpha <- list(meanlog=1.0, sdlog=1.0) 
 
 samp <- rlnorm(10000, mean=par.alpha$meanlog, sd=par.alpha$sdlog)
 samp<-samp[samp>=0]
@@ -174,9 +180,10 @@ hist((log(2)/samp), breaks=10000, main="Prior density of half-life",xlim=c(0,3))
 abline(v=(c(0.04,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (27 Ma) - 
 ########################################
 ```
-This looks pretty good. Again to enter these priors, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the priors on a, log mean and log sd to 
 
-## Priors Block
+This looks pretty good. Again to enter these priors, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the priors on a, log mean and log sd to the values as above.
+
+### Priors Block
 //Priors
   a ~ lognormal(1.0,1.0); //a = log(2)/half-life
   //sigma2_y ~ exponential(0.1); //
@@ -198,13 +205,15 @@ In the Priors code within the model block, they are then not given a prior distr
   alpha ~ normal(ols_intercept,0.5); //Intercept
   beta ~ normal(ols_slope, 0.4); //Slope
 
+
+### Sigma2_y
 If we wanted to explore how sigma2_y prior compares to our expectations we could use the code below, but for the example we will use a uniform prior as discussed above.
 
 ```{r}
 library(extraDistr)
 ###########################################
 #Normal - based on alpha
-par.sigma2y <- list(sigma=0.1)
+par.sigma2y <- list(sigma=1.0)
 
 samp <- rhcauchy(10000, sigma=par.sigma2y$sigma)
 
@@ -227,16 +236,18 @@ hist(samp/(2*2), breaks=10000, main="Prior density of Vy",xlim=c(0,3))
 
 ```
 
-## Direct Effect Models
+## Direct Effect Model
 Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch. 
 
 Now lets do a simple analysis. Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.
 
+### Run Model
 Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
 ```{r}
 fit.direct<- rstan::sampling(stanmodels$blouchOU_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 ```
 
+### Parameter Estimates
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
 ```{r}
 #Lets look at the parameter estimates
@@ -251,7 +262,7 @@ Here alpha is the intercept and beta is the slope of the direct effect relations
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
-## Trace and Density Plots for estimated parameters
+### Trace and Density Plots for estimated parameters
 We can look at how our procedures using the standard trace and density plots from Rstan 
 
 ```{r}
@@ -261,17 +272,20 @@ traceplot(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
 stan_dens(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
 #3X8
 ```
+
 These look good.
 
 ## Adaptive Model
 Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.
 
+### Run Model
 Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
 ```{r}
 fit.adaptive<- rstan::sampling(stanmodels$blouchOU_v1,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 
 ```
 
+### Parameter Estimates
 Again, lets look at the parameter estimates
 ```{r}
 print(fit.adaptive,pars = c("a","hl","alpha","beta","beta_evol","vy","r_squared","sigma2_y"))
@@ -280,11 +294,12 @@ print(fit.adaptive,pars = c("a","hl","alpha","beta","beta_evol","vy","r_squared"
 ext.fit.adaptive <- rstan::extract(fit.adaptive)
 
 ```
+
 Here alpha is the intercept and beta is the optimal slope of the adaptive regression between brain mass and body mass, while beta_evol is the slope of the evolutionary regression. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
-
+### Trace and Density Plots for estimated parameters
 And explore the trance and density plots
 ```{r}
 par(mfrow = c(1,3))
@@ -295,9 +310,9 @@ stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 ```
 
 ## Model Comparison using Bayes Factors
-While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package (CITATION).
+While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes a direct effect model rather than af adaptive model.
 
-```{r}
+```{r Bayes Factors D vs A}
 
 lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
 lml.fit.adaptive<-bridge_sampler(fit.adaptive,silent=TRUE)
@@ -306,28 +321,29 @@ BF_att
 
 ```
 
-We find that the data is 5.2 more likely under a model that assumes a direct effect model rather than af adaptive model.
-
 ## Brownian Model
 Blouch can also fit a Brownian motion model to the data, which can then be compared to the other models using Bayes Factors. Note that while this is possible with Blouch, it is assuming your data follows this model of evolution, rather than testing for it using the Direct Effect or Adaptive models above. Here we again use the stan_constraint_data type but a new Stan function. Note that priors on the intercept and slope should be set as previously, but sigma2_y no longer has an upper range of values in its declaration.
 
-
-```{r}
+### Run Model
+```{r Brownian-Motion Model}
 fit.BM<- rstan::sampling(stanmodels$blouchBM_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
 
 ```
 
-```{r}
+### Parameter Estimates
+```{r Fitted Parameters for BM}
 print(fit.BM,pars = c("alpha","beta","r_squared","sigma2_y"))
 
 #For downstream analysis and plots
 ext.fit.BM <- rstan::extract(fit.BM)
 
 ```
+
 Parameters follow on as above, with beta being the Brownian slope.
 
+### Trace and Density Plots for estimated parameters
 And explore the trance and density plots
-```{r}
+```{r BM Trace and Density Plots}
 par(mfrow = c(1,3))
 
 traceplot(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
@@ -338,7 +354,8 @@ stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 Looking Good!
 
 ## Direct vs. BM Model Comparison using BF
-```{r}
+While using a type of model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes a direct effect model rather than af Brownian-motion model.
+```{r Compare Models using BF}
 library(bridgesampling)
 lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
 lml.fit.BM<-bridge_sampler(fit.BM,silent=TRUE)
@@ -347,19 +364,54 @@ BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.BM)
 BF_att
 
 ```
-Here the direct fit model has a Bayes Factor of 0.7 over the BM model, which makes sense for this data as the estimated phylogenetic half life is quite long, 65% the length of the phylogeny.
 
+## OU1
+Finally, Blouch can fit a model with only a single intercept/optimum, the half-life of which can be interpreted as a measure of phylogenetic effect (see Hansen et al. 2008). This model is a little different from the previous models as there are no predictors.
+
+### Run Model
+```{r OU1 Stan Model}
+fit.OU1<- rstan::sampling(stanmodels$blouchOU1_v1,data = stan_OU1_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
+
+```
+
+### Parameter Estimates
+Lets look at the parameter estimates
+```{r OU1 Parameter Estimates}
+print(fit.OU1,pars = c("a","hl","alpha","vy","sigma2_y"))
+
+#pairs(fit.OU1,pars = c("a","hl","alpha","vy","sigma","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.OU1 <- rstan::extract(fit.OU1)
+
+```
+
+Parameters are the same as above, but alpha here is the phylogenetically informed intercept and hl here is the estimate of phylogenetic effect. We can see that the half-life is many multiples tree length, meaning brain mass is evolving as if by a Brownian-motion process when no predictors are included in the model. See Hansen et al. (2008) and Labra et al. (2009) for more on this effect, but if half-life = 0, there is no influence of the past, and all species are independent, and if half-life = infinity, there is no centralizing tendency, and the trait evolves as if by Brown- ian motion (Labra et al. 2009).
+
+### Trace and Density Plots for estimated parameters
+We can look at how our procedures using the standard trace and density plots from Rstan 
+
+```{r OU1 Trace and Density Pltos}
+par(mfrow = c(1,3))
+
+traceplot(fit.OU1,c("a","hl","alpha","vy","sigma2_y"))
+stan_dens(fit.OU1,c("a","hl","alpha","vy","sigma2_y"))
+
+```
+
+These look good.
 
 ## Plots
 Let's make some plots of our results
 
+### Load Plot Packages
 ```{r}
 library(ggsci)
 library(ggplot2)
 
 ```
 
-## Direct Effect Plot
+### Direct Effect Plot
 ```{r}
 ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
@@ -372,7 +424,7 @@ ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   scale_color_npg()
 ```
 
-## Adaptive Plot
+### Adaptive Plot
 ```{r}
 ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
@@ -385,4 +437,19 @@ ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
   ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
   scale_color_npg()
 ```
+
+## References
+Grabowski, M., K. L. Voje, and T. F. Hansen. 2016. Evolutionary modeling and correcting for observation error support a 3/5 brain-body allometry for primates. J. Hum. Evol. 94:106–116.
+
+Gronau, Q. F., H. Singmann, and E.-J. Wagenmakers. 2020. bridgesampling: An R Package for Estimating Normalizing Constants. Journal of Statistical Software 92:1–29.
+
+Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for studying adaptation to a randomly evolving environment. Evolution 62:1965–1977.
+
+Labra, A., J. Pienaar, and T. F. Hansen. 2009. Evolution of thermal physiology in Liolaemus lizards: adaptation, phylogenetic inertia, and niche tracking. Am. Nat. 174:204–220.
+
+Kopperud, B. T., J. Pienaar, K. L. Voje, S. H. Orzack, and T. F. Hansen. 2020. Slouch: Stochastic Linear Ornstein-Uhlenbeck Comparative Hypotheses. R package version 2.1.4.
+
+Toljagić, O., K. L. Voje, M. Matschiner, L. H. Liow, and T. F. Hansen. 2017. Millions of Years Behind: Slow Adaptation of Ruminants to Grasslands. Systematic Biology 67:145–157.
+
+Uyeda, J. C., and L. J. Harmon. 2020. R Package treeplyr.
 

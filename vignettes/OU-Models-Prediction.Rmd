@@ -14,25 +14,20 @@ knitr::opts_chunk$set(
 )
 ```
 
-# OU Models with Prediction
 This vignette walks you through the basic steps of running an analysis in Blouch including prediction of unknown/fossil values.
 
 ## Setup
 
-Here we load the R packages used to setup the data for blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
+Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
 ```{r Setup}
 rm(list=ls())
 library(devtools)
 #devtools::install_github("Mark-Grabowski/blouch")
 #library(blouch)
 
-#devtools::install_github("Mark-Grabowski/blouch"
-#                         ,ref="master"
-#                         ,auth_token = "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"
-#                         )
 library(blouch)
 load_all()
-# Load necessary packages
+## Load necessary packages
 library(ape)
 library(slouch)
 library(rstan)
@@ -49,7 +44,7 @@ rstan_options(auto_write = TRUE)
 
 ```
 
-## Scale Tree
+### Load Data
 For the purposes of illustrating the software, we will use a dataset of ruminant brain and body sizes bundled with the Slouch package (Kopperud et al. 2020) and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the brain and body data.
 
 ```{r}
@@ -63,8 +58,9 @@ data(neocortex)
 ## Plot the tree
 plot(ladderize(phy), cex = 0.6)
 ```
-## Data Prep
-We will use the treeplyr function make.treedata to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. 
+
+### Combine data and tree
+Next we will use the treeplyr package (Uyeda and Harmon, 2014) make.treedata function to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages.
 
 
 ```{r}
@@ -98,8 +94,9 @@ ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(
 ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_log_mean-mean(ruminant.extant.trdata$dat$body_mass_g_log_mean)
 
 ```
-## Rescale Tree
-Next, we rescale Tree to Height = 1
+
+### Rescale Tree
+Next, we rescale tree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
 ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
@@ -111,8 +108,8 @@ max(branching.times(ruminant.extant.trdata$phy))
 
 ```
 
-## Running Blouch Data Setup Function - 1st trait is adapting to 2
-Here we are finally setting up our dataset to run in Blouch, using the blouchOUPredict.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) for more on both of these models.
+### Running Blouch Data Setup Function
+Here we are finally setting up our dataset to run in Blouch, using the blouchOUPredict.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) and below for more on both of these models. Here the first trait is adapting towards the second for the adaptive model.
 ```{r}
 #names.traits<-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
 names.traits<-c("brain_mass_g_log_mean","bodycentered","brain_se_squared","body_se_squared") #With ME
@@ -126,14 +123,16 @@ stan_adaptive_data<-stan_data[[2]]
 
 ```
 
-## Explore Priors: Slope and intercept
+## Explore Priors
 Priors must be set manually in the Stan Blouch code (e.g. blouchOUPredict_v1.stan), but we use the same priors for this analysis as in the OU-Models vignette. Go back and look at that vignette if you need to explore the effect of your priors - do not use the default values.
 
-## Direct EFfect Model for Prediction
+## Direct Effect Model for Prediction
 Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch.
 
 Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints. We will be using this model to predict unknown values as assuming an allometric relationship may be more valid in prediction than an adaptive relationship.
 
+
+### Run Model
 Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
 
 ```{r}
@@ -141,6 +140,7 @@ fit.fos.direct<- rstan::sampling(stanmodels$blouchOUPredict_v1,data = stan_const
 
 ```
 
+### Parameter Estimates
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
 
 ```{r}
@@ -152,12 +152,9 @@ posterior.fit.fos.direct <- rstan::extract(fit.fos.direct)
 
 Here alpha is the intercept and beta is the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y, the root mean square error of the predictions including the effects of phylogeny and adpatation in the predictions RMSE, the root mean square error only based on the prediction using the regression line RMSE_mu, and finally the fossil/unknown prediction mean(s) X_pred_fos_means.
 
-
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
-Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
-
-## Trace and Density Plots for estimated parameters
+### Trace and Density Plots for estimated parameters
 We can look at how our procedures using the standard trace and density plots from Rstan 
 
 ```{r}
@@ -171,7 +168,7 @@ stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
 ## Plots
 
 Let's make some plots of our results
-
+### Load Plot Packages
 ```{r}
 library(ggsci)
 library(ggplot2)
@@ -179,7 +176,7 @@ library(plotly)
 
 ```
 
-## Data Setup for Plots
+### Data Setup for Plots
 ```{r}
 old.par <- par(mar = c(0, 0, 0, 0))
 par(old.par)
@@ -199,7 +196,7 @@ merged.data<-rbind(extant.data,fos.predictions)
 
 ```
 
-## Make Plots
+### Make Plots
 ```{r}
 brbo.plot<-ggplot(merged.data,aes(y=log_brain))+
 geom_point(aes(x=log_body_pred,color=Status),size=2.5,alpha=0.8)+
@@ -218,6 +215,8 @@ brbo.plot+scale_color_aaas()
 
 ## Inverse Regression
 Here we will assign one taxa as the fossil species to be predicted, and use Inverse Regression to predict an unknown value based on the combination of phylogeny and allometry. Here we are regression Y - brain size on X body size, and then predicting a fossil Y (brain mass) based on its X (body mass). Finally we mean scale the X data (here body mass) so that the average across species is 0.
+
+### Combine data and tree
 
 ```{r}
 ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
@@ -242,7 +241,8 @@ ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(
 ruminant.extant.trdata$dat$bodycentered<-ruminant.extant.trdata$dat$body_mass_g_log_mean-mean(ruminant.extant.trdata$dat$body_mass_g_log_mean)
 
 ```
-## Rescale Tree
+
+### Rescale Tree
 Next, we rescale Tree to Height = 1
 ```{r}
 l.tree<-max(branching.times(ruminant.trdata$phy))
@@ -255,7 +255,7 @@ max(branching.times(ruminant.extant.trdata$phy))
 
 ```
 
-## Running Blouch Data Setup Function - 1st trait is adapting to 2
+### Running Blouch Data Setup Function
 Here we are finally setting up our dataset to run in Blouch, using the blouchOUPredict.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) for more on both of these models.
 ```{r}
 
@@ -276,11 +276,14 @@ Now that we have formatted our data and supplied reasonable priors for the vario
 
 Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints. We will be using this model to predict unknown values as assuming an allometric relationship may be more valid in prediction than an adaptive relationship.
 
+### Run Model
 Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
 ```{r}
 fit.fos.direct<- rstan::sampling(stanmodels$blouchOUPredict_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),save_warmup=FALSE)
 
 ```
+
+### Parameter Estimates
 Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
 
 ```{r}
@@ -293,7 +296,7 @@ Here alpha is the intercept and beta is the slope of the direct effect relations
 
 Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
 
-## Trace and Density Plots for estimated parameters
+### Trace and Density Plots for estimated parameters
 We can look at how our procedures using the standard trace and density plots from Rstan 
 
 ```{r}
@@ -306,6 +309,8 @@ stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
 
 ## Inverse Regression Plots
 Let's make some plots of our results
+
+### Load Plot Packages
 ```{r}
 library(ggsci)
 library(ggplot2)
@@ -313,7 +318,7 @@ library(ggplot2)
 
 ```
 
-## Data setup for plots
+### Data setup for plots
 ```{r}
 old.par <- par(mar = c(0, 0, 0, 0))
 par(old.par)
@@ -333,7 +338,7 @@ merged.data<-rbind(extant.data,fos.predictions)
 
 ```
 
-## Make Plots
+### Make Plots
 ```{r}
 
 brbo.plot<-ggplot(merged.data,aes(x=log_body))+
@@ -351,4 +356,20 @@ brbo.plot+scale_color_aaas()
 
 ```
 
+Here the unknown/fossil prediction is in red, the known values are in grey, and the predicted known values are in blue.
+
+## References
+Grabowski, M., K. L. Voje, and T. F. Hansen. 2016. Evolutionary modeling and correcting for observation error support a 3/5 brain-body allometry for primates. J. Hum. Evol. 94:106–116.
+
+Gronau, Q. F., H. Singmann, and E.-J. Wagenmakers. 2020. bridgesampling: An R Package for Estimating Normalizing Constants. Journal of Statistical Software 92:1–29.
+
+Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for studying adaptation to a randomly evolving environment. Evolution 62:1965–1977.
+
+Labra, A., J. Pienaar, and T. F. Hansen. 2009. Evolution of thermal physiology in Liolaemus lizards: adaptation, phylogenetic inertia, and niche tracking. Am. Nat. 174:204–220.
+
+Kopperud, B. T., J. Pienaar, K. L. Voje, S. H. Orzack, and T. F. Hansen. 2020. Slouch: Stochastic Linear Ornstein-Uhlenbeck Comparative Hypotheses. R package version 2.1.4.
+
+Toljagić, O., K. L. Voje, M. Matschiner, L. H. Liow, and T. F. Hansen. 2017. Millions of Years Behind: Slow Adaptation of Ruminants to Grasslands. Systematic Biology 67:145–157.
+
+Uyeda, J. C., and L. J. Harmon. 2020. R Package treeplyr.
 

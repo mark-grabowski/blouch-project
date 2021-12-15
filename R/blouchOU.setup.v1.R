@@ -98,7 +98,19 @@ blouchOU.setup.v1<-function(trdata,names.traits){
                            #sigma2_y_scale = dist.values$sigma2_y_scale
                            )
 
-  return(list(stan_constraint_data,stan_adaptive_data))
+  stan_OU1_data<-list(N = n,
+                          Z = 1,
+                          Y = as.vector((pull(trdata$dat,names.traits[1]))),
+                          mv_response = mv.response,
+                          ta = as.matrix(ta),
+                          T_term = as.vector(T.term),
+                          tia = as.matrix(tia),
+                          tja = as.matrix(tja),
+                          tij = as.matrix(tij),
+                          Y_mean = mean(as.vector((pull(trdata$dat,names.traits[1]))))
+                      )
+  
+  return(list(stan_constraint_data,stan_adaptive_data,stan_OU1_data))
 }
 
 

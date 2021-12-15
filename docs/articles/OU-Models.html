@@ -89,14 +89,11 @@
 
     
     
-<div class="section level1">
-<h1 id="ou-models">OU Models<a class="anchor" aria-label="anchor" href="#ou-models"></a>
-</h1>
 <p>This vignette walks you through the basic streps of running an analysis in Blouch.</p>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
-<p>Here we load the R packages used to setup the data for blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: <a href="https://mc-stan.org/users/interfaces/rstan" class="external-link uri">https://mc-stan.org/users/interfaces/rstan</a></p>
+<p>Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: <a href="https://mc-stan.org/users/interfaces/rstan" class="external-link uri">https://mc-stan.org/users/interfaces/rstan</a></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span>list<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
@@ -106,7 +103,7 @@
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mark-grabowski/blouch">blouch</a></span><span class="op">)</span>
 <span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">load_all</a></span><span class="op">(</span><span class="op">)</span>
 <span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Loading <span style="color: #0000BB;">blouch</span></span>
-<span class="co"># Load necessary packages</span>
+<span class="co">## Load necessary packages</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://ape-package.ird.fr/" class="external-link">ape</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://github.com/kopperud/slouch" class="external-link">slouch</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/rstan/" class="external-link">rstan</a></span><span class="op">)</span>
@@ -142,6 +139,9 @@
 <span class="co">#options(mc.cores = parallel::detectCores())</span>
 <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>
 <span class="fu"><a href="https://mc-stan.org/rstan/reference/rstan_options.html" class="external-link">rstan_options</a></span><span class="op">(</span>auto_write <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<div class="section level3">
+<h3 id="load-data">Load Data<a class="anchor" aria-label="anchor" href="#load-data"></a>
+</h3>
 <p>For the purposes of illustrating the software, we will use a dataset of ruminant brain and body sizes bundled with the Slouch package (Kopperud et al. 2020) and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the brain and body data.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## Load the phylogenetic tree with annotation data</span>
@@ -154,7 +154,11 @@
 <span class="co">## Plot the tree</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/ladderize.html" class="external-link">ladderize</a></span><span class="op">(</span><span class="va">phy</span><span class="op">)</span>, cex <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/load%20data-1.png" width="700"></p>
-<p>Next we will use the treeplyr function make.treedata to combine the data and tree based on the “species” column, which has the taxa names. See <a href="https://github.com/uyedaj/treeplyr" class="external-link uri">https://github.com/uyedaj/treeplyr</a> for more on this package.Then we will finlter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. Finally we mean scale the X data (here body mass) so that the average across species is 0.</p>
+</div>
+<div class="section level3">
+<h3 id="combine-data-and-tree">Combine data and tree<a class="anchor" aria-label="anchor" href="#combine-data-and-tree"></a>
+</h3>
+<p>Next we will use the treeplyr package (Uyeda and Harmon, 2014) make.treedata function to combine the data and tree based on the “species” column, which has the taxa names. See <a href="https://github.com/uyedaj/treeplyr" class="external-link uri">https://github.com/uyedaj/treeplyr</a> for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. Finally we mean scale the X data (here body mass) so that the average across species is 0.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ruminant.trdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/treeplyr/man/make.treedata.html" class="external-link">make.treedata</a></span><span class="op">(</span><span class="va">phy</span>, <span class="va">neocortex</span>,name_column<span class="op">=</span><span class="st">"species"</span><span class="op">)</span>
 
@@ -166,22 +170,22 @@
 <span class="co">#Mean Scale</span>
 <span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">bodycentered</span><span class="op">&lt;-</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">-</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span><span class="op">$</span><span class="va">body_mass_g_log_mean</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="rescale-tree">Rescale Tree<a class="anchor" aria-label="anchor" href="#rescale-tree"></a>
-</h2>
-<p>Next, we rescale Tree to Height = 1</p>
+<div class="section level3">
+<h3 id="rescale-tree">Rescale Tree<a class="anchor" aria-label="anchor" href="#rescale-tree"></a>
+</h3>
+<p>Next, we rescale rree to Height = 1</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">l.tree</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/branching.times.html" class="external-link">branching.times</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">)</span><span class="op">)</span>
 <span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">$</span><span class="va">edge.length</span><span class="op">&lt;-</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">$</span><span class="va">edge.length</span><span class="op">/</span><span class="va">l.tree</span> <span class="co">## rescale tree to height 1</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/ape/man/branching.times.html" class="external-link">branching.times</a></span><span class="op">(</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">phy</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="running-blouch-data-setup-function">Running Blouch Data Setup Function<a class="anchor" aria-label="anchor" href="#running-blouch-data-setup-function"></a>
-</h2>
-<p>Here we are finally setting up our dataset to run in Blouch, using the blouchOU.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptative models. See Grabowski et al. (2016) for more on both of these models. Here the first trait is adapting towards the second.</p>
+<div class="section level3">
+<h3 id="running-blouch-data-setup-function">Running Blouch Data Setup Function<a class="anchor" aria-label="anchor" href="#running-blouch-data-setup-function"></a>
+</h3>
+<p>Here we are finally setting up our dataset to run in Blouch, using the blouchOU.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. The list produced by this function has data formatted to run both the direct effect (constraint) models, adaptive models, and OU1 models. See Grabowski et al. (2016) and below for more on both of these models. Here the first trait is adapting towards the second for the adaptive model.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/source.html" class="external-link">source</a></span><span class="op">(</span><span class="st">"/Users/markgrabowski/Documents/Academic/Research/R Packages/blouch/R/blouchOU.setup.v1.R"</span><span class="op">)</span>
 <span class="co">#names.traits&lt;-c("brain_mass_g_log_mean","bodycentered","NA","NA") #With ME</span>
 <span class="va">names.traits</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"brain_mass_g_log_mean"</span>,<span class="st">"bodycentered"</span>,<span class="st">"brain_se_squared"</span>,<span class="st">"body_se_squared"</span><span class="op">)</span> <span class="co">#With ME</span>
 
@@ -190,14 +194,19 @@
 <span class="va">stan_data</span><span class="op">&lt;-</span><span class="fu"><a href="../reference/blouchOU.setup.v1.html">blouchOU.setup.v1</a></span><span class="op">(</span><span class="va">ruminant.trdata</span>,<span class="va">names.traits</span><span class="op">)</span>
 
 <span class="va">stan_constraint_data</span><span class="op">&lt;-</span><span class="va">stan_data</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
-<span class="va">stan_adaptive_data</span><span class="op">&lt;-</span><span class="va">stan_data</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></code></pre></div>
+<span class="va">stan_adaptive_data</span><span class="op">&lt;-</span><span class="va">stan_data</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>
+<span class="va">stan_OU1_data</span><span class="op">&lt;-</span><span class="va">stan_data</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
-<h2 id="explore-priors-slope-and-intercept">Explore Priors: Slope and intercept<a class="anchor" aria-label="anchor" href="#explore-priors-slope-and-intercept"></a>
+<h2 id="explore-priors">Explore Priors<a class="anchor" aria-label="anchor" href="#explore-priors"></a>
 </h2>
+<div class="section level3">
+<h3 id="slope-and-intercept">Slope and intercept<a class="anchor" aria-label="anchor" href="#slope-and-intercept"></a>
+</h3>
 <p>Priors must be set manually in the Stan Blouch code (e.g. blouchOU_v1.stan). This is not a big deal, but we have to explore how our data leads to weak or stong prors beforehand. Do not use the default priors of Blouch as these are only appropriate for a smaller range of datasets.</p>
-<p>First lets look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.</p>
-<p>Here we are using the OLS intercept and slope for the regression of brain on body for our dataset as the mean prior values, but we should look at how our standard deviation (0.5 and 1.0 below) affects the region explored by Blouch.</p>
+<p>First let’s look at how our priors for the intercept and slope look given the dispersion of the data. Blouch is setup to use the OLS slope and intercept as the mean parameter values of the normal distribution as a prior, so here we just want to figure out the most appropriate standard deviation of the slope and intercept terms.</p>
+<p>In this example we are using the OLS intercept and slope for the regression of brain on body for our dataset as the mean prior values, but we should look at how our standard deviation (0.5 and 1.0 below) affects the region explored by Blouch.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://nanx.me/ggsci/" class="external-link">ggsci</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span>
@@ -215,7 +224,7 @@
 
 <span class="va">slope.prior.plot</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/Explore%20Priors-1.png" width="700"></p>
-<p>This first prior is far two wide, so let’s use a stronger prior (0.5 and 0.4 below).</p>
+<p>This first prior is far too wide, so let’s use a stronger prior (0.5 and 0.4 below).</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">intercept_test</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>,<span class="va">stan_adaptive_data</span><span class="op">$</span><span class="va">ols_intercept</span>,<span class="fl">0.5</span><span class="op">)</span>
 <span class="co">#slope_test&lt;-rnorm(100,ols.slope,0.5)</span>
@@ -230,22 +239,23 @@
   <span class="fu"><a href="https://nanx.me/ggsci/reference/scale_npg.html" class="external-link">scale_color_npg</a></span><span class="op">(</span><span class="op">)</span>
 
 <span class="va">slope.prior.plot</span></code></pre></div>
-<p><img src="OU-Models_files/figure-html/Explore%20Priors%202-1.png" width="700"> This looks pretty good. To enter these priors in Blouch, we would open the Blouch Stan code (e.g. blouchOU_v1.stan) and change the Priors code within the model block. Below we have set the intercept (alpha) and slope (beta) to have the best priors found above.</p>
+<p><img src="OU-Models_files/figure-html/Explore%20Priors%202-1.png" width="700"></p>
+<p>This looks pretty good. To enter these priors in Blouch, we would open the Blouch Stan code (e.g. blouchOU_v1.stan) and change the Priors code within the model block. Below is the block of code from blouchOU_v1.st where we have set the intercept (alpha) and slope (beta) to have the best priors found above.</p>
+</div>
 <div class="section level3">
 <h3 id="priors-block">Priors block<a class="anchor" aria-label="anchor" href="#priors-block"></a>
 </h3>
 <p>//Priors a ~ lognormal(1.0,1.0); //sigma2_y ~ exponential(0.1); alpha ~ normal(ols_intercept,0.5); //Intercept beta ~ normal(ols_slope, 0.4); //Slope</p>
 </div>
-</div>
-<div class="section level2">
-<h2 id="explore-priors-half-life">Explore Priors: Half-life<a class="anchor" aria-label="anchor" href="#explore-priors-half-life"></a>
-</h2>
+<div class="section level3">
+<h3 id="half-life">Half-life<a class="anchor" aria-label="anchor" href="#half-life"></a>
+</h3>
 <p>Since our tree is scaled to unit length = 1, and the original phylogeny is ~27 Ma, we would like our half-life prior to be allow for very quick adaptation (e.g &lt; 1 Ma, which equals &lt; 0.04 in tree units), and very slow adaptation (e.g. &gt; 27 Ma, which equals 1 in tree units). Thus, we will the 10% quantile of the distrubution at 0.04 and 90% at 1.</p>
-<p>We can explore how changing our parameters on the priors affect half-life using the code below. The values 1.25 and 1.25 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.</p>
+<p>We can explore how changing our parameters on the priors affect half-life using the code below. The values 1.0 and 1.0 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">###########################################</span>
 <span class="co">#Log-normal prior for half-life - based on alpha</span>
-<span class="va">par.alpha</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>meanlog<span class="op">=</span><span class="fl">1.25</span>, sdlog<span class="op">=</span><span class="fl">1.25</span><span class="op">)</span> 
+<span class="va">par.alpha</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>meanlog<span class="op">=</span><span class="fl">1.0</span>, sdlog<span class="op">=</span><span class="fl">1.0</span><span class="op">)</span> 
 
 <span class="va">samp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">rlnorm</a></span><span class="op">(</span><span class="fl">10000</span>, mean<span class="op">=</span><span class="va">par.alpha</span><span class="op">$</span><span class="va">meanlog</span>, sd<span class="op">=</span><span class="va">par.alpha</span><span class="op">$</span><span class="va">sdlog</span><span class="op">)</span>
 <span class="va">samp</span><span class="op">&lt;-</span><span class="va">samp</span><span class="op">[</span><span class="va">samp</span><span class="op">&gt;=</span><span class="fl">0</span><span class="op">]</span>
@@ -255,13 +265,13 @@
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - </span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.02968153</span>
+<span class="co">#&gt; [1] 0.07236748</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 684.4162</span>
+<span class="co">#&gt; [1] 106.4072</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 23.35281</span>
+<span class="co">#&gt; [1] 9.578159</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.001012757</span>
+<span class="co">#&gt; [1] 0.006514101</span>
 
 <span class="va">quantiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.01</span>, <span class="fl">0.025</span>,<span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>,<span class="fl">0.90</span>,<span class="fl">0.95</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="co">#hls &lt;- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)</span>
@@ -269,28 +279,32 @@
 <span class="va">qs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="va">samp</span>, <span class="va">quantiles</span><span class="op">)</span> <span class="co">## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">qs</span>, <span class="fl">2</span><span class="op">)</span>
 <span class="co">#&gt;    0%    1%  2.5%   10%   25%   50%   75%   90%   95% 97.5%   99%  100% </span>
-<span class="co">#&gt;  0.00  0.01  0.02  0.04  0.09  0.20  0.47  1.02  1.60  2.39  3.68 23.35</span>
+<span class="co">#&gt;  0.01  0.03  0.04  0.07  0.13  0.26  0.50  0.93  1.31  1.79  2.64  9.58</span>
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="va">samp</span><span class="op">)</span>, breaks<span class="op">=</span><span class="fl">10000</span>, main<span class="op">=</span><span class="st">"Prior density of half-life"</span>,xlim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>v<span class="op">=</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.04</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span>, col<span class="op">=</span><span class="st">"red"</span>, lwd<span class="op">=</span><span class="fl">2</span>, lty<span class="op">=</span><span class="fl">2</span><span class="op">)</span> <span class="co">#Lines for 1 Ma and length of tree (27 Ma) - </span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/unnamed-chunk-5-2.png" width="700"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">########################################</span></code></pre></div>
-<p>This looks pretty good. Again to enter these priors, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the priors on a, log mean and log sd to</p>
+<p>This looks pretty good. Again to enter these priors, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the priors on a, log mean and log sd to the values as above.</p>
 </div>
-<div class="section level2">
-<h2 id="priors-block-1">Priors Block<a class="anchor" aria-label="anchor" href="#priors-block-1"></a>
-</h2>
+<div class="section level3">
+<h3 id="priors-block-1">Priors Block<a class="anchor" aria-label="anchor" href="#priors-block-1"></a>
+</h3>
 <p>//Priors a ~ lognormal(1.0,1.0); //a = log(2)/half-life //sigma2_y ~ exponential(0.1); // alpha ~ normal(ols_intercept,0.5); //Intercept beta ~ normal(ols_slope, 0.4); //Slope</p>
 <p>The other parameter we have to set is the sigma2_y parameter, but in the default case it is simply a uniform distribution with a lower limt of 0 and an upper limit equal to 4 times the variance of Y. In Stan, uniform priors are defined in the parmeters block and given their limits in this block:</p>
 <p>parameters { real &lt;lower = 0&gt; a; real &lt;lower = 0, upper = variance(Y)*4&gt; sigma2_y; //Added to limit the variance real alpha; //OU alpha vector[Z] beta; //OU beta</p>
 <p>In the Priors code within the model block, they are then not given a prior distribution. //Priors a ~ lognormal(1.0,1.0); //a = log(2)/half-life //sigma2_y ~ exponential(0.1); // alpha ~ normal(ols_intercept,0.5); //Intercept beta ~ normal(ols_slope, 0.4); //Slope</p>
+</div>
+<div class="section level3">
+<h3 id="sigma2_y">Sigma2_y<a class="anchor" aria-label="anchor" href="#sigma2_y"></a>
+</h3>
 <p>If we wanted to explore how sigma2_y prior compares to our expectations we could use the code below, but for the example we will use a uniform prior as discussed above.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/twolodzko/extraDistr" class="external-link">extraDistr</a></span><span class="op">)</span>
 <span class="co">###########################################</span>
 <span class="co">#Normal - based on alpha</span>
-<span class="va">par.sigma2y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sigma<span class="op">=</span><span class="fl">0.1</span><span class="op">)</span>
+<span class="va">par.sigma2y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sigma<span class="op">=</span><span class="fl">1.0</span><span class="op">)</span>
 
 <span class="va">samp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/extraDistr/man/HalfCauchy.html" class="external-link">rhcauchy</a></span><span class="op">(</span><span class="fl">10000</span>, sigma<span class="op">=</span><span class="va">par.sigma2y</span><span class="op">$</span><span class="va">sigma</span><span class="op">)</span>
 
@@ -299,21 +313,23 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - </span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.0001814935</span>
+<span class="co">#&gt; [1] 0.0002841916</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 598.3354</span>
+<span class="co">#&gt; [1] 5008.52</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 3819.13</span>
+<span class="co">#&gt; [1] 2439.014</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.001158459</span>
+<span class="co">#&gt; [1] 0.0001383936</span>
 
 <span class="va">quantiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.01</span>, <span class="fl">0.025</span>,<span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.90</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="co">#hls &lt;- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)</span>
 <span class="co">#hls&lt;-hls[hls&gt;=0]</span>
 <span class="va">qs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">samp</span>, <span class="va">quantiles</span><span class="op">)</span> <span class="co">## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">qs</span>, <span class="fl">2</span><span class="op">)</span>
-<span class="co">#&gt;     0%     1%   2.5%    10%    25%    50%    75%    90%  97.5%    99%   100% </span>
-<span class="co">#&gt;   0.00   0.00   0.00   0.02   0.04   0.10   0.23   0.61   2.34   5.63 598.34</span>
+<span class="co">#&gt;      0%      1%    2.5%     10%     25%     50%     75%     90%   97.5%     99% </span>
+<span class="co">#&gt;    0.00    0.02    0.04    0.15    0.41    0.99    2.36    6.34   26.09   66.65 </span>
+<span class="co">#&gt;    100% </span>
+<span class="co">#&gt; 5008.52</span>
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">samp</span><span class="op">/</span><span class="op">(</span><span class="fl">2</span><span class="op">*</span><span class="fl">2</span><span class="op">)</span>, breaks<span class="op">=</span><span class="fl">10000</span>, main<span class="op">=</span><span class="st">"Prior density of Vy"</span>,xlim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/unnamed-chunk-6-2.png" width="700"></p>
@@ -321,14 +337,22 @@
 <code class="sourceCode R"><span class="co">#abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - </span>
 <span class="co">########################################</span></code></pre></div>
 </div>
+</div>
 <div class="section level2">
-<h2 id="direct-effect-models">Direct Effect Models<a class="anchor" aria-label="anchor" href="#direct-effect-models"></a>
+<h2 id="direct-effect-model">Direct Effect Model<a class="anchor" aria-label="anchor" href="#direct-effect-model"></a>
 </h2>
 <p>Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch.</p>
 <p>Now lets do a simple analysis. Blouch implements the model of constrained evolution (Hansen &amp; Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.</p>
+<div class="section level3">
+<h3 id="run-model">Run Model<a class="anchor" aria-label="anchor" href="#run-model"></a>
+</h3>
 <p>Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit.direct</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchOU_v1</span>,data <span class="op">=</span> <span class="va">stan_constraint_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="parameter-estimates">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates"></a>
+</h3>
 <p>Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#Lets look at the parameter estimates</span>
@@ -338,15 +362,15 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;           mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a         5.41    0.24 8.19 0.42 1.42 2.73 5.78 28.97  1152    1</span>
-<span class="co">#&gt; hl        0.40    0.01 0.47 0.02 0.12 0.25 0.49  1.66  1867    1</span>
-<span class="co">#&gt; alpha     5.06    0.00 0.04 4.97 5.03 5.06 5.08  5.14  1711    1</span>
-<span class="co">#&gt; beta[1]   0.57    0.00 0.02 0.53 0.55 0.57 0.58  0.61  2358    1</span>
-<span class="co">#&gt; vy        0.02    0.00 0.01 0.01 0.01 0.01 0.02  0.04  2528    1</span>
-<span class="co">#&gt; r_squared 0.96    0.00 0.00 0.95 0.96 0.96 0.96  0.97  1387    1</span>
-<span class="co">#&gt; sigma2_y  0.15    0.01 0.22 0.02 0.05 0.08 0.16  0.78  1039    1</span>
+<span class="co">#&gt; a         5.74    0.26 8.45 0.37 1.40 2.92 6.29 31.51  1036    1</span>
+<span class="co">#&gt; hl        0.41    0.01 0.52 0.02 0.11 0.24 0.50  1.85  1522    1</span>
+<span class="co">#&gt; alpha     5.05    0.00 0.04 4.97 5.03 5.05 5.08  5.13  1886    1</span>
+<span class="co">#&gt; beta[1]   0.57    0.00 0.02 0.53 0.56 0.57 0.58  0.61  2051    1</span>
+<span class="co">#&gt; vy        0.02    0.00 0.01 0.01 0.01 0.01 0.02  0.05  1963    1</span>
+<span class="co">#&gt; r_squared 0.96    0.00 0.00 0.95 0.96 0.96 0.96  0.97  1190    1</span>
+<span class="co">#&gt; sigma2_y  0.16    0.01 0.23 0.02 0.05 0.08 0.16  0.79   931    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 13:40:32 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 15 15:32:29 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -356,9 +380,9 @@
 <p>Here alpha is the intercept and beta is the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.</p>
 <p>Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.</p>
 </div>
-<div class="section level2">
-<h2 id="trace-and-density-plots-for-estimated-parameters">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters"></a>
-</h2>
+<div class="section level3">
+<h3 id="trace-and-density-plots-for-estimated-parameters">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters"></a>
+</h3>
 <p>We can look at how our procedures using the standard trace and density plots from Rstan</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
@@ -372,13 +396,21 @@
 <code class="sourceCode R"><span class="co">#3X8</span></code></pre></div>
 <p>These look good.</p>
 </div>
+</div>
 <div class="section level2">
 <h2 id="adaptive-model">Adaptive Model<a class="anchor" aria-label="anchor" href="#adaptive-model"></a>
 </h2>
 <p>Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.</p>
+<div class="section level3">
+<h3 id="run-model-1">Run Model<a class="anchor" aria-label="anchor" href="#run-model-1"></a>
+</h3>
 <p>Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit.adaptive</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchOU_v1</span>,data <span class="op">=</span> <span class="va">stan_adaptive_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="parameter-estimates-1">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates-1"></a>
+</h3>
 <p>Again, lets look at the parameter estimates</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"r_squared"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span>
@@ -386,18 +418,18 @@
 <span class="co">#&gt; 2 chains, each with iter=4000; warmup=2000; thin=1; </span>
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;               mean se_mean    sd  2.5%   25%   50%   75%  97.5% n_eff Rhat</span>
-<span class="co">#&gt; a            41.97    0.52 21.58 15.09 26.83 37.04 51.09 100.43  1711    1</span>
-<span class="co">#&gt; hl            0.02    0.00  0.01  0.01  0.01  0.02  0.03   0.05  1979    1</span>
-<span class="co">#&gt; alpha         5.06    0.00  0.03  4.99  5.04  5.06  5.08   5.12  2302    1</span>
-<span class="co">#&gt; beta[1]       0.59    0.00  0.02  0.55  0.57  0.58  0.60   0.63  2889    1</span>
-<span class="co">#&gt; beta_evol[1]  5.06    0.00  0.00  5.05  5.06  5.06  5.06   5.06  4031    1</span>
-<span class="co">#&gt; beta_evol[2]  0.57    0.00  0.00  0.57  0.57  0.57  0.57   0.57  2627    1</span>
-<span class="co">#&gt; vy            0.01    0.00  0.00  0.00  0.00  0.00  0.01   0.02  3340    1</span>
-<span class="co">#&gt; r_squared     0.96    0.00  0.00  0.95  0.96  0.96  0.96   0.97  1686    1</span>
-<span class="co">#&gt; sigma2_y      0.45    0.01  0.48  0.01  0.11  0.28  0.63   1.85  1774    1</span>
+<span class="co">#&gt;               mean se_mean    sd  2.5%   25%   50%   75% 97.5% n_eff Rhat</span>
+<span class="co">#&gt; a            42.06    0.50 21.50 15.99 27.26 37.10 50.99 98.81  1818    1</span>
+<span class="co">#&gt; hl            0.02    0.00  0.01  0.01  0.01  0.02  0.03  0.04  2055    1</span>
+<span class="co">#&gt; alpha         5.06    0.00  0.03  5.00  5.04  5.06  5.08  5.12  2630    1</span>
+<span class="co">#&gt; beta[1]       0.59    0.00  0.02  0.55  0.57  0.58  0.60  0.63  2610    1</span>
+<span class="co">#&gt; beta_evol[1]  5.06    0.00  0.00  5.05  5.06  5.06  5.06  5.06  4043    1</span>
+<span class="co">#&gt; beta_evol[2]  0.57    0.00  0.00  0.57  0.57  0.57  0.57  0.57  2525    1</span>
+<span class="co">#&gt; vy            0.01    0.00  0.00  0.00  0.00  0.00  0.01  0.02  3358    1</span>
+<span class="co">#&gt; r_squared     0.96    0.00  0.00  0.95  0.96  0.96  0.96  0.97  1831    1</span>
+<span class="co">#&gt; sigma2_y      0.47    0.01  0.48  0.01  0.12  0.31  0.66  1.83  1884    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 13:45:52 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 15 15:37:55 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -406,6 +438,10 @@
 <span class="va">ext.fit.adaptive</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit.adaptive</span><span class="op">)</span></code></pre></div>
 <p>Here alpha is the intercept and beta is the optimal slope of the adaptive regression between brain mass and body mass, while beta_evol is the slope of the evolutionary regression. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.</p>
 <p>Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.</p>
+</div>
+<div class="section level3">
+<h3 id="trace-and-density-plots-for-estimated-parameters-1">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters-1"></a>
+</h3>
 <p>And explore the trance and density plots</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
@@ -418,25 +454,32 @@
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#3X8</span></code></pre></div>
 </div>
+</div>
 <div class="section level2">
 <h2 id="model-comparison-using-bayes-factors">Model Comparison using Bayes Factors<a class="anchor" aria-label="anchor" href="#model-comparison-using-bayes-factors"></a>
 </h2>
-<p>While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package (CITATION).</p>
+<p>While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes a direct effect model rather than af adaptive model.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R">
 <span class="va">lml.fit.direct</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.direct</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">lml.fit.adaptive</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">BF_att</span> <span class="op">&lt;-</span> <span class="fu">bridgesampling</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bf.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">lml.fit.direct</span>, <span class="va">lml.fit.adaptive</span><span class="op">)</span>
 <span class="va">BF_att</span>
-<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.adaptive: 33.03245</span></code></pre></div>
-<p>We find that the data is 5.2 more likely under a model that assumes a direct effect model rather than af adaptive model.</p>
+<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.adaptive: 32.45303</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="brownian-model">Brownian Model<a class="anchor" aria-label="anchor" href="#brownian-model"></a>
 </h2>
 <p>Blouch can also fit a Brownian motion model to the data, which can then be compared to the other models using Bayes Factors. Note that while this is possible with Blouch, it is assuming your data follows this model of evolution, rather than testing for it using the Direct Effect or Adaptive models above. Here we again use the stan_constraint_data type but a new Stan function. Note that priors on the intercept and slope should be set as previously, but sigma2_y no longer has an upper range of values in its declaration.</p>
+<div class="section level3">
+<h3 id="run-model-2">Run Model<a class="anchor" aria-label="anchor" href="#run-model-2"></a>
+</h3>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit.BM</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchBM_v1</span>,data <span class="op">=</span> <span class="va">stan_constraint_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="parameter-estimates-2">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates-2"></a>
+</h3>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit.BM</span>,pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"r_squared"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; Inference for Stan model: blouchBM_v1.</span>
@@ -444,12 +487,12 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;           mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; alpha     5.05       0 0.08 4.88 5.00 5.05 5.10  5.21  2990    1</span>
-<span class="co">#&gt; beta[1]   0.56       0 0.02 0.51 0.54 0.56 0.57  0.60  3531    1</span>
-<span class="co">#&gt; r_squared 0.99       0 0.01 0.98 0.99 0.99 0.99  0.99  2512    1</span>
-<span class="co">#&gt; sigma2_y  0.03       0 0.01 0.01 0.02 0.02 0.03  0.05  2909    1</span>
+<span class="co">#&gt; alpha     5.05       0 0.08 4.90 5.00 5.05 5.10  5.21  2970    1</span>
+<span class="co">#&gt; beta[1]   0.56       0 0.02 0.51 0.54 0.56 0.57  0.60  3156    1</span>
+<span class="co">#&gt; r_squared 0.99       0 0.01 0.98 0.99 0.99 0.99  0.99  2431    1</span>
+<span class="co">#&gt; sigma2_y  0.03       0 0.01 0.01 0.02 0.02 0.03  0.05  2814    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Sun Dec 12 13:48:49 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 15 15:40:34 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -457,22 +500,28 @@
 <span class="co">#For downstream analysis and plots</span>
 <span class="va">ext.fit.BM</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit.BM</span><span class="op">)</span></code></pre></div>
 <p>Parameters follow on as above, with beta being the Brownian slope.</p>
+</div>
+<div class="section level3">
+<h3 id="trace-and-density-plots-for-estimated-parameters-2">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters-2"></a>
+</h3>
 <p>And explore the trance and density plots</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-traceplot.html" class="external-link">traceplot</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="OU-Models_files/figure-html/unnamed-chunk-16-1.png" width="700"></p>
+<p><img src="OU-Models_files/figure-html/BM%20Trace%20and%20Density%20Plots-1.png" width="700"></p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="OU-Models_files/figure-html/unnamed-chunk-16-2.png" width="700"></p>
+<p><img src="OU-Models_files/figure-html/BM%20Trace%20and%20Density%20Plots-2.png" width="700"></p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#3X8</span></code></pre></div>
 <p>Looking Good!</p>
 </div>
+</div>
 <div class="section level2">
 <h2 id="direct-vs--bm-model-comparison-using-bf">Direct vs. BM Model Comparison using BF<a class="anchor" aria-label="anchor" href="#direct-vs--bm-model-comparison-using-bf"></a>
 </h2>
+<p>While using a type of model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes a direct effect model rather than af Brownian-motion model.</p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/quentingronau/bridgesampling" class="external-link">bridgesampling</a></span><span class="op">)</span>
 <span class="va">lml.fit.direct</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.direct</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
@@ -480,21 +529,76 @@
 
 <span class="va">BF_att</span> <span class="op">&lt;-</span> <span class="fu">bridgesampling</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bf.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">lml.fit.direct</span>, <span class="va">lml.fit.BM</span><span class="op">)</span>
 <span class="va">BF_att</span>
-<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.BM: 1.31051</span></code></pre></div>
-<p>Here the direct fit model has a Bayes Factor of 0.7 over the BM model, which makes sense for this data as the estimated phylogenetic half life is quite long, 65% the length of the phylogeny.</p>
+<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.BM: 1.27957</span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="ou1">OU1<a class="anchor" aria-label="anchor" href="#ou1"></a>
+</h2>
+<p>Finally, Blouch can fit a model with only a single intercept/optimum, the half-life of which can be interpreted as a measure of phylogenetic effect (see Hansen et al. 2008). This model is a little different from the previous models as there are no predictors.</p>
+<div class="section level3">
+<h3 id="run-model-3">Run Model<a class="anchor" aria-label="anchor" href="#run-model-3"></a>
+</h3>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fit.OU1</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchOU1_v1</span>,data <span class="op">=</span> <span class="va">stan_OU1_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="parameter-estimates-3">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates-3"></a>
+</h3>
+<p>Lets look at the parameter estimates</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit.OU1</span>,pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; Inference for Stan model: blouchOU1_v1.</span>
+<span class="co">#&gt; 2 chains, each with iter=4000; warmup=2000; thin=1; </span>
+<span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;           mean se_mean    sd 2.5%  25%  50%   75% 97.5% n_eff Rhat</span>
+<span class="co">#&gt; a         0.25    0.01  0.31 0.01 0.05 0.13  0.33  1.10  3126    1</span>
+<span class="co">#&gt; hl       12.44    0.37 17.64 0.63 2.09 5.14 14.11 70.07  2229    1</span>
+<span class="co">#&gt; alpha     5.11    0.00  0.36 4.41 4.87 5.12  5.36  5.82  6362    1</span>
+<span class="co">#&gt; vy        7.68    0.23 10.94 0.60 1.46 3.17  8.55 42.06  2288    1</span>
+<span class="co">#&gt; sigma2_y  0.97    0.01  0.32 0.52 0.75 0.91  1.11  1.75  2502    1</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 15 15:42:43 2021.</span>
+<span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
+<span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
+<span class="co">#&gt; convergence, Rhat=1).</span>
+
+<span class="co">#pairs(fit.OU1,pars = c("a","hl","alpha","vy","sigma","sigma2_y"))</span>
+
+<span class="co">#For downstream analysis and plots</span>
+<span class="va">ext.fit.OU1</span> <span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">fit.OU1</span><span class="op">)</span></code></pre></div>
+<p>Parameters are the same as above, but alpha here is the phylogenetically informed intercept and hl here is the estimate of phylogenetic effect. We can see that the half-life is many multiples tree length, meaning brain mass is evolving as if by a Brownian-motion process when no predictors are included in the model. See Hansen et al. (2008) and Labra et al. (2009) for more on this effect, but if half-life = 0, there is no influence of the past, and all species are independent, and if half-life = infinity, there is no centralizing tendency, and the trait evolves as if by Brown- ian motion (Labra et al. 2009).</p>
+</div>
+<div class="section level3">
+<h3 id="trace-and-density-plots-for-estimated-parameters-3">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters-3"></a>
+</h3>
+<p>We can look at how our procedures using the standard trace and density plots from Rstan</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
+
+<span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-traceplot.html" class="external-link">traceplot</a></span><span class="op">(</span><span class="va">fit.OU1</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p><img src="OU-Models_files/figure-html/OU1%20Trace%20and%20Density%20Pltos-1.png" width="700"></p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.OU1</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p><img src="OU-Models_files/figure-html/OU1%20Trace%20and%20Density%20Pltos-2.png" width="700"></p>
+<p>These look good.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a>
 </h2>
 <p>Let’s make some plots of our results</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="section level3">
+<h3 id="load-plot-packages">Load Plot Packages<a class="anchor" aria-label="anchor" href="#load-plot-packages"></a>
+</h3>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://nanx.me/ggsci/" class="external-link">ggsci</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="direct-effect-plot">Direct Effect Plot<a class="anchor" aria-label="anchor" href="#direct-effect-plot"></a>
-</h2>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="section level3">
+<h3 id="direct-effect-plot">Direct Effect Plot<a class="anchor" aria-label="anchor" href="#direct-effect-plot"></a>
+</h3>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y<span class="op">=</span><span class="va">brain_mass_g_log_mean</span>,x<span class="op">=</span><span class="va">bodycentered</span><span class="op">)</span><span class="op">)</span><span class="op">+</span>
   <span class="co">#geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.direct</span><span class="op">$</span><span class="va">alpha</span><span class="op">)</span>,slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.direct</span><span class="op">$</span><span class="va">beta</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span>,lty<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">+</span>
@@ -504,12 +608,12 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Direct Effect Model"</span><span class="op">)</span><span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"log Brain Mass (g)"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"log Body Mass (g)"</span><span class="op">)</span><span class="op">+</span>
   <span class="fu"><a href="https://nanx.me/ggsci/reference/scale_npg.html" class="external-link">scale_color_npg</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p><img src="OU-Models_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
+<p><img src="OU-Models_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
 </div>
-<div class="section level2">
-<h2 id="adaptive-plot">Adaptive Plot<a class="anchor" aria-label="anchor" href="#adaptive-plot"></a>
-</h2>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="section level3">
+<h3 id="adaptive-plot">Adaptive Plot<a class="anchor" aria-label="anchor" href="#adaptive-plot"></a>
+</h3>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y<span class="op">=</span><span class="va">brain_mass_g_log_mean</span>,x<span class="op">=</span><span class="va">bodycentered</span><span class="op">)</span><span class="op">)</span><span class="op">+</span>
   <span class="co">#geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.adaptive</span><span class="op">$</span><span class="va">alpha</span><span class="op">)</span>,slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.adaptive</span><span class="op">$</span><span class="va">beta</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span>,lty<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">+</span>
@@ -520,8 +624,19 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Adaptive Model"</span><span class="op">)</span><span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"log Brain Mass (g)"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"log Body Mass (g)"</span><span class="op">)</span><span class="op">+</span>
   <span class="fu"><a href="https://nanx.me/ggsci/reference/scale_npg.html" class="external-link">scale_color_npg</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p><img src="OU-Models_files/figure-html/unnamed-chunk-20-1.png" width="700"></p>
+<p><img src="OU-Models_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Grabowski, M., K. L. Voje, and T. F. Hansen. 2016. Evolutionary modeling and correcting for observation error support a 3/5 brain-body allometry for primates. J. Hum. Evol. 94:106–116.</p>
+<p>Gronau, Q. F., H. Singmann, and E.-J. Wagenmakers. 2020. bridgesampling: An R Package for Estimating Normalizing Constants. Journal of Statistical Software 92:1–29.</p>
+<p>Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for studying adaptation to a randomly evolving environment. Evolution 62:1965–1977.</p>
+<p>Labra, A., J. Pienaar, and T. F. Hansen. 2009. Evolution of thermal physiology in Liolaemus lizards: adaptation, phylogenetic inertia, and niche tracking. Am. Nat. 174:204–220.</p>
+<p>Kopperud, B. T., J. Pienaar, K. L. Voje, S. H. Orzack, and T. F. Hansen. 2020. Slouch: Stochastic Linear Ornstein-Uhlenbeck Comparative Hypotheses. R package version 2.1.4.</p>
+<p>Toljagić, O., K. L. Voje, M. Matschiner, L. H. Liow, and T. F. Hansen. 2017. Millions of Years Behind: Slow Adaptation of Ruminants to Grasslands. Systematic Biology 67:145–157.</p>
+<p>Uyeda, J. C., and L. J. Harmon. 2020. R Package treeplyr.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
