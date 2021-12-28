@@ -221,11 +221,13 @@ library(ggplot2)
 
 ### Direct Effect Plot
 ```{r Direct Effect Plot}
-ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
+mypal = pal_npg("nrc", alpha = 0.7)(3)
+
+ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered,color=diet,group=diet))+
   #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
-  geom_abline(intercept=mean(ext.fit.direct$beta[,1]),slope = mean(ext.fit.direct$beta[,4]),lty=1)+
-  geom_abline(intercept=mean(ext.fit.direct$beta[,2]),slope = mean(ext.fit.direct$beta[,4]),lty=2)+
-  geom_abline(intercept=mean(ext.fit.direct$beta[,3]),slope = mean(ext.fit.direct$beta[,4]),lty=3)+
+  geom_abline(intercept=mean(ext.fit.direct$beta[,1]),slope = mean(ext.fit.direct$beta[,4]),lty=1,color=mypal[1])+
+  geom_abline(intercept=mean(ext.fit.direct$beta[,2]),slope = mean(ext.fit.direct$beta[,4]),lty=1,color=mypal[2])+
+  geom_abline(intercept=mean(ext.fit.direct$beta[,3]),slope = mean(ext.fit.direct$beta[,4]),lty=1,color=mypal[3])+
   geom_point(data=ruminant.trdata$dat,mapping=aes(color=diet), size=2.0,alpha=0.8)+
   theme_bw()+
   theme(legend.position="bottom")+
@@ -239,12 +241,15 @@ The diet data has three regimes, in the order: Levels: Br Gr MF. Our results abo
 
 ### Adaptive Plot
 ```{r Adaptive Plot}
-ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered))+
+mypal = pal_npg("nrc", alpha = 0.7)(3)
+
+ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered,color=diet,group=diet))+
   #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
-  geom_abline(intercept=mean(ext.fit.adapive$beta[,1]),slope = mean(ext.fit.adapive$beta[,4]),lty=1)+
-  geom_abline(intercept=mean(ext.fit.adapive$beta[,2]),slope = mean(ext.fit.adapive$beta[,4]),lty=2)+
-  geom_abline(intercept=mean(ext.fit.adapive$beta[,3]),slope = mean(ext.fit.adapive$beta[,4]),lty=3)+
-  geom_point(data=ruminant.trdata$dat,mapping=aes(color=diet), size=2.0,alpha=0.8)+
+  geom_abline(intercept=mean(ext.fit.adapive$beta[,1]),slope = mean(ext.fit.adapive$beta[,4]),lty=1,color=mypal[1])+
+  geom_abline(intercept=mean(ext.fit.adapive$beta[,2]),slope = mean(ext.fit.adapive$beta[,4]),lty=1,color=mypal[2])+
+  geom_abline(intercept=mean(ext.fit.adapive$beta[,3]),slope = mean(ext.fit.adapive$beta[,4]),lty=1,color=mypal[3])+
+#  geom_point(data=ruminant.trdata$dat,mapping=aes(color=diet), size=2.0,alpha=0.8)+
+  geom_point(data=ruminant.trdata$dat,size=2.0,alpha=0.8)+
   theme_bw()+  theme(legend.position="bottom")+
   ggtitle("Adaptive Model")+
   ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+

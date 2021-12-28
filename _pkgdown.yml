@@ -21,8 +21,6 @@ navbar:
       href: articles/OU-Models-Prediction.html
     - text: OU Models with Regimes
       href: articles/OU-Models-Regimes.html
-    - text: FAQ
-      href: articles/faq.html
   - text: News
     href: news/
   right:
