@@ -3,7 +3,10 @@
 
 #' This is the R setup file for blouchOUPredict_v1.stan
 #' 
-#'
+#' @importFrom stats lm
+#' @importFrom utils head tail
+#' @importFrom dplyr pull
+#' @importFrom ape branching.times
 #' @param trdata Data formatted by make.treedata function from the R Pacakge treeplyr - only extant species
 #' @param trdata.fos Data formatted by make.treedata function from the R Pacakge treeplyr - extant and fossil
 #' @param names.traits Vector of trait names

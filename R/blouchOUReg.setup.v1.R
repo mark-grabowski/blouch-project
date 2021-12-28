@@ -4,6 +4,11 @@
 #' This is the R setup file for blouchOUReg_v1.stan
 #' 
 #'
+#'
+#' @importFrom stats lm
+#' @importFrom utils head tail
+#' @importFrom dplyr pull
+#' @importFrom ape branching.times
 #' @param trdata Data formatted by make.treedata function from the R Pacakge treeplyr
 #' @param names.traits Vector of trait names
 #' @return An object of class list for use in blouchOUReg_v1.stan
