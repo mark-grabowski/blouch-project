@@ -88,11 +88,11 @@
 
     
     
-<p>This vignette walks you through the basic streps of running an analysis including categorical predictors in Blouch.</p>
+<p>This vignette walks you through the basic steps of running an analysis including categorical predictors in Blouch.</p>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
-<p>Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: <a href="https://mc-stan.org/users/interfaces/rstan" class="external-link uri">https://mc-stan.org/users/interfaces/rstan</a></p>
+<p>Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes RStan (Stan Development Team, 2021), the the R interface to Stan. If you have not used RStan before, it needs to be set up as shown here: <a href="https://mc-stan.org/users/interfaces/rstan" class="external-link uri">https://mc-stan.org/users/interfaces/rstan</a></p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span>list<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span>
@@ -246,17 +246,17 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;           mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a         3.24    0.26 6.13 0.27 0.77 1.51 3.20 17.07   561 1.00</span>
-<span class="co">#&gt; hl        0.68    0.02 0.71 0.04 0.22 0.46 0.90  2.54   937 1.00</span>
-<span class="co">#&gt; beta[1]   5.22    0.00 0.16 4.98 5.12 5.19 5.29  5.63  1469 1.00</span>
-<span class="co">#&gt; beta[2]   5.22    0.01 0.23 4.87 5.08 5.17 5.32  5.83  1013 1.01</span>
-<span class="co">#&gt; beta[3]   5.00    0.00 0.06 4.88 4.97 5.00 5.04  5.12  2506 1.00</span>
-<span class="co">#&gt; beta[4]   0.57    0.00 0.02 0.52 0.56 0.57 0.58  0.61  1966 1.00</span>
-<span class="co">#&gt; vy        0.02    0.00 0.02 0.01 0.01 0.02 0.02  0.06  1153 1.00</span>
-<span class="co">#&gt; r_squared 0.96    0.00 0.01 0.95 0.96 0.96 0.96  0.97   767 1.00</span>
-<span class="co">#&gt; sigma2_y  0.09    0.01 0.16 0.01 0.03 0.05 0.09  0.40   483 1.00</span>
+<span class="co">#&gt; a         3.07    0.20 5.63 0.27 0.78 1.51 3.14 16.55   828    1</span>
+<span class="co">#&gt; hl        0.67    0.02 0.73 0.04 0.22 0.46 0.89  2.54  1341    1</span>
+<span class="co">#&gt; beta[1]   5.22    0.00 0.17 4.99 5.12 5.19 5.29  5.66  1436    1</span>
+<span class="co">#&gt; beta[2]   5.21    0.00 0.22 4.85 5.08 5.17 5.30  5.74  1965    1</span>
+<span class="co">#&gt; beta[3]   5.00    0.00 0.06 4.89 4.97 5.00 5.04  5.12  2470    1</span>
+<span class="co">#&gt; beta[4]   0.57    0.00 0.02 0.52 0.55 0.57 0.58  0.61  2192    1</span>
+<span class="co">#&gt; vy        0.02    0.00 0.02 0.01 0.01 0.02 0.02  0.06  1861    1</span>
+<span class="co">#&gt; r_squared 0.96    0.00 0.01 0.95 0.96 0.96 0.96  0.97   969    1</span>
+<span class="co">#&gt; sigma2_y  0.09    0.01 0.14 0.02 0.03 0.05 0.08  0.41   763    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Tue Dec 28 20:10:21 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 29 09:35:29 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -306,21 +306,21 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;               mean se_mean    sd  2.5%   25%   50%   75%  97.5% n_eff Rhat</span>
-<span class="co">#&gt; a            47.81    0.58 25.13 16.42 30.48 42.49 58.88 114.17  1892    1</span>
-<span class="co">#&gt; hl            0.02    0.00  0.01  0.01  0.01  0.02  0.02   0.04  2185    1</span>
-<span class="co">#&gt; beta[1]       5.12    0.00  0.05  5.03  5.09  5.12  5.16   5.23  3078    1</span>
-<span class="co">#&gt; beta[2]       5.09    0.00  0.06  4.97  5.05  5.09  5.13   5.21  3065    1</span>
-<span class="co">#&gt; beta[3]       5.00    0.00  0.04  4.93  4.98  5.00  5.03   5.08  3045    1</span>
-<span class="co">#&gt; beta[4]       0.59    0.00  0.02  0.55  0.57  0.59  0.60   0.63  3573    1</span>
-<span class="co">#&gt; beta_evol[1]  5.13    0.00  0.00  5.13  5.13  5.13  5.13   5.13  2861    1</span>
-<span class="co">#&gt; beta_evol[2]  5.08    0.00  0.00  5.08  5.08  5.08  5.08   5.08  4152    1</span>
-<span class="co">#&gt; beta_evol[3]  5.00    0.00  0.00  5.00  5.00  5.00  5.01   5.01  3839    1</span>
-<span class="co">#&gt; beta_evol[4]  0.58    0.00  0.00  0.58  0.58  0.58  0.58   0.58  2877    1</span>
-<span class="co">#&gt; vy            0.01    0.00  0.00  0.00  0.00  0.00  0.01   0.02  3925    1</span>
-<span class="co">#&gt; r_squared     0.97    0.00  0.00  0.96  0.96  0.97  0.97   0.97  1553    1</span>
-<span class="co">#&gt; sigma2_y      0.52    0.01  0.52  0.01  0.13  0.35  0.75   1.92  2025    1</span>
+<span class="co">#&gt; a            46.27    0.49 23.76 16.22 29.66 40.69 56.29 107.08  2361    1</span>
+<span class="co">#&gt; hl            0.02    0.00  0.01  0.01  0.01  0.02  0.02   0.04  2500    1</span>
+<span class="co">#&gt; beta[1]       5.13    0.00  0.05  5.03  5.09  5.13  5.16   5.23  3327    1</span>
+<span class="co">#&gt; beta[2]       5.09    0.00  0.06  4.96  5.04  5.08  5.13   5.21  3100    1</span>
+<span class="co">#&gt; beta[3]       5.00    0.00  0.04  4.92  4.98  5.00  5.03   5.08  3332    1</span>
+<span class="co">#&gt; beta[4]       0.59    0.00  0.02  0.55  0.57  0.59  0.60   0.63  3163    1</span>
+<span class="co">#&gt; beta_evol[1]  5.13    0.00  0.00  5.13  5.13  5.13  5.13   5.13  3049    1</span>
+<span class="co">#&gt; beta_evol[2]  5.08    0.00  0.00  5.08  5.08  5.08  5.08   5.08  3737    1</span>
+<span class="co">#&gt; beta_evol[3]  5.00    0.00  0.00  5.00  5.00  5.00  5.01   5.01  3965    1</span>
+<span class="co">#&gt; beta_evol[4]  0.58    0.00  0.00  0.58  0.58  0.58  0.58   0.58  3144    1</span>
+<span class="co">#&gt; vy            0.01    0.00  0.00  0.00  0.00  0.00  0.01   0.02  4087    1</span>
+<span class="co">#&gt; r_squared     0.97    0.00  0.00  0.96  0.96  0.97  0.97   0.97  1692    1</span>
+<span class="co">#&gt; sigma2_y      0.49    0.01  0.48  0.01  0.13  0.33  0.68   1.80  2488    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Tue Dec 28 20:17:42 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 29 09:44:06 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -342,7 +342,8 @@
 <p><img src="OU-Models-Regimes_files/figure-html/Adaptive%20Trace%20and%20Density%20Plots-1.png" width="700"></p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.direct</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"beta"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="OU-Models-Regimes_files/figure-html/Adaptive%20Trace%20and%20Density%20Plots-2.png" width="700"> These look good.</p>
+<p><img src="OU-Models-Regimes_files/figure-html/Adaptive%20Trace%20and%20Density%20Plots-2.png" width="700"></p>
+<p>These look good.</p>
 </div>
 </div>
 <div class="section level2">
@@ -355,7 +356,7 @@
 <span class="va">lml.fit.adaptive</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">BF_att</span> <span class="op">&lt;-</span> <span class="fu">bridgesampling</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bf.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">lml.fit.direct</span>, <span class="va">lml.fit.adaptive</span><span class="op">)</span>
 <span class="va">BF_att</span>
-<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.adaptive: 96.55581</span></code></pre></div>
+<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.adaptive: 96.75605</span></code></pre></div>
 <p>We find that the data is BF_att more likely under a model that assumes a direct effect model rather than af adaptive model.</p>
 </div>
 <div class="section level2">
@@ -418,6 +419,7 @@
 <p>Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for studying adaptation to a randomly evolving environment. Evolution 62:1965–1977.</p>
 <p>Labra, A., J. Pienaar, and T. F. Hansen. 2009. Evolution of thermal physiology in Liolaemus lizards: adaptation, phylogenetic inertia, and niche tracking. Am. Nat. 174:204–220.</p>
 <p>Kopperud, B. T., J. Pienaar, K. L. Voje, S. H. Orzack, and T. F. Hansen. 2020. Slouch: Stochastic Linear Ornstein-Uhlenbeck Comparative Hypotheses. R package version 2.1.4.</p>
+<p>Stan Development Team. 2021. RStan: the R interface to Stan. R package version 2.21.3, <a href="https://mc-stan.org/" class="external-link uri">https://mc-stan.org/</a>.</p>
 <p>Toljagić, O., K. L. Voje, M. Matschiner, L. H. Liow, and T. F. Hansen. 2017. Millions of Years Behind: Slow Adaptation of Ruminants to Grasslands. Systematic Biology 67:145–157.</p>
 <p>Uyeda, J. C., and L. J. Harmon. 2020. R Package treeplyr.</p>
 </div>

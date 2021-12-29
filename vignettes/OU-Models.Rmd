@@ -14,10 +14,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette walks you through the basic streps of running an analysis in Blouch.
+This vignette walks you through the basic steps of running an analysis in Blouch.
 
 ## Setup
-Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes Rstan, the the R interface to Stan. If you have not used Rstan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
+Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes RStan (Stan Development Team, 2021), the the R interface to Stan. If you have not used RStan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
 ```{r Setup}
 rm(list=ls())
 library(devtools)
@@ -448,6 +448,8 @@ Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for stud
 Labra, A., J. Pienaar, and T. F. Hansen. 2009. Evolution of thermal physiology in Liolaemus lizards: adaptation, phylogenetic inertia, and niche tracking. Am. Nat. 174:204–220.
 
 Kopperud, B. T., J. Pienaar, K. L. Voje, S. H. Orzack, and T. F. Hansen. 2020. Slouch: Stochastic Linear Ornstein-Uhlenbeck Comparative Hypotheses. R package version 2.1.4.
+
+Stan Development Team. 2021. RStan: the R interface to Stan. R package version 2.21.3, https://mc-stan.org/.
 
 Toljagić, O., K. L. Voje, M. Matschiner, L. H. Liow, and T. F. Hansen. 2017. Millions of Years Behind: Slow Adaptation of Ruminants to Grasslands. Systematic Biology 67:145–157.
 
