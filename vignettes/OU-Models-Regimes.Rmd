@@ -152,7 +152,6 @@ par(mfrow = c(1,3))
 
 traceplot(fit.direct,c("a","hl","beta","vy","sigma2_y"))
 stan_dens(fit.direct,c("a","hl","beta","vy","sigma2_y"))
-#3X8
 ```
 
 These look good.

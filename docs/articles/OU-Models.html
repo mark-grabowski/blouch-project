@@ -264,13 +264,13 @@
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - </span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.044341</span>
+<span class="co">#&gt; [1] 0.08313576</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 144.8103</span>
+<span class="co">#&gt; [1] 135.1713</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 15.6322</span>
+<span class="co">#&gt; [1] 8.337534</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.004786587</span>
+<span class="co">#&gt; [1] 0.005127917</span>
 
 <span class="va">quantiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.01</span>, <span class="fl">0.025</span>,<span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>,<span class="fl">0.90</span>,<span class="fl">0.95</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="co">#hls &lt;- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)</span>
@@ -278,7 +278,7 @@
 <span class="va">qs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="va">samp</span>, <span class="va">quantiles</span><span class="op">)</span> <span class="co">## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">qs</span>, <span class="fl">2</span><span class="op">)</span>
 <span class="co">#&gt;    0%    1%  2.5%   10%   25%   50%   75%   90%   95% 97.5%   99%  100% </span>
-<span class="co">#&gt;  0.00  0.03  0.04  0.07  0.13  0.25  0.50  0.92  1.31  1.82  2.74 15.63</span>
+<span class="co">#&gt;  0.01  0.03  0.04  0.07  0.13  0.25  0.49  0.91  1.30  1.75  2.47  8.34</span>
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="va">samp</span><span class="op">)</span>, breaks<span class="op">=</span><span class="fl">10000</span>, main<span class="op">=</span><span class="st">"Prior density of half-life"</span>,xlim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>v<span class="op">=</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.04</span>,<span class="fl">1</span><span class="op">)</span><span class="op">)</span>, col<span class="op">=</span><span class="st">"red"</span>, lwd<span class="op">=</span><span class="fl">2</span>, lty<span class="op">=</span><span class="fl">2</span><span class="op">)</span> <span class="co">#Lines for 1 Ma and length of tree (27 Ma) - </span></code></pre></div>
@@ -312,13 +312,13 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - </span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 0.0001948322</span>
+<span class="co">#&gt; [1] 9.721822e-06</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 17032.5</span>
+<span class="co">#&gt; [1] 48902.94</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 3557.663</span>
+<span class="co">#&gt; [1] 71298.07</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">samp</span><span class="op">)</span>
-<span class="co">#&gt; [1] 4.069557e-05</span>
+<span class="co">#&gt; [1] 1.417394e-05</span>
 
 <span class="va">quantiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.01</span>, <span class="fl">0.025</span>,<span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.90</span>, <span class="fl">0.975</span>, <span class="fl">0.99</span>, <span class="fl">1</span><span class="op">)</span>
 <span class="co">#hls &lt;- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)</span>
@@ -326,9 +326,9 @@
 <span class="va">qs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">samp</span>, <span class="va">quantiles</span><span class="op">)</span> <span class="co">## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">qs</span>, <span class="fl">2</span><span class="op">)</span>
 <span class="co">#&gt;       0%       1%     2.5%      10%      25%      50%      75%      90% </span>
-<span class="co">#&gt;     0.00     0.02     0.04     0.16     0.43     1.01     2.40     6.40 </span>
+<span class="co">#&gt;     0.00     0.02     0.04     0.16     0.41     0.99     2.29     6.17 </span>
 <span class="co">#&gt;    97.5%      99%     100% </span>
-<span class="co">#&gt;    22.75    56.37 17032.50</span>
+<span class="co">#&gt;    23.79    64.18 48902.94</span>
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="va">samp</span><span class="op">/</span><span class="op">(</span><span class="fl">2</span><span class="op">*</span><span class="fl">2</span><span class="op">)</span>, breaks<span class="op">=</span><span class="fl">10000</span>, main<span class="op">=</span><span class="st">"Prior density of Vy"</span>,xlim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/unnamed-chunk-6-2.png" width="700"></p>
@@ -361,15 +361,15 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;           mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a         5.60    0.28 8.53 0.41 1.38 2.84 6.15 29.70   954    1</span>
-<span class="co">#&gt; hl        0.40    0.01 0.48 0.02 0.11 0.24 0.50  1.68  1691    1</span>
-<span class="co">#&gt; alpha     5.05    0.00 0.04 4.97 5.03 5.05 5.08  5.14  1813    1</span>
-<span class="co">#&gt; beta[1]   0.57    0.00 0.02 0.53 0.55 0.57 0.58  0.61  1956    1</span>
-<span class="co">#&gt; vy        0.02    0.00 0.01 0.01 0.01 0.01 0.02  0.05  2597    1</span>
-<span class="co">#&gt; r_squared 0.96    0.00 0.00 0.95 0.96 0.96 0.96  0.97  1167    1</span>
-<span class="co">#&gt; sigma2_y  0.15    0.01 0.22 0.02 0.05 0.08 0.16  0.77   846    1</span>
+<span class="co">#&gt; a         5.08    0.19 6.91 0.43 1.38 2.78 5.73 24.44  1306    1</span>
+<span class="co">#&gt; hl        0.40    0.01 0.49 0.03 0.12 0.25 0.50  1.62  1854    1</span>
+<span class="co">#&gt; alpha     5.05    0.00 0.04 4.97 5.03 5.05 5.08  5.14  1696    1</span>
+<span class="co">#&gt; beta[1]   0.57    0.00 0.02 0.53 0.55 0.57 0.58  0.61  2250    1</span>
+<span class="co">#&gt; vy        0.02    0.00 0.01 0.01 0.01 0.01 0.02  0.05  2331    1</span>
+<span class="co">#&gt; r_squared 0.96    0.00 0.00 0.95 0.96 0.96 0.96  0.97  1190    1</span>
+<span class="co">#&gt; sigma2_y  0.14    0.01 0.18 0.02 0.05 0.08 0.15  0.66  1298    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 29 09:50:38 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec 30 17:57:07 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -391,8 +391,6 @@
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.direct</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta[1]"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/unnamed-chunk-9-2.png" width="700"></p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#3X8</span></code></pre></div>
 <p>These look good.</p>
 </div>
 </div>
@@ -404,31 +402,31 @@
 <h3 id="run-model-1">Run Model<a class="anchor" aria-label="anchor" href="#run-model-1"></a>
 </h3>
 <p>Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit.adaptive</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchOU_v1</span>,data <span class="op">=</span> <span class="va">stan_adaptive_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="parameter-estimates-1">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates-1"></a>
 </h3>
 <p>Again, lets look at the parameter estimates</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"r_squared"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; Inference for Stan model: blouchOU_v1.</span>
 <span class="co">#&gt; 2 chains, each with iter=4000; warmup=2000; thin=1; </span>
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;               mean se_mean    sd  2.5%   25%   50%   75%  97.5% n_eff Rhat</span>
-<span class="co">#&gt; a            42.64    0.53 23.14 15.21 26.90 37.32 51.71 102.06  1880    1</span>
-<span class="co">#&gt; hl            0.02    0.00  0.01  0.01  0.01  0.02  0.03   0.05  2249    1</span>
-<span class="co">#&gt; alpha         5.06    0.00  0.03  4.99  5.04  5.06  5.08   5.12  2899    1</span>
-<span class="co">#&gt; beta[1]       0.59    0.00  0.02  0.55  0.57  0.59  0.60   0.63  2951    1</span>
-<span class="co">#&gt; beta_evol[1]  5.06    0.00  0.00  5.05  5.06  5.06  5.06   5.06  4587    1</span>
-<span class="co">#&gt; beta_evol[2]  0.57    0.00  0.00  0.57  0.57  0.57  0.57   0.57  2779    1</span>
-<span class="co">#&gt; vy            0.01    0.00  0.00  0.00  0.00  0.00  0.01   0.02  3299    1</span>
-<span class="co">#&gt; r_squared     0.96    0.00  0.00  0.95  0.96  0.96  0.96   0.97  1731    1</span>
-<span class="co">#&gt; sigma2_y      0.47    0.01  0.50  0.01  0.12  0.30  0.64   1.94  1802    1</span>
+<span class="co">#&gt; a            42.51    0.53 22.67 14.77 27.41 37.04 51.66 105.70  1825    1</span>
+<span class="co">#&gt; hl            0.02    0.00  0.01  0.01  0.01  0.02  0.03   0.05  2263    1</span>
+<span class="co">#&gt; alpha         5.06    0.00  0.03  4.99  5.04  5.06  5.08   5.12  2542    1</span>
+<span class="co">#&gt; beta[1]       0.59    0.00  0.02  0.55  0.57  0.58  0.60   0.63  2618    1</span>
+<span class="co">#&gt; beta_evol[1]  5.06    0.00  0.00  5.05  5.06  5.06  5.06   5.06  4656    1</span>
+<span class="co">#&gt; beta_evol[2]  0.57    0.00  0.00  0.57  0.57  0.57  0.57   0.57  2847    1</span>
+<span class="co">#&gt; vy            0.01    0.00  0.00  0.00  0.00  0.00  0.01   0.02  3331    1</span>
+<span class="co">#&gt; r_squared     0.96    0.00  0.00  0.95  0.96  0.96  0.96   0.97  1964    1</span>
+<span class="co">#&gt; sigma2_y      0.48    0.01  0.50  0.01  0.12  0.30  0.67   1.92  1771    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 29 09:56:02 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec 30 18:02:18 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -442,29 +440,27 @@
 <h3 id="trace-and-density-plots-for-estimated-parameters-1">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters-1"></a>
 </h3>
 <p>And explore the trance and density plots</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-traceplot.html" class="external-link">traceplot</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/unnamed-chunk-12-2.png" width="700"></p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#3X8</span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="model-comparison-using-bayes-factors">Model Comparison using Bayes Factors<a class="anchor" aria-label="anchor" href="#model-comparison-using-bayes-factors"></a>
 </h2>
 <p>While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes a direct effect model rather than af adaptive model.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R">
 <span class="va">lml.fit.direct</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.direct</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">lml.fit.adaptive</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">BF_att</span> <span class="op">&lt;-</span> <span class="fu">bridgesampling</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bf.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">lml.fit.direct</span>, <span class="va">lml.fit.adaptive</span><span class="op">)</span>
 <span class="va">BF_att</span>
-<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.adaptive: 32.67914</span></code></pre></div>
+<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.adaptive: 33.24592</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="brownian-model">Brownian Model<a class="anchor" aria-label="anchor" href="#brownian-model"></a>
@@ -473,25 +469,25 @@
 <div class="section level3">
 <h3 id="run-model-2">Run Model<a class="anchor" aria-label="anchor" href="#run-model-2"></a>
 </h3>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit.BM</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchBM_v1</span>,data <span class="op">=</span> <span class="va">stan_constraint_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="parameter-estimates-2">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates-2"></a>
 </h3>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit.BM</span>,pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"r_squared"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; Inference for Stan model: blouchBM_v1.</span>
 <span class="co">#&gt; 2 chains, each with iter=4000; warmup=2000; thin=1; </span>
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;           mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; alpha     5.05       0 0.08 4.89 5.00 5.05 5.11  5.22  3038    1</span>
-<span class="co">#&gt; beta[1]   0.56       0 0.02 0.51 0.54 0.56 0.57  0.60  3030    1</span>
-<span class="co">#&gt; r_squared 0.99       0 0.01 0.98 0.99 0.99 0.99  0.99  2436    1</span>
-<span class="co">#&gt; sigma2_y  0.03       0 0.01 0.01 0.02 0.02 0.03  0.05  2716    1</span>
+<span class="co">#&gt; alpha     5.05       0 0.08 4.88 5.00 5.05 5.10  5.22  3008    1</span>
+<span class="co">#&gt; beta[1]   0.56       0 0.02 0.51 0.54 0.56 0.57  0.60  3501    1</span>
+<span class="co">#&gt; r_squared 0.99       0 0.01 0.98 0.99 0.99 0.99  0.99  2719    1</span>
+<span class="co">#&gt; sigma2_y  0.03       0 0.01 0.01 0.02 0.02 0.03  0.05  3095    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 29 09:58:50 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec 30 18:05:10 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -504,16 +500,14 @@
 <h3 id="trace-and-density-plots-for-estimated-parameters-2">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters-2"></a>
 </h3>
 <p>And explore the trance and density plots</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-traceplot.html" class="external-link">traceplot</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/BM%20Trace%20and%20Density%20Plots-1.png" width="700"></p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.adaptive</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"beta"</span>,<span class="st">"beta_evol"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/BM%20Trace%20and%20Density%20Plots-2.png" width="700"></p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">#3X8</span></code></pre></div>
 <p>Looking Good!</p>
 </div>
 </div>
@@ -521,14 +515,14 @@
 <h2 id="direct-vs--bm-model-comparison-using-bf">Direct vs. BM Model Comparison using BF<a class="anchor" aria-label="anchor" href="#direct-vs--bm-model-comparison-using-bf"></a>
 </h2>
 <p>While using a type of model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes a direct effect model rather than af Brownian-motion model.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/quentingronau/bridgesampling" class="external-link">bridgesampling</a></span><span class="op">)</span>
 <span class="va">lml.fit.direct</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.direct</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">lml.fit.BM</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bridge_sampler.html" class="external-link">bridge_sampler</a></span><span class="op">(</span><span class="va">fit.BM</span>,silent<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
 
 <span class="va">BF_att</span> <span class="op">&lt;-</span> <span class="fu">bridgesampling</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/bridgesampling/man/bf.html" class="external-link">bf</a></span><span class="op">(</span><span class="va">lml.fit.direct</span>, <span class="va">lml.fit.BM</span><span class="op">)</span>
 <span class="va">BF_att</span>
-<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.BM: 1.25072</span></code></pre></div>
+<span class="co">#&gt; Estimated Bayes factor in favor of lml.fit.direct over lml.fit.BM: 1.28088</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="ou1">OU1<a class="anchor" aria-label="anchor" href="#ou1"></a>
@@ -537,27 +531,27 @@
 <div class="section level3">
 <h3 id="run-model-3">Run Model<a class="anchor" aria-label="anchor" href="#run-model-3"></a>
 </h3>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fit.OU1</span><span class="op">&lt;-</span> <span class="fu">rstan</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/rstan/reference/stanmodel-method-sampling.html" class="external-link">sampling</a></span><span class="op">(</span><span class="va">stanmodels</span><span class="op">$</span><span class="va">blouchOU1_v1</span>,data <span class="op">=</span> <span class="va">stan_OU1_data</span>,chains <span class="op">=</span> <span class="fl">2</span>,iter <span class="op">=</span> <span class="fl">4000</span>,control<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>adapt_delta<span class="op">=</span><span class="fl">0.95</span><span class="op">)</span>,show_messages<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="parameter-estimates-3">Parameter Estimates<a class="anchor" aria-label="anchor" href="#parameter-estimates-3"></a>
 </h3>
 <p>Lets look at the parameter estimates</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fit.OU1</span>,pars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; Inference for Stan model: blouchOU1_v1.</span>
 <span class="co">#&gt; 2 chains, each with iter=4000; warmup=2000; thin=1; </span>
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;           mean se_mean    sd 2.5%  25%  50%   75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a         0.25    0.01  0.32 0.01 0.05 0.14  0.32  1.06  2661    1</span>
-<span class="co">#&gt; hl       12.78    0.36 18.18 0.65 2.17 5.09 14.39 71.27  2621    1</span>
-<span class="co">#&gt; alpha     5.12    0.00  0.36 4.42 4.88 5.12  5.37  5.83  6455    1</span>
-<span class="co">#&gt; vy        8.01    0.24 11.64 0.61 1.53 3.31  9.06 45.56  2396    1</span>
-<span class="co">#&gt; sigma2_y  0.97    0.01  0.33 0.54 0.76 0.91  1.12  1.77  2647    1</span>
+<span class="co">#&gt; a         0.25    0.01  0.31 0.01 0.05 0.13  0.32  1.15  2755    1</span>
+<span class="co">#&gt; hl       12.69    0.37 17.76 0.60 2.15 5.32 14.77 71.25  2333    1</span>
+<span class="co">#&gt; alpha     5.12    0.00  0.37 4.39 4.88 5.12  5.36  5.84  8344    1</span>
+<span class="co">#&gt; vy        7.85    0.23 11.05 0.61 1.50 3.32  9.08 42.87  2275    1</span>
+<span class="co">#&gt; sigma2_y  0.97    0.01  0.33 0.54 0.76 0.91  1.11  1.76  3033    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Wed Dec 29 10:00:54 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec 30 18:07:18 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -572,12 +566,12 @@
 <h3 id="trace-and-density-plots-for-estimated-parameters-3">Trace and Density Plots for estimated parameters<a class="anchor" aria-label="anchor" href="#trace-and-density-plots-for-estimated-parameters-3"></a>
 </h3>
 <p>We can look at how our procedures using the standard trace and density plots from Rstan</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">3</span><span class="op">)</span><span class="op">)</span>
 
 <span class="fu"><a href="https://mc-stan.org/rstan/reference/stanfit-method-traceplot.html" class="external-link">traceplot</a></span><span class="op">(</span><span class="va">fit.OU1</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/OU1%20Trace%20and%20Density%20Pltos-1.png" width="700"></p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://mc-stan.org/rstan/reference/stan_plot.html" class="external-link">stan_dens</a></span><span class="op">(</span><span class="va">fit.OU1</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>,<span class="st">"hl"</span>,<span class="st">"alpha"</span>,<span class="st">"vy"</span>,<span class="st">"sigma2_y"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="OU-Models_files/figure-html/OU1%20Trace%20and%20Density%20Pltos-2.png" width="700"></p>
 <p>These look good.</p>
@@ -590,14 +584,14 @@
 <div class="section level3">
 <h3 id="load-plot-packages">Load Plot Packages<a class="anchor" aria-label="anchor" href="#load-plot-packages"></a>
 </h3>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://nanx.me/ggsci/" class="external-link">ggsci</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="direct-effect-plot">Direct Effect Plot<a class="anchor" aria-label="anchor" href="#direct-effect-plot"></a>
 </h3>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y<span class="op">=</span><span class="va">brain_mass_g_log_mean</span>,x<span class="op">=</span><span class="va">bodycentered</span><span class="op">)</span><span class="op">)</span><span class="op">+</span>
   <span class="co">#geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.direct</span><span class="op">$</span><span class="va">alpha</span><span class="op">)</span>,slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.direct</span><span class="op">$</span><span class="va">beta</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span>,lty<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">+</span>
@@ -612,7 +606,7 @@
 <div class="section level3">
 <h3 id="adaptive-plot">Adaptive Plot<a class="anchor" aria-label="anchor" href="#adaptive-plot"></a>
 </h3>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span>data<span class="op">=</span><span class="va">ruminant.trdata</span><span class="op">$</span><span class="va">dat</span>,<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y<span class="op">=</span><span class="va">brain_mass_g_log_mean</span>,x<span class="op">=</span><span class="va">bodycentered</span><span class="op">)</span><span class="op">)</span><span class="op">+</span>
   <span class="co">#geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>intercept<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.adaptive</span><span class="op">$</span><span class="va">alpha</span><span class="op">)</span>,slope <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">ext.fit.adaptive</span><span class="op">$</span><span class="va">beta</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span><span class="op">)</span>,lty<span class="op">=</span><span class="fl">1</span><span class="op">)</span><span class="op">+</span>

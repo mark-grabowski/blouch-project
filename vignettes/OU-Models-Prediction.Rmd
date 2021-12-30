@@ -162,7 +162,6 @@ par(mfrow = c(1,3))
   
 traceplot(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
 stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
-#3 X 8
 ```
 
 ## Plots
@@ -304,7 +303,6 @@ par(mfrow = c(1,3))
   
 traceplot(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
 stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
-#3 X 8
 ```
 
 ## Inverse Regression Plots

@@ -270,7 +270,6 @@ par(mfrow = c(1,3))
 
 traceplot(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
 stan_dens(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
-#3X8
 ```
 
 These look good.
@@ -306,7 +305,6 @@ par(mfrow = c(1,3))
 
 traceplot(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
-#3X8
 ```
 
 ## Model Comparison using Bayes Factors
@@ -348,7 +346,6 @@ par(mfrow = c(1,3))
 
 traceplot(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
 stan_dens(fit.adaptive,c("a","hl","alpha","beta","beta_evol","vy","sigma2_y"))
-#3X8
 ```
 
 Looking Good!
