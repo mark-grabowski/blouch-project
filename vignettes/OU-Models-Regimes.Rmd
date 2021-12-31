@@ -118,7 +118,7 @@ stan_adaptive_data<-stan_data[[2]]
 ## Explore Priors
 Priors must be set manually in the Stan Blouch code (e.g. blouchOUReg_v1.stan), but we use the same priors for this analysis as in the OU-Models vignette. Go back and look at that vignette if you need to explore the effect of your priors - do not use the default values.
 
-## Direct Effect Models
+## Direct Effect Model
 Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch. 
 
 Now lets do a simple analysis. Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.
@@ -206,7 +206,7 @@ BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.adaptive)
 BF_att
 ```
 
-We find that the data is BF_att more likely under a model that assumes a direct effect model rather than af adaptive model.
+We find that the data is much more likely under a model that assumes a direct effect model rather than an adaptive model.
 
 ## Plots
 

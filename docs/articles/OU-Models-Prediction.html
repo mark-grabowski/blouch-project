@@ -228,7 +228,7 @@
 <p>Priors must be set manually in the Stan Blouch code (e.g. blouchOUPredict_v1.stan), but we use the same priors for this analysis as in the OU-Models vignette. Go back and look at that vignette if you need to explore the effect of your priors - do not use the default values.</p>
 </div>
 <div class="section level2">
-<h2 id="direct-effect-model-for-prediction">Direct Effect Model for Prediction<a class="anchor" aria-label="anchor" href="#direct-effect-model-for-prediction"></a>
+<h2 id="direct-effect-model-for-prediction-using-classical-regression">Direct Effect Model for Prediction using Classical Regression<a class="anchor" aria-label="anchor" href="#direct-effect-model-for-prediction-using-classical-regression"></a>
 </h2>
 <p>Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch.</p>
 <p>Blouch implements the model of constrained evolution (Hansen &amp; Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints. We will be using this model to predict unknown values as assuming an allometric relationship may be more valid in prediction than an adaptive relationship.</p>
@@ -250,17 +250,17 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;                      mean se_mean   sd  2.5%   25%   50%   75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a                    5.69    0.24 8.67  0.41  1.39  2.75  6.16 29.21  1342    1</span>
-<span class="co">#&gt; hl                   0.40    0.01 0.48  0.02  0.11  0.25  0.50  1.70  1883    1</span>
-<span class="co">#&gt; alpha                5.07    0.00 0.04  5.00  5.04  5.06  5.09  5.15  1906    1</span>
-<span class="co">#&gt; beta[1]              0.57    0.00 0.02  0.53  0.56  0.57  0.58  0.61  2648    1</span>
-<span class="co">#&gt; r_squared            0.96    0.00 0.00  0.95  0.96  0.96  0.97  0.97  1391    1</span>
-<span class="co">#&gt; sigma2_y             0.15    0.01 0.23  0.02  0.04  0.07  0.15  0.77  1297    1</span>
-<span class="co">#&gt; RMSE                 0.29    0.00 0.03  0.25  0.28  0.29  0.31  0.35  3309    1</span>
-<span class="co">#&gt; RMSE_mu              0.27    0.00 0.02  0.26  0.26  0.26  0.27  0.31  1261    1</span>
-<span class="co">#&gt; X_pred_fos_means[1] -0.48    0.00 0.17 -0.83 -0.59 -0.47 -0.36 -0.15  3028    1</span>
+<span class="co">#&gt; a                    6.00    0.29 9.05  0.42  1.39  2.86  6.54 33.52   948    1</span>
+<span class="co">#&gt; hl                   0.39    0.01 0.47  0.02  0.11  0.24  0.50  1.63  1606    1</span>
+<span class="co">#&gt; alpha                5.06    0.00 0.04  4.99  5.04  5.06  5.09  5.15  2099    1</span>
+<span class="co">#&gt; beta[1]              0.57    0.00 0.02  0.53  0.56  0.57  0.58  0.61  2445    1</span>
+<span class="co">#&gt; r_squared            0.96    0.00 0.00  0.95  0.96  0.96  0.97  0.97  1192    1</span>
+<span class="co">#&gt; sigma2_y             0.16    0.01 0.24  0.02  0.04  0.08  0.16  0.88   854    1</span>
+<span class="co">#&gt; RMSE                 0.29    0.00 0.03  0.24  0.28  0.29  0.31  0.35  3777    1</span>
+<span class="co">#&gt; RMSE_mu              0.27    0.00 0.02  0.26  0.26  0.26  0.27  0.32  1034    1</span>
+<span class="co">#&gt; X_pred_fos_means[1] -0.48    0.00 0.17 -0.82 -0.59 -0.47 -0.36 -0.14  3385    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec 30 17:28:48 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Fri Dec 31 12:13:21 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
@@ -284,7 +284,7 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a>
+<h2 id="classical-regression-plots">Classical Regression Plots<a class="anchor" aria-label="anchor" href="#classical-regression-plots"></a>
 </h2>
 <p>Let’s make some plots of our results ### Load Plot Packages</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -435,7 +435,7 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="direct-effect-model-for-prediction-1">Direct EFfect Model for Prediction<a class="anchor" aria-label="anchor" href="#direct-effect-model-for-prediction-1"></a>
+<h2 id="direct-effect-model-for-prediction-using-inverse-regression">Direct Effect Model for Prediction using Inverse Regression<a class="anchor" aria-label="anchor" href="#direct-effect-model-for-prediction-using-inverse-regression"></a>
 </h2>
 <p>Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch.</p>
 <p>Blouch implements the model of constrained evolution (Hansen &amp; Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints. We will be using this model to predict unknown values as assuming an allometric relationship may be more valid in prediction than an adaptive relationship.</p>
@@ -457,17 +457,17 @@
 <span class="co">#&gt; post-warmup draws per chain=2000, total post-warmup draws=4000.</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;                     mean se_mean   sd 2.5%  25%  50%  75% 97.5% n_eff Rhat</span>
-<span class="co">#&gt; a                   5.59    0.30 9.06 0.42 1.42 2.73 5.91 29.05   907    1</span>
-<span class="co">#&gt; hl                  0.41    0.01 0.53 0.02 0.12 0.25 0.49  1.67  1839    1</span>
-<span class="co">#&gt; alpha               5.07    0.00 0.04 5.00 5.04 5.06 5.09  5.15  1785    1</span>
-<span class="co">#&gt; beta[1]             0.57    0.00 0.02 0.53 0.56 0.57 0.58  0.61  2671    1</span>
-<span class="co">#&gt; r_squared           0.96    0.00 0.00 0.95 0.96 0.96 0.97  0.97  1244    1</span>
-<span class="co">#&gt; sigma2_y            0.15    0.01 0.23 0.02 0.04 0.07 0.15  0.77   864    1</span>
-<span class="co">#&gt; RMSE                0.21    0.00 0.02 0.17 0.20 0.21 0.23  0.27  3750    1</span>
-<span class="co">#&gt; RMSE_mu             0.15    0.00 0.01 0.15 0.15 0.15 0.16  0.18   938    1</span>
-<span class="co">#&gt; Y_pred_fos_means[1] 5.09    0.00 0.13 4.85 5.01 5.09 5.17  5.34  3520    1</span>
+<span class="co">#&gt; a                   5.83    0.28 8.83 0.39 1.44 2.88 6.47 28.73   988    1</span>
+<span class="co">#&gt; hl                  0.40    0.01 0.53 0.02 0.11 0.24 0.48  1.77  1882    1</span>
+<span class="co">#&gt; alpha               5.07    0.00 0.04 5.00 5.04 5.06 5.09  5.15  1512    1</span>
+<span class="co">#&gt; beta[1]             0.57    0.00 0.02 0.53 0.56 0.57 0.58  0.61  2327    1</span>
+<span class="co">#&gt; r_squared           0.96    0.00 0.00 0.95 0.96 0.96 0.97  0.97  1002    1</span>
+<span class="co">#&gt; sigma2_y            0.15    0.01 0.23 0.02 0.04 0.08 0.16  0.81   946    1</span>
+<span class="co">#&gt; RMSE                0.21    0.00 0.02 0.17 0.20 0.21 0.23  0.27  3559    1</span>
+<span class="co">#&gt; RMSE_mu             0.16    0.00 0.01 0.15 0.15 0.15 0.16  0.19   875    1</span>
+<span class="co">#&gt; Y_pred_fos_means[1] 5.09    0.00 0.13 4.84 5.01 5.09 5.17  5.35  3587    1</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec 30 17:34:12 2021.</span>
+<span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Fri Dec 31 12:19:35 2021.</span>
 <span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="co">#&gt; convergence, Rhat=1).</span>
