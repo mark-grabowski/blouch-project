@@ -1,4 +1,5 @@
 # BLOUCH
+Modified
 Bayesian Linear Ornstein-Uhlenbeck models for Comparative Hypotheses (BLOUCH) fits adaptive models of continuous trait evolution in a Bayesian framework based on categorical or continuous predictors, and incorporates measurement error following the approach of Hansen et al. (2008). Blouch can also make phylogenetically informed predictions of known or unknown traits from any clade, given a dataset of comparative measurements and a phylogeny including the taxa of interest.
 
 Blouch is a Bayesian version of its frequentist brother, Slouch (Kopperud et al. 2020), which is available <a href="https://github.com/kopperud/slouch" title="here.">here</a>. While the front-end component of Blouch is written in R (R Core Team, 2015), the nuts and bolts are written in the language Stan (Carpenter et al., 2017), which allows estimation of Bayesian models using Markov chain Monte Carlo (MCMC) methods based on the Hamilton Monte Carlo sampler.
