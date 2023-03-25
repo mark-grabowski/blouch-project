@@ -1,0 +1,277 @@
+---
+title: "OU-Models-Regimes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{OU-Models-Regimes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette walks you through the basic steps of running an analysis including categorical predictors in Blouch.
+
+## Setup
+Here we load the R packages used to setup the data for Blouch, make figures post-analysis, etc. This includes RStan (Stan Development Team, 2021), the the R interface to Stan. If you have not used RStan before, it needs to be set up as shown here: https://mc-stan.org/users/interfaces/rstan
+
+```{r Setup}
+rm(list=ls())
+library(devtools)
+#devtools::install_github("Mark-Grabowski/blouch")
+
+library(blouch)
+load_all()
+## Load necessary packages
+library(ape)
+library(slouch)
+library(rstan)
+library(treeplyr)
+library(ggplot2)
+library(bridgesampling)
+
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+#options(mc.cores = parallel::detectCores())
+options(mc.cores = 2)
+rstan_options(auto_write = TRUE)
+
+```
+
+### Load Data
+For the purposes of illustrating the software, we will use a dataset of ruminant brain and body sizes bundled with the Slouch package (Kopperud et al. 2020) and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the brain and body data.
+```{r load data}
+## Load the phylogenetic tree with annotation data
+data(artiodactyla)
+phy <- artiodactyla
+
+## Load the neocortex dataset
+data(neocortex)
+
+## Plot the tree
+plot(ladderize(phy), cex = 0.6)
+```
+
+### Regime Setup
+Stealing some code from the Slouch tutorial, regimes are shown painted on the phylogeny as below
+```{r Plot Regimes}
+## Inspect the internal node regimes
+## These have order n+1, n+2, n+3 ...
+internal_regimes <- factor(phy$node.label)
+
+## Concatenate tip and internal regimes. These will have order 1,2,3 ...
+regimes <- c(neocortex$diet, internal_regimes)
+
+## Pick out the regimes of the edges, in the order of phy$edge
+edge_regimes <- factor(regimes[phy$edge[,2]])
+
+plot(phy, 
+     edge.color = c("Black", "Orange", "blue")[edge_regimes], 
+     edge.width = 3, cex = 0.6)
+```
+
+### Combine data and tree
+Next we will use the treeplyr package (Uyeda and Harmon, 2014) make.treedata function to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. Finally we mean scale the X data (here body mass) so that the average across species is 0.
+
+```{r Prep Data}
+ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
+
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_mass_g_log_mean)) & !(is.na(body_mass_g_log_mean)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(body_se_squared)))
+
+#ruminant.trdata #Full dataset
+
+#Mean Scale
+ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean)
+
+```
+
+### Rescale Tree
+Next, we rescale rree to Height = 1
+```{r Rescale Tree}
+l.tree<-max(branching.times(ruminant.trdata$phy))
+ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.trdata$phy))
+
+```
+
+### Running Blouch Data Setup Function
+Here we are finally setting up our dataset to run in Blouch, using the blouchOURegimes.setup.v1() function. This function takes out data formatted by treeplyr, and the names of our traits of interest in the order shown. Note that the categorical data should come first in the list of traits. The list produced by this function has data formatted to run both the direct effect (constraint) models and adaptive models. See Grabowski et al. (2016) and below for more on both of these models. Here the first trait is adapting towards the second for the adaptive model.
+```{r Blouch Setup}
+#source("/Volumes/GoogleDrive/My Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/Blouch Setup Files/blouchOUReg.setup.v1.R")
+
+#names.traits<-c("diet","brain_mass_g_log_mean","bodycentered","NA","NA") #With ME
+names.traits<-c("diet","brain_mass_g_log_mean","bodycentered","brain_se_squared","body_se_squared") #With ME
+
+#Data must be logged before entry into blouch.setup
+#names.traits = c(response, predictor, me.response, me.predictor) - classical = 0 for inverse regression
+stan_data<-blouchOUReg.setup.v1(ruminant.trdata,names.traits)
+
+stan_constraint_data<-stan_data[[1]]
+stan_adaptive_data<-stan_data[[2]]
+
+```
+
+## Explore Priors
+Priors must be set manually in the Stan Blouch code (e.g. blouchOUReg_v1.stan), but we use the same priors for this analysis as in the OU-Models vignette. Go back and look at that vignette if you need to explore the effect of your priors - do not use the default values.
+
+## Direct Effect Model
+Now that we have formatted our data and supplied reasonable priors for the various distributions, we can now run Blouch. 
+
+Now lets do a simple analysis. Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) known as the direct effect model, previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.
+
+### Run Model
+Here we run this model using 2 chains and 4000 iterations per chain. This code follows standard Stan/Rstan code.
+
+```{r Direct Effect Model}
+fit.direct<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
+```
+
+### Parameter Estimates
+Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
+```{r Direct Results}
+#Lets look at the parameter estimates
+print(fit.direct,pars = c("a","hl","beta","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.direct <- rstan::extract(fit.direct)
+
+```
+Here beta[1,2,3] are the intercepts/effects of the three regimes, with the fourth, beta[4] being the slope of the direct effect relationship between brain mass and body mass. Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.
+
+Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
+
+### Trace and Density Plots for estimated parameters
+We can look at how our procedures using the standard trace and density plots from Rstan 
+
+```{r Direct Trace and Density Plots}
+par(mfrow = c(1,3))
+
+traceplot(fit.direct,c("a","hl","beta","vy","sigma2_y"))
+stan_dens(fit.direct,c("a","hl","beta","vy","sigma2_y"))
+```
+
+These look good.
+
+## Adaptive Model
+Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.
+
+### Run Model
+Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
+
+```{r Adaptive Model}
+fit.adaptive<- rstan::sampling(stanmodels$blouchOUReg_v1,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),show_messages=FALSE)
+```
+
+### Parameter Estimates
+Stan prints out a lot of info, so lets just look at the parameter estimates here and store the most important stuff for later.
+```{r Adaptive Results}
+#Lets look at the parameter estimates
+print(fit.adaptive,pars = c("a","hl","beta","beta_evol","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.adapive <- rstan::extract(fit.adaptive)
+
+```
+Here beta[1,2,3] are the intercepts/effects of the three regimes, with the fourth, beta[4] being the optimal slope of the adaptive  relationship between brain mass and body mass. beta_evol[1,2,3] is a repeat of the previous results for each regime but beta_evol[4] is the evolutionary slope between brain mass and body mass.
+
+Other parameters are the rate of adaptation (a), the phylogenetic half life (hl), the equilibrium variance of the OU process vy, r_squared, and standard deviation of random changes sigma2_y.
+
+Blouch follows the same format of parameter estimate presentation as Slouch - see Hansen et al. (2008), Grabowski et al. (2016), and Kopperud et al. (2020) for more explanation.
+
+### Trace and Density Plots for estimated parameters
+We can look at how our procedures using the standard trace and density plots from Rstan 
+
+```{r Adaptive Trace and Density Plots}
+par(mfrow = c(1,3))
+
+traceplot(fit.direct,c("a","hl","beta","vy","sigma2_y"))
+stan_dens(fit.direct,c("a","hl","beta","vy","sigma2_y"))
+
+```
+
+These look good.
+
+## Model Comparison using Bayes Factors
+While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package. 
+
+```{r Model Comparison}
+
+lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
+lml.fit.adaptive<-bridge_sampler(fit.adaptive,silent=TRUE)
+BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.adaptive)
+BF_att
+```
+
+We find that the data is much more likely under a model that assumes a direct effect model rather than an adaptive model.
+
+## Plots
+
+### Load Plot Packages
+Let's make some plots of our results
+
+```{r R Packages for Plots}
+library(ggsci)
+library(ggplot2)
+
+```
+
+### Direct Effect Plot
+```{r Direct Effect Plot}
+mypal = pal_npg("nrc", alpha = 0.7)(3)
+
+ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered,color=diet,group=diet))+
+  #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  geom_abline(intercept=mean(ext.fit.direct$beta[,1]),slope = mean(ext.fit.direct$beta[,4]),lty=1,color=mypal[1])+
+  geom_abline(intercept=mean(ext.fit.direct$beta[,2]),slope = mean(ext.fit.direct$beta[,4]),lty=1,color=mypal[2])+
+  geom_abline(intercept=mean(ext.fit.direct$beta[,3]),slope = mean(ext.fit.direct$beta[,4]),lty=1,color=mypal[3])+
+  geom_point(data=ruminant.trdata$dat,mapping=aes(color=diet), size=2.0,alpha=0.8)+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  ggtitle("Direct Effect Model")+
+  ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+```
+
+The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the third regime is having an effect on relative brain mass when compared to the other two.
+
+
+### Adaptive Plot
+```{r Adaptive Plot}
+mypal = pal_npg("nrc", alpha = 0.7)(3)
+
+ggplot(data=ruminant.trdata$dat,aes(y=brain_mass_g_log_mean,x=bodycentered,color=diet,group=diet))+
+  #geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  geom_abline(intercept=mean(ext.fit.adapive$beta[,1]),slope = mean(ext.fit.adapive$beta[,4]),lty=1,color=mypal[1])+
+  geom_abline(intercept=mean(ext.fit.adapive$beta[,2]),slope = mean(ext.fit.adapive$beta[,4]),lty=1,color=mypal[2])+
+  geom_abline(intercept=mean(ext.fit.adapive$beta[,3]),slope = mean(ext.fit.adapive$beta[,4]),lty=1,color=mypal[3])+
+#  geom_point(data=ruminant.trdata$dat,mapping=aes(color=diet), size=2.0,alpha=0.8)+
+  geom_point(data=ruminant.trdata$dat,size=2.0,alpha=0.8)+
+  theme_bw()+  theme(legend.position="bottom")+
+  ggtitle("Adaptive Model")+
+  ylab("log Brain Mass (g)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+```
+
+The diet data has three regimes, in the order: Levels: Br Gr MF. Our results above and plotted here suggest only the third regime might be having an effect on the adaptive relationship between brain mass and body mass when compared to the other two.
+
+## References
+Grabowski, M., K. L. Voje, and T. F. Hansen. 2016. Evolutionary modeling and correcting for observation error support a 3/5 brain-body allometry for primates. J. Hum. Evol. 94:106–116.
+
+Gronau, Q. F., H. Singmann, and E.-J. Wagenmakers. 2020. bridgesampling: An R Package for Estimating Normalizing Constants. Journal of Statistical Software 92:1–29.
+
+Hansen, T. F., J. Pienaar, and S. H. Orzack. 2008. A comparative method for studying adaptation to a randomly evolving environment. Evolution 62:1965–1977.
+
+Labra, A., J. Pienaar, and T. F. Hansen. 2009. Evolution of thermal physiology in Liolaemus lizards: adaptation, phylogenetic inertia, and niche tracking. Am. Nat. 174:204–220.
+
+Kopperud, B. T., J. Pienaar, K. L. Voje, S. H. Orzack, and T. F. Hansen. 2020. Slouch: Stochastic Linear Ornstein-Uhlenbeck Comparative Hypotheses. R package version 2.1.4.
+
+Stan Development Team. 2021. RStan: the R interface to Stan. R package version 2.21.3, https://mc-stan.org/.
+
+Toljagić, O., K. L. Voje, M. Matschiner, L. H. Liow, and T. F. Hansen. 2017. Millions of Years Behind: Slow Adaptation of Ruminants to Grasslands. Systematic Biology 67:145–157.
+
+Uyeda, J. C., and L. J. Harmon. 2020. R Package treeplyr.
+

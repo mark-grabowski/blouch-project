@@ -1,0 +1,143 @@
+---
+title: "Prior Exploration"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOUReg.setup.mv_v1_3.R")
+
+name.response.trait<-"Sim1"
+reg.trdata<-ruminant.trdata
+
+stan_test_data<-blouchOUReg.setup.mv(reg.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits=NULL)
+
+reg.trdata<-ruminant.trdata
+```
+
+
+Slope and intercept - simple one level regime model
+```{r}
+library(ggsci)
+
+intercept_test<-rnorm(100,stan_test_data$ols_intercept,1)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_test_data$ols_slope,0.5)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=bodycentered))+  
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Brain (mm2)") + xlab("log Body")+
+  scale_color_npg()
+
+slope.prior.plot
+```
+
+Mean Centered Y
+```{r}
+intercept_test<-rt(100,4)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_test_data$ols_slope,0.3)
+
+slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim.MC1,x=bodycentered))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  scale_color_npg()
+
+slope.prior.plot
+library(ggsci)
+```
+
+
+Multilevel model - Normal Y data
+```{r}
+#beta_raw<-rnorm(100,0,1)
+beta_bar<-rnorm(100,stan_test_data$ols_intercept,0.25)
+sd_beta<-rexp(100,3)
+beta<-rnorm(100,beta_bar,sd_beta)
+
+slope_test<-rnorm(100,stan_test_data$ols_slope,0.5)
+
+regression.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=bodycentered))+
+  geom_point()+
+  geom_abline(intercept=beta,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("Simulated log Neocortex Area (mm2)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+
+regression.prior.plot
+```
+
+Centered - Mean Centered Y data
+```{r Explore Priors 2}
+#beta_raw<-rnorm(100,0,1)
+beta_raw<-rt(100,1)
+#beta_bar<-rnorm(100,stan_test_data$ols_intercept,0.5)
+sd_beta<-rexp(100,1)
+
+beta<-rnorm(100,beta_bar,sd_beta)
+
+slope_test<-rnorm(100,stan_test_data$ols_slope,0.25)
+
+regression.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=Sim.MC1,x=bodycentered))+
+  geom_point()+
+  geom_abline(intercept=beta,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("Simulated log Neocortex Area (mm2)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+
+regression.prior.plot
+```
+
+Multilevel Optima non-centered Y not mean standardize
+```{r}
+#beta_raw<-rnorm(100,0,1)
+beta_raw<-rt(100,2)
+sd_beta<-rexp(100,1)
+beta_bar<-rnorm(100,stan_test_data$ols_intercept,0.5)
+beta<- beta_bar + sd_beta * beta_raw
+
+slope_test<-rnorm(100,stan_test_data$ols_slope,0.25)
+
+regression.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=Sim1,x=bodycentered))+
+  geom_point()+
+  geom_abline(intercept=beta,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("Simulated log Neocortex Area (mm2)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+
+regression.prior.plot
+```
+
+Multilevel Optima non-centered Y mean standardized
+```{r}
+#beta_raw<-rnorm(100,0,1)
+beta_raw<-rt(100,2)
+sd_beta<-rexp(100,1)
+beta_bar<-rt(100,2)
+beta<- beta_bar + sd_beta * beta_raw
+
+slope_test<-rnorm(100,stan_test_data$ols_slope,0.25)
+
+regression.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=Sim.MC1,x=bodycentered))+
+  geom_point()+
+  geom_abline(intercept=beta,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("Simulated log Neocortex Area (mm2)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+
+regression.prior.plot
+```
+

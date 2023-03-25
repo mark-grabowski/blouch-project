@@ -1,0 +1,2814 @@
+---
+title: "Blouch Sim and BPA Plots"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Plot output from SBR1 - Blouch Testing - BPA.Rmd
+
+```{r}
+rm(list=ls())
+
+library(ggplot2)
+library(dplyr)
+library(ggsci)
+
+```
+
+```{r}
+load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/SBR1 - Blouch and Slouch - Main Sims - Adaptive and Direct - WS_122222.RData")
+
+```
+saved.parameters.sub<-saved.adapt.parameters%>%filter(vy==0.0001)
+
+
+optimal.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  theme(text = element_text(size=8))+
+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.0001.plot
+ 
+evol.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.0001.plot
+
+ hl.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+     theme(text = element_text(size=8))+
+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ hl.vy.0001.plot
+
+vy.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ vy.vy.0001.plot
+
+Ya.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=Ya.median,x=factor(hl),group=1))+
+  geom_point(aes(y=Ya,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Ya")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+Ya.vy.0001.plot
+
+
+
+Blouch Post. Median: Adaptive Model
+```{r}
+
+#Start here for ms plots
+
+saved.parameters.sub<-saved.adapt.parameters%>%filter(vy==0.001)
+
+theta.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=theta.median,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  theme(text = element_text(size=8))+
+  
+  ggtitle("Theta")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.001.plot
+
+optimal.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.001.plot
+ 
+evol.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.001.plot
+
+ hl.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+     theme(text = element_text(size=8))+
+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ hl.vy.001.plot
+
+vy.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ vy.vy.001.plot
+ 
+ Ya.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=Ya.median,x=factor(hl),group=1))+
+  geom_point(aes(y=Ya,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+     theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Ya")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+Ya.vy.001.plot
+
+saved.parameters.sub<-saved.adapt.parameters%>%filter(vy==0.01)
+
+theta.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=theta.median,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  theme(text = element_text(size=8))+
+  
+  ggtitle("Theta")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.01.plot
+
+optimal.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.01.plot
+
+evol.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.01.plot
+
+hl.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.01.plot
+
+vy.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.01.plot
+
+Ya.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=Ya.median,x=factor(hl),group=1))+
+  geom_point(aes(y=Ya,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Ya")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+Ya.vy.01.plot
+
+saved.parameters.sub<-saved.adapt.parameters%>%filter(vy==0.1)
+
+theta.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=theta.median,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  theme(text = element_text(size=8))+
+  
+  ggtitle("Theta")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.1.plot
+
+optimal.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.1.plot
+
+evol.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.1.plot
+
+hl.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.1.plot
+
+vy.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.1.plot
+
+Ya.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=Ya.median,x=factor(hl),group=1))+
+  geom_point(aes(y=Ya,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+    theme(text = element_text(size=8))+
+
+  ggtitle(expression(italic("Ya")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+Ya.vy.1.plot
+```
+
+
+```{r}
+#library(ggpubr)
+#pdf("blouch_adapt_hl_vy.pdf", width=12, height=9)
+#ggarrange(optimal.vy.0001.plot,evol.vy.0001.plot,hl.vy.0001.plot,vy.vy.0001.plot,Ya.vy.0001.plot,
+#          optimal.vy.001.plot,evol.vy.001.plot,hl.vy.001.plot,vy.vy.001.plot,Ya.vy.001.plot,
+#          optimal.vy.01.plot,evol.vy.01.plot,hl.vy.01.plot,vy.vy.01.plot,Ya.vy.01.plot,
+#          optimal.vy.1.plot,evol.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,Ya.vy.1.plot,
+#          ncol=5,nrow=4)
+
+#dev.off()
+
+#3X5 - no 0.001 vy
+library(ggpubr)
+pdf("blouch_adapt_hl_vy.pdf", width=12, height=6 )
+ggarrange(
+          theta.vy.001.plot,optimal.vy.001.plot,evol.vy.001.plot,hl.vy.001.plot,vy.vy.001.plot,Ya.vy.001.plot,
+          theta.vy.01.plot,optimal.vy.01.plot,evol.vy.01.plot,hl.vy.01.plot,vy.vy.01.plot,Ya.vy.01.plot,
+          theta.vy.1.plot,optimal.vy.1.plot,evol.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,Ya.vy.1.plot,
+          ncol=6,nrow=3)
+
+dev.off()
+
+  
+
+
+```
+
+
+
+Load Slouch Adaptive WS
+```{r}
+#load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/SBR1 - Blouch Testing - BPAs - Slouch Adaptive - 122022.RData")
+
+
+```
+
+
+saved.parameters.sub<-saved.slouch.adapt.parameters%>%filter(vy==0.0001)
+
+optimal.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.0001.plot
+
+evol.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.0001.plot
+
+hl.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.0001.plot
+
+vy.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.0001.plot
+
+
+Slouch Mean: Adaptive Model
+```{r}
+backup.saved.adapt.bpa<-saved.slouch.adapt.parameters
+#saved.slouch.adapt.parameters<-saved.slouch.adapt.parameters%>%filter(hl>=0.05)
+
+saved.parameters.sub<-saved.slouch.adapt.parameters%>%filter(vy==0.001)
+
+
+theta.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=theta.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.001.plot
+
+optimal.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.001.plot
+
+evol.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.001.plot
+
+hl.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.001.plot
+
+vy.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.001.plot
+
+saved.parameters.sub<-saved.slouch.adapt.parameters%>%filter(vy==0.01)
+
+
+theta.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=theta.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.01.plot
+
+optimal.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.01.plot
+
+evol.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.01.plot
+
+hl.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.01.plot
+
+vy.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.01.plot
+
+saved.parameters.sub<-saved.slouch.adapt.parameters%>%filter(vy==0.1)
+
+theta.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=theta.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.1.plot
+
+optimal.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.vy.1.plot
+
+evol.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+evol.vy.1.plot
+
+hl.vy.5.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.1.plot
+
+vy.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.1.plot
+```
+
+
+```{r}
+library(ggpubr)
+#pdf("slouch_adapt_hl_vy.pdf", width=10, height=9)
+#ggarrange(optimal.vy.0001.plot,evol.vy.0001.plot,hl.vy.0001.plot,vy.vy.0001.plot,
+#          optimal.vy.001.plot,evol.vy.001.plot,hl.vy.001.plot,vy.vy.001.plot,
+#          optimal.vy.01.plot,evol.vy.01.plot,hl.vy.01.plot,vy.vy.01.plot,
+#          optimal.vy.1.plot,evol.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,
+#          ncol=4,nrow=4)
+#dev.off()
+
+
+pdf("slouch_adapt_hl_vy.pdf", width=10, height=6)
+ggarrange(theta.vy.001.plot,optimal.vy.001.plot,evol.vy.001.plot,hl.vy.001.plot,vy.vy.001.plot,
+          theta.vy.01.plot,optimal.vy.01.plot,evol.vy.01.plot,hl.vy.01.plot,vy.vy.01.plot,
+          theta.vy.1.plot,optimal.vy.1.plot,evol.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,
+          ncol=5,nrow=3)
+dev.off()
+
+
+```
+
+
+## Direct Effect Model Plots
+
+
+saved.parameters.sub<-saved.direct.parameters%>%filter(vy==0.0001)
+
+
+direct.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(aes(y=mean(expected.slope),x=factor(hl)),size=1.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.0001.plot
+
+hl.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.0001.plot
+
+vy.vy.0001.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.0001.plot
+
+Blouch Post. Median: Direct Effect Model
+```{r}
+saved.parameters.sub<-saved.direct.parameters%>%filter(vy==0.001)
+
+theta.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=theta.median,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.001.plot
+
+direct.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.001.plot
+
+
+hl.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.001.plot
+
+vy.vy.001.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.001.plot
+
+saved.parameters.sub<-saved.direct.parameters%>%filter(vy==0.01)
+
+theta.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=theta.median,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.01.plot
+
+direct.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.01.plot
+
+
+
+hl.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.01.plot
+
+vy.vy.01.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.01.plot
+
+saved.parameters.sub<-saved.direct.parameters%>%filter(vy==0.1)
+
+theta.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=theta.median,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.1.plot
+
+direct.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.median,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Posterior Median") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.1.plot
+
+
+
+hl.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.1.plot
+
+vy.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.1.plot
+
+
+```
+
+
+```{r}
+library(ggpubr)
+#pdf("blouch_direct_hl_vy.pdf", width=12, height=12)
+#ggarrange(direct.vy.0001.plot,hl.vy.0001.plot,vy.vy.0001.plot,direct.vy.001.plot,hl.vy.001.plot,vy.vy.001.plot,direct.vy.01.plot,hl.vy.01.plot,vy.vy.01.plot,direct.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,ncol=3,nrow=4)
+#dev.off()
+
+pdf("blouch_direct_hl_vy.pdf", width=9, height=9)
+ggarrange(theta.vy.001.plot,direct.vy.001.plot,hl.vy.001.plot,vy.vy.001.plot,theta.vy.01.plot,direct.vy.01.plot,hl.vy.01.plot,vy.vy.01.plot,theta.vy.1.plot,direct.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,ncol=3,nrow=4)
+dev.off()
+
+```
+
+Blouch direct BPA: Logged half-lives
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+theta.bias.plot<-ggplot(saved.theta.bpa,aes(y=theta.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Bias")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+theta.bias.plot
+
+theta.imp.plot<-ggplot(saved.theta.bpa,aes(y=theta.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Imprecision")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+theta.imp.plot
+
+theta.inac.plot<-ggplot(saved.theta.bpa,aes(y=theta.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+theta.inac.plot
+
+direct.bias.plot<-ggplot(saved.direct.bpa,aes(y=direct.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Bias")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+direct.bias.plot
+
+direct.imp.plot<-ggplot(saved.direct.bpa,aes(y=direct.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Imprecision")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+direct.imp.plot
+
+direct.inac.plot<-ggplot(saved.direct.bpa,aes(y=direct.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+direct.inac.plot
+
+
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+hl.bias.plot<-ggplot(saved.direct.bpa,aes(y=hl.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Bias")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+hl.bias.plot
+
+hl.imp.plot<-ggplot(saved.direct.bpa,aes(y=hl.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Imprecision")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+hl.imp.plot
+hl.inac.plot<-ggplot(saved.direct.bpa,aes(y=hl.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+hl.inac.plot
+
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_direct_bpa.pdf", width=12, height=6)
+ggarrange(theta.bias.plot,theta.imp.plot,theta.inac.plot,direct.bias.plot,direct.imp.plot,direct.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,ncol=3,nrow=3)
+dev.off()
+
+```
+
+
+#################
+Slouch Mean: direct Model
+```{r}
+saved.parameters.sub<-saved.slouch.direct.parameters%>%filter(vy==0.1)
+
+theta.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=theta.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=theta,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+theta.vy.1.plot
+
+
+direct.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.1.plot
+
+
+hl.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.1.plot
+
+vy.vy.1.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.1.plot
+
+
+saved.parameters.sub<-saved.slouch.direct.parameters%>%filter(vy==0.25)
+
+direct.vy.25.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.25.plot
+
+
+hl.vy.25.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.25.plot
+
+vy.vy.25.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.25.plot
+
+saved.parameters.sub<-saved.slouch.direct.parameters%>%filter(vy==0.5)
+
+direct.vy.5.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.vy.5.plot
+
+hl.vy.5.plot<-ggplot(saved.parameters.sub,aes(y=hl.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.vy.5.plot
+
+vy.vy.5.plot<-ggplot(saved.parameters.sub,aes(y=vy.mean,x=factor(hl),group=1))+
+  geom_point(aes(y=vy,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Mean") + xlab("Half-life")+
+  scale_color_npg()
+
+vy.vy.5.plot
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_direct_hl_vy.pdf", width=12, height=9)
+ggarrange(direct.vy.1.plot,hl.vy.1.plot,vy.vy.1.plot,direct.vy.25.plot,hl.vy.25.plot,vy.vy.25.plot,direct.vy.5.plot,hl.vy.1.plot,vy.vy.5.plot,ncol=4,nrow=3)
+dev.off()
+
+```
+
+
+Slouch BPA Plots: Logged Half lives
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+sl.direct.bias.plot<-ggplot(saved.slouch.direct.bpa,aes(y=direct.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Bias")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#  scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+sl.direct.bias.plot
+
+sl.direct.imp.plot<-ggplot(saved.slouch.direct.bpa,aes(y=direct.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Imprecision")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.direct.imp.plot
+
+sl.direct.inac.plot<-ggplot(saved.slouch.direct.bpa,aes(y=direct.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Inaccuracy")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.direct.inac.plot
+
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+sl.hl.bias.plot<-ggplot(saved.slouch.direct.bpa,aes(y=hl.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Bias")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.hl.bias.plot
+
+sl.hl.imp.plot<-ggplot(saved.slouch.direct.bpa,aes(y=hl.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Imprecision")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.hl.imp.plot
+sl.hl.inac.plot<-ggplot(saved.slouch.direct.bpa,aes(y=hl.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Inaccuracy")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.hl.inac.plot
+
+```
+
+```{r}
+library(ggpubr)
+pdf("slouch_direct_bpa.pdf", width=12, height=9)
+ggarrange(direct.bias.plot,direct.imp.plot,direct.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,sl.direct.bias.plot,sl.direct.imp.plot,sl.direct.inac.plot,sl.hl.bias.plot,sl.hl.imp.plot,sl.hl.inac.plot,ncol=3,nrow=4)
+
+dev.off()
+
+```
+
+
+```{r}
+load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Workspaces/SBR1 - Blouch Testing - BPAs -Adaptive More Runs- WS_102222.RData")
+#load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Workspaces/SBR1 - Blouch Testing - BPAs - Slouch Adaptive - 102422.RData")
+```
+
+Combined BPA Plots - blouch and slouch
+```{r}
+
+saved.direct.bpa<-cbind("Type"="blouch",saved.direct.bpa)
+saved.slouch.direct.bpa<-cbind("Type"="slouch",saved.slouch.direct.bpa)
+names(saved.slouch.direct.bpa)[12]<-"sym"
+saved.combined.bpa<-rbind(saved.direct.bpa,saved.slouch.direct.bpa)
+saved.combined.bpa<-saved.combined.bpa%>%filter(hl>=0.05)
+saved.combined.bpa<-saved.combined.bpa%>%filter(vy>=0.001)
+
+```
+
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+direct.bias.plot<-ggplot(saved.combined.bpa,aes(y=direct.bias,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Bias")+
+  ylab("Bias") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+direct.bias.plot
+
+direct.imp.plot<-ggplot(saved.combined.bpa,aes(y=direct.imp,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Imprecision")+
+  ylab("Imprecision") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+direct.imp.plot
+
+direct.inac.plot<-ggplot(saved.combined.bpa,aes(y=direct.inac,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Effect Slope Inaccuracy")+
+  ylab("Inaccuracy") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+direct.inac.plot
+
+```
+
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+hl.bias.plot<-ggplot(saved.combined.bpa,aes(y=hl.bias,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Bias")+
+  ylab("Bias") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+hl.bias.plot
+
+hl.imp.plot<-ggplot(saved.combined.bpa,aes(y=hl.imp,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Imprecision")+
+  ylab("Imprecision") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+hl.imp.plot
+
+hl.inac.plot<-ggplot(saved.combined.bpa,aes(y=hl.inac,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Inaccuracy")+
+  ylab("Inaccuracy") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+hl.inac.plot
+
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_slouch_direct_bpa.pdf", width=12, height=6)
+ggarrange(direct.bias.plot,direct.imp.plot,direct.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,ncol=3,nrow=2)
+
+dev.off()
+
+```
+
+```{r}
+load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/SBR1 - Blouch Testing - BPAs - WS_122022_pt2.RData")
+```
+
+
+## Brownian motion plots
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+brown.plot<-ggplot(saved.BM.parameters,aes(y=brown.slope.median,x=factor(sigma2y),group=1))+
+  geom_point(aes(y=0.25),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+
+  #geom_line(data=mean.opt.slopes, aes(y=mean.opt,x=factor(hl)),lty=2)+
+  theme_bw()+
+  #theme(legend.position="bottom")+
+  ggtitle("Brownian Slope")+
+  #ggtitle("Evolutionary Regression Slope")+
+  #ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Sigma2y")+
+  #ylim(c(0,0.5))+
+  scale_color_npg()
+  scale_x_discrete(breaks=seq(0, 1, 0.1))
+
+
+brown.plot
+ 
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+sigma.plot<-ggplot(saved.BM.parameters,aes(y=sigma2y.median,x=factor(sigma2y),group=1))+
+  geom_point(aes(y=sigma2y),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+
+  #geom_line(data=mean.opt.slopes, aes(y=mean.opt,x=factor(hl)),lty=2)+
+  theme_bw()+
+  #theme(legend.position="bottom")+
+  ggtitle("Sigma2y")+
+  #ggtitle("Evolutionary Regression Slope")+
+  #ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Sigma2y")+
+  #ylim(c(0,0.5))+
+  scale_color_npg()+
+    #scale_x_discrete(breaks=seq(0, 1, 0.1))
+
+
+sigma.plot
+ 
+
+
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_BM_sigma2y.pdf", width=6, height=3)
+ggarrange(brown.plot,sigma.plot,ncol=2,nrow=1)
+dev.off()
+
+```
+
+
+Blouch brown.slope BPA: Logged half-lives
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+brown.slope.bias.plot<-ggplot(saved.BM.bpa,aes(y=brown.slope.bias,x=log(sigma2y)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Brownian Slope Bias")+
+  ylab("Posterior Median") + xlab("log Sigma2y")+
+  scale_color_npg()
+#scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+brown.slope.bias.plot
+
+brown.slope.imp.plot<-ggplot(saved.BM.bpa,aes(y=brown.slope.imp,x=log(sigma2y)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Brownian Slope Imprecision")+
+  ylab("Posterior Median") + xlab("log Sigma2y")+
+  scale_color_npg()
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+brown.slope.imp.plot
+
+brown.slope.inac.plot<-ggplot(saved.BM.bpa,aes(y=brown.slope.inac,x=log(sigma2y)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Brownian Slope Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Sigma2y")+
+  scale_color_npg()
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+brown.slope.inac.plot
+
+
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+sigma2y.bias.plot<-ggplot(saved.BM.bpa,aes(y=sigma2y.bias,x=log(sigma2y)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Sigma2y Bias")+
+  ylab("Posterior Median") + xlab("log Sigma2y")+
+  scale_color_npg()
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sigma2y.bias.plot
+
+sigma2y.imp.plot<-ggplot(saved.BM.bpa,aes(y=sigma2y.imp,x=log(sigma2y)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Sigma2y Imprecision")+
+  ylab("Posterior Median") + xlab("log Sigma2y")+
+  scale_color_npg()
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sigma2y.inac.plot<-ggplot(saved.BM.bpa,aes(y=sigma2y.inac,x=log(sigma2y)))+
+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Sigma2y Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Sigma2y")+
+  scale_color_npg()
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sigma2y.inac.plot
+
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_brown.slope_bpa.pdf", width=12, height=6)
+ggarrange(brown.slope.bias.plot,brown.slope.imp.plot,brown.slope.inac.plot,sigma2y.bias.plot,sigma2y.imp.plot,sigma2y.inac.plot,ncol=3,nrow=2)
+dev.off()
+
+```
+
+
+
+
+Changing Tip Number Plots
+
+Adaptive Model
+
+
+```{r}
+#Turn your 'treatment' column into a character vector
+saved.adapt.parameters$sym <- as.character(saved.adapt.parameters$sym)
+#Then turn it back into a factor with the levels in the correct order
+saved.adapt.parameters$sym <- factor(saved.adapt.parameters$sym, levels=unique(saved.adapt.parameters$sym))
+
+#Turn your 'treatment' column into a character vector
+saved.adapt.bpa$sym <- as.character(saved.adapt.bpa$sym)
+#Then turn it back into a factor with the levels in the correct order
+saved.adapt.bpa$sym <- factor(saved.adapt.bpa$sym, levels=unique(saved.adapt.bpa$sym))
+
+```
+
+
+```{r}
+library(dplyr)
+
+saved.parameters.sub<-saved.adapt.parameters%>%filter(hl==0.1)
+
+optimal.hl.0.1.plot<-ggplot(saved.adapt.parameters,aes(y=opt.slope.median,x=factor(tips),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(tips)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+optimal.hl.0.1.plot
+
+evol.hl.0.1.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+evol.hl.0.1.plot
+
+hl.hl.0.1.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(sym),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+hl.hl.0.1.plot
+
+vy.hl.0.1.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(sym),group=1))+
+  geom_point(aes(y=vy,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+vy.hl.0.1.plot
+
+saved.parameters.sub<-saved.adapt.parameters%>%filter(hl==0.25)
+
+
+optimal.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+optimal.hl.0.25.plot
+
+evol.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+evol.hl.0.25.plot
+
+hl.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(sym),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+hl.hl.0.25.plot
+
+vy.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(sym),group=1))+
+  geom_point(aes(y=vy,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+vy.hl.0.25.plot
+
+saved.parameters.sub<-saved.adapt.parameters%>%filter(hl==1.0)
+
+optimal.hl.1.0.plot<-ggplot(saved.parameters.sub,aes(y=opt.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=opt.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+optimal.hl.1.0.plot
+
+evol.hl.1.0.plot<-ggplot(saved.parameters.sub,aes(y=evol.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=evol.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Evolutionary Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+evol.hl.1.0.plot
+
+hl.vy.1.0.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(sym),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+hl.vy.1.0.plot
+
+vy.vy.1.0.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(sym),group=1))+
+  geom_point(aes(y=vy,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+vy.vy.1.0.plot
+```
+
+
+```{r}
+library(ggpubr)
+pdf("plots_adapt_tips.pdf", width=12, height=9)
+ggarrange(optimal.hl.0.1.plot,evol.hl.0.1.plot,hl.hl.0.1.plot,vy.hl.0.1.plot,optimal.hl.0.25.plot,evol.hl.0.25.plot,hl.hl.0.25.plot,vy.hl.0.25.plot,optimal.hl.1.0.plot,evol.hl.1.0.plot,hl.hl.1.0.plot,hl.hl.1.0.plot,ncol=4,nrow=3)
+dev.off()
+  
+```
+
+
+
+Plots of BPA
+```{r}
+optimal.bias.plot<-ggplot(saved.adapt.bpa,aes(y=opt.bias,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Bias")+
+  ylab("Bias") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.bias.plot
+ 
+optimal.imp.plot<-ggplot(saved.adapt.bpa,aes(y=opt.imp,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Optimal Slope Imprecision")+
+  ylab("Imprecision") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.imp.plot
+
+optimal.inac.plot<-ggplot(saved.adapt.bpa,aes(y=opt.inac,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=opt.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Optimal Slope Inaccuracy")+
+  ylab("Inaccuracy") + xlab("Half-life")+
+  scale_color_npg()
+
+optimal.inac.plot
+
+
+ hl.bias.plot<-ggplot(saved.adapt.bpa,aes(y=hl.bias,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Bias")+
+  ylab("Bias") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ hl.bias.plot
+
+
+ hl.imp.plot<-ggplot(saved.adapt.bpa,aes(y=hl.imp,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Imprecision")+
+  ylab("Imprecision") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ hl.imp.plot
+
+ 
+ hl.inac.plot<-ggplot(saved.adapt.bpa,aes(y=hl.inac,x=factor(sym),color=factor(hl)))+
+  geom_point(size=2.0,alpha=0.8)+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Innacuracy")+
+  ylab("Inaccuracy") + xlab("Half-life")+
+  scale_color_npg()
+ 
+ hl.inac.plot
+
+```
+
+```{r}
+pdf("plots_adapt_tips_bpa.pdf", width=12, height=9)
+ggarrange(optimal.bias.plot,optimal.imp.plot,optimal.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,ncol=3,nrow=2)
+dev.off()
+
+```
+
+Direct Model Plots
+
+```{r}
+#Turn your 'treatment' column into a character vector
+saved.direct.parameters$sym <- as.character(saved.direct.parameters$sym)
+#Then turn it back into a factor with the levels in the correct order
+saved.direct.parameters$sym <- factor(saved.direct.parameters$sym, levels=unique(saved.direct.parameters$sym))
+
+#Turn your 'treatment' column into a character vector
+saved.direct.bpa$sym <- as.character(saved.direct.bpa$sym)
+#Then turn it back into a factor with the levels in the correct order
+saved.direct.bpa$sym <- factor(saved.direct.bpa$sym, levels=unique(saved.direct.bpa$sym))
+
+```
+
+```{r}
+library(dplyr)
+
+saved.parameters.sub<-saved.direct.parameters%>%filter(hl==0.1)
+
+direct.hl.0.1.plot<-ggplot(saved.direct.parameters,aes(y=direct.slope.median,x=factor(tips),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(tips)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+direct.hl.0.1.plot
+
+
+hl.hl.0.1.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(sym),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+hl.hl.0.1.plot
+
+vy.hl.0.1.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(sym),group=1))+
+  geom_point(aes(y=vy,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+vy.hl.0.1.plot
+
+saved.parameters.sub<-saved.direct.parameters%>%filter(hl==0.25)
+
+
+direct.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+direct.hl.0.25.plot
+
+hl.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(sym),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+hl.hl.0.25.plot
+
+vy.hl.0.25.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(sym),group=1))+
+  geom_point(aes(y=vy,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+vy.hl.0.25.plot
+
+saved.parameters.sub<-saved.direct.parameters%>%filter(hl==1.0)
+
+direct.hl.1.0.plot<-ggplot(saved.parameters.sub,aes(y=direct.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y=direct.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+direct.hl.1.0.plot
+
+hl.hl.1.0.plot<-ggplot(saved.parameters.sub,aes(y=hl.median,x=factor(sym),group=1))+
+  geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+hl.hl.1.0.plot
+
+vy.hl.1.0.plot<-ggplot(saved.parameters.sub,aes(y=vy.median,x=factor(sym),group=1))+
+  geom_point(aes(y=vy,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle(expression(italic("Vy")))+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+vy.hl.1.0.plot
+```
+
+
+```{r}
+library(ggpubr)
+pdf("plots_direct_tips.pdf", width=12, height=9)
+ggarrange(direct.hl.0.1.plot,hl.hl.0.1.plot,vy.hl.0.1.plot,direct.hl.0.25.plot,hl.hl.0.25.plot,vy.hl.0.25.plot,direct.hl.1.0.plot,hl.hl.1.0.plot,vy.hl.1.0.plot,ncol=3,nrow=3)
+dev.off()
+
+```
+
+
+Plots of BPA
+```{r}
+direct.bias.plot<-ggplot(saved.direct.bpa,aes(y=direct.bias,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Direct Slope Bias")+
+  ylab("Bias") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.bias.plot
+
+direct.imp.plot<-ggplot(saved.direct.bpa,aes(y=direct.imp,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Direct Slope Imprecision")+
+  ylab("Imprecision") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.imp.plot
+
+direct.inac.plot<-ggplot(saved.direct.bpa,aes(y=direct.inac,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=direct.slope,x=factor(hl)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Direct Effect Slope Inaccuracy")+
+  ylab("Inaccuracy") + xlab("Half-life")+
+  scale_color_npg()
+
+direct.inac.plot
+
+
+hl.bias.plot<-ggplot(saved.direct.bpa,aes(y=hl.bias,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Bias")+
+  ylab("Bias") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.bias.plot
+
+
+hl.imp.plot<-ggplot(saved.direct.bpa,aes(y=hl.imp,x=factor(sym),color=factor(hl)))+
+  #geom_point(aes(y=hl),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Imprecision")+
+  ylab("Imprecision") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.imp.plot
+
+
+hl.inac.plot<-ggplot(saved.direct.bpa,aes(y=hl.inac,x=factor(sym),color=factor(hl)))+
+  geom_point(size=2.0,alpha=0.8)+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Innacuracy")+
+  ylab("Inaccuracy") + xlab("Half-life")+
+  scale_color_npg()
+
+hl.inac.plot
+
+```
+
+```{r}
+pdf("plots_direct_tips_bpa.pdf", width=12, height=9)
+ggarrange(direct.bias.plot,direct.imp.plot,direct.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,ncol=3,nrow=2)
+dev.off()
+
+```
+
+
+```{r}
+library(dplyr)
+
+saved.parameters.sub<-saved.BM.parameters%>%filter(sigma2y==0.1)
+
+brown.sigma2y.0.1.plot<-ggplot(saved.BM.parameters,aes(y=brown.slope.median,x=factor(tips),group=1))+
+  geom_point(aes(y= brown.slope,x=factor(tips)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Brownian Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+brown.sigma2y.0.1.plot
+
+
+sigma2y.sigma2y.0.1.plot<-ggplot(saved.parameters.sub,aes(y=sigma2y.median,x=factor(sym),group=1))+
+  geom_point(aes(y=sigma2y),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+sigma2y.sigma2y.0.1.plot
+
+saved.parameters.sub<-saved.BM.parameters%>%filter(sigma2y==0.25)
+
+
+brown.sigma2y.0.25.plot<-ggplot(saved.parameters.sub,aes(y=brown.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y= brown.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("BM Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+brown.sigma2y.0.25.plot
+
+sigma2y.sigma2y.0.25.plot<-ggplot(saved.parameters.sub,aes(y=sigma2y.median,x=factor(sym),group=1))+
+  geom_point(aes(y=sigma2y),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+sigma2y.sigma2y.0.25.plot
+
+saved.parameters.sub<-saved.BM.parameters%>%filter(sigma2y==1.0)
+
+brown.sigma2y.1.0.plot<-ggplot(saved.parameters.sub,aes(y=brown.slope.median,x=factor(sym),group=1))+
+  geom_point(aes(y= brown.slope,x=factor(sym)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Brownian Slope")+
+  ylab("Posterior Median") + xlab("Tips")+
+  scale_color_npg()
+
+brown.sigma2y.1.0.plot
+
+sigma2y.sigma2y.1.0.plot<-ggplot(saved.parameters.sub,aes(y=sigma2y.median,x=factor(sym),group=1))+
+  geom_point(aes(y=sigma2y),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=1.0,alpha=0.4)+
+  geom_point(stat='summary', fun=mean)+
+  stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life")+
+  ylab("Posterior Mean") + xlab("Tips")+
+  scale_color_npg()
+
+sigma2y.sigma2y.1.0.plot
+```
+
+
+```{r}
+library(ggpubr)
+pdf("plots_BM_tips.pdf", width=12, height=9)
+ggarrange(brown.sigma2y.0.1.plot,sigma2y.sigma2y.0.1.plot,vy.sigma2y.0.1.plot,brown.sigma2y.0.25.plot,sigma2y.sigma2y.0.25.plot,vy.sigma2y.0.25.plot,brown.sigma2y.1.0.plot,sigma2y.sigma2y.1.0.plot,vy.sigma2y.1.0.plot,ncol=3,nrow=3)
+dev.off()
+
+```
+
+
+Plots of BPA
+```{r}
+brown.bias.plot<-ggplot(saved.BM.bpa,aes(y=brown.bias,x=factor(sym),color=factor(sigma2y)))+
+  #geom_point(aes(y= brown.slope,x=factor(sigma2y)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("BM Slope Bias")+
+  ylab("Bias") + xlab("Half-life")+
+  scale_color_npg()
+
+brown.bias.plot
+
+brown.imp.plot<-ggplot(saved.BM.bpa,aes(y=brown.imp,x=factor(sym),color=factor(sigma2y)))+
+  #geom_point(aes(y= brown.slope,x=factor(sigma2y)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("BM Slope Imprecision")+
+  ylab("Imprecision") + xlab("Half-life")+
+  scale_color_npg()
+
+brown.imp.plot
+
+brown.inac.plot<-ggplot(saved.BM.bpa,aes(y=brown.inac,x=factor(sym),color=factor(sigma2y)))+
+  #geom_point(aes(y= brown.slope,x=factor(sigma2y)),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("BM Slope Inaccuracy")+
+  ylab("Inaccuracy") + xlab("Half-life")+
+  scale_color_npg()
+
+brown.inac.plot
+
+
+sigma2y.bias.plot<-ggplot(saved.BM.bpa,aes(y=sigma2y.bias,x=factor(sym),color=factor(sigma2y)))+
+  #geom_point(aes(y=sigma2y),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Bias")+
+  ylab("Bias") + xlab("Half-life")+
+  scale_color_npg()
+
+sigma2y.bias.plot
+
+
+sigma2y.imp.plot<-ggplot(saved.BM.bpa,aes(y=sigma2y.imp,x=factor(sym),color=factor(sigma2y)))+
+  #geom_point(aes(y=sigma2y),size=2.0,alpha=0.8,color="black")+
+  geom_point(size=2.0,alpha=0.8)+
+  #geom_point(stat='summary', fun=mean)+
+  #stat_summary(fun=mean, geom="line")+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Imprecision")+
+  ylab("Imprecision") + xlab("Half-life")+
+  scale_color_npg()
+
+sigma2y.imp.plot
+
+
+sigma2y.inac.plot<-ggplot(saved.BM.bpa,aes(y=sigma2y.inac,x=factor(sym),color=factor(sigma2y)))+
+  geom_point(size=2.0,alpha=0.8)+
+  theme_bw()+
+  ggtitle("Phylogenetic Half-life Innacuracy")+
+  ylab("Inaccuracy") + xlab("Half-life")+
+  scale_color_npg()
+
+sigma2y.inac.plot
+
+```
+
+```{r}
+pdf("plots_BM_tips_bpa.pdf", width=12, height=9)
+ggarrange(brown.bias.plot,brown.imp.plot,brown.inac.plot,sigma2y.bias.plot,sigma2y.imp.plot,sigma2y.inac.plot,ncol=3,nrow=2)
+dev.off()
+
+```
+
+BPA Plots
+
+Slouch BPA Plots: Logged Half lives
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+sl.theta.bias.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=theta.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Bias")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#  scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+sl.theta.bias.plot
+
+sl.theta.imp.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=theta.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Imprecision")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.theta.imp.plot
+
+sl.theta.inac.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=theta.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Inaccuracy")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.theta.inac.plot
+sl.optimal.bias.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=opt.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Bias")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#  scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+sl.optimal.bias.plot
+
+sl.optimal.imp.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=opt.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Imprecision")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.optimal.imp.plot
+
+sl.optimal.inac.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=opt.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Inaccuracy")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.optimal.inac.plot
+
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+sl.hl.bias.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=hl.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Half-life Bias")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.hl.bias.plot
+
+sl.hl.imp.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=hl.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Half-life Imprecision")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.hl.imp.plot
+sl.hl.inac.plot<-ggplot(saved.slouch.adapt.bpa,aes(y=hl.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=2.0,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Half-life Inaccuracy")+
+  ylab("Mean") + xlab("log Half-life")+
+  scale_color_npg()
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+sl.hl.inac.plot
+
+```
+
+```{r}
+library(ggpubr)
+pdf("slouch_adapt_bpa.pdf", width=12, height=9)
+ggarrange(theta.bias.plot,theta.imp.plot,theta.inac.plot,optimal.bias.plot,optimal.imp.plot,optimal.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,sl.optimal.bias.plot,sl.optimal.imp.plot,sl.optimal.inac.plot,sl.hl.bias.plot,sl.hl.imp.plot,sl.hl.inac.plot,ncol=3,nrow=5)
+
+dev.off()
+
+```
+
+```{r}
+load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Workspaces/SBR1 - Blouch Testing - BPAs -Adaptive More Runs- WS_102222.RData")
+load("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro (1)/Academic/Research/Current Projects/Blouch project/R1/Workspaces/SBR1 - Blouch Testing - BPAs -Adaptive More Runs- WS_102222.RData")
+```
+
+
+```{r}
+load("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/SBR1 - Blouch and Slouch - BPA Plots - Adaptive and Direct - WS_122222.RData")
+```
+
+
+Combined BPA Plots - blouch and slouch
+```{r}
+saved.adapt.bpa<-cbind("Type"="blouch",saved.adapt.bpa)
+saved.slouch.adapt.bpa<-cbind("Type"="slouch",saved.slouch.adapt.bpa)
+names(saved.slouch.adapt.bpa)[13]<-"sym"
+saved.combined.bpa<-rbind(saved.adapt.bpa[,c(1:6,8:14)],saved.slouch.adapt.bpa)
+
+backup.saved.combined.bpa<-saved.combined.bpa
+saved.combined.bpa<-saved.combined.bpa%>%filter(hl>=0.05)
+saved.combined.bpa<-saved.combined.bpa%>%filter(vy>=0.001)
+
+
+```
+
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+theta.bias.plot<-ggplot(saved.combined.bpa,aes(y=theta.bias,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Bias")+
+  ylab("Bias") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+
+theta.bias.plot
+
+theta.imp.plot<-ggplot(saved.combined.bpa,aes(y=theta.imp,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Imprecision")+
+  ylab("Imprecision") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+theta.imp.plot
+
+theta.inac.plot<-ggplot(saved.combined.bpa,aes(y=theta.inac,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Inaccuracy")+
+  ylab("Inaccuracy") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+theta.inac.plot
+
+
+
+optimal.bias.plot<-ggplot(saved.combined.bpa,aes(y=opt.bias,x=log(hl),color=factor(vy),shape=factor(Type)))+
+geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Bias")+
+  ylab("Bias") + xlab("log Half-life")+
+  scale_color_npg()+
+  labs(shape = "Type",color=expression(italic("Vy")))
+
+optimal.bias.plot
+
+optimal.imp.plot<-ggplot(saved.combined.bpa,aes(y=opt.imp,x=log(hl),color=factor(vy),shape=factor(Type)))+
+geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Imprecision")+
+  ylab("Imprecision") + xlab("log Half-life")+
+  scale_color_npg()+
+    labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+optimal.imp.plot
+
+optimal.inac.plot<-ggplot(saved.combined.bpa,aes(y=opt.inac,x=log(hl),color=factor(vy),shape=factor(Type)))+
+geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Optimal Slope Inaccuracy")+
+  ylab("Inaccuracy") + xlab("log Half-life")+
+  scale_color_npg()+
+    labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+optimal.inac.plot
+
+
+
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+hl.bias.plot<-ggplot(saved.combined.bpa,aes(y=hl.bias,x=log(hl),color=factor(vy),shape=factor(Type)))+
+geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Half-life Bias")+
+  ylab("Bias") + xlab("log Half-life")+
+  scale_color_npg()+
+    labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+hl.bias.plot
+
+hl.imp.plot<-ggplot(saved.combined.bpa,aes(y=hl.imp,x=log(hl),color=factor(vy),shape=factor(Type)))+
+geom_point(size=1.5,alpha=0.8)+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Half-life Imprecision")+
+  ylab("Imprecision") + xlab("log Half-life")+
+  scale_color_npg()+
+    labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+hl.imp.plot
+
+hl.inac.plot<-ggplot(saved.combined.bpa,aes(y=hl.inac,x=log(hl),color=factor(vy),shape=factor(Type)))+
+  geom_point(size=1.5,alpha=0.8)+
+#  geom_point(stat='summary', fun=mean)+
+#  stat_summary(fun=mean, geom="line")+
+
+  theme_bw()+
+  ggtitle("Half-life Inaccuracy")+
+  ylab("Inaccuracy") + xlab("log Half-life")+
+  scale_color_npg()+
+    labs(shape = "Type",color=expression(italic("Vy")))
+#+
+#    scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+
+hl.inac.plot
+
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_slouch_adapt_bpa.pdf", width=12, height=6)
+ggarrange(theta.bias.plot,theta.imp.plot,theta.inac.plot,optimal.bias.plot,optimal.imp.plot,optimal.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,ncol=3,nrow=3)
+
+dev.off()
+```
+Blouch Adapt BPA: Logged half-lives
+```{r}
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+backup.saved.adapt.bpa<-saved.adapt.bpa
+saved.adapt.bpa<-saved.adapt.bpa%>%filter(hl>=0.05)
+
+theta.bias.plot<-ggplot(saved.adapt.bpa,aes(y=theta.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Bias")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+theta.bias.plot
+
+theta.imp.plot<-ggplot(saved.adapt.bpa,aes(y=theta.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Imprecision")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+theta.imp.plot
+
+theta.inac.plot<-ggplot(saved.adapt.bpa,aes(y=theta.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Theta Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+theta.inac.plot
+
+optimal.bias.plot<-ggplot(saved.adapt.bpa,aes(y=opt.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope Bias")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+    #scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+optimal.bias.plot
+
+optimal.imp.plot<-ggplot(saved.adapt.bpa,aes(y=opt.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope Imprecision")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+optimal.imp.plot
+
+optimal.inac.plot<-ggplot(saved.adapt.bpa,aes(y=opt.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Optimal Slope Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+optimal.inac.plot
+
+
+#saved.parameters.sub<-saved.parameters%>%filter(vy==0.01)
+
+hl.bias.plot<-ggplot(saved.adapt.bpa,aes(y=hl.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Bias")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+hl.bias.plot
+
+hl.imp.plot<-ggplot(saved.adapt.bpa,aes(y=hl.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Imprecision")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+hl.imp.plot
+hl.inac.plot<-ggplot(saved.adapt.bpa,aes(y=hl.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle("Half-life Inaccuracy")+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+hl.inac.plot
+
+
+Ya.bias.plot<-ggplot(saved.adapt.bpa,aes(y=Ya.bias,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle(expression(paste(italic("Ya")," Bias")))+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+Ya.bias.plot
+
+Ya.imp.plot<-ggplot(saved.adapt.bpa,aes(y=Ya.imp,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle(expression(paste(italic("Ya")," Imprecision")))+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+Ya.imp.plot
+
+Ya.inac.plot<-ggplot(saved.adapt.bpa,aes(y=Ya.inac,x=log(hl),color=factor(vy)))+
+  geom_point(size=1.5,alpha=0.8)+
+  #  geom_point(stat='summary', fun=mean)+
+  #  stat_summary(fun=mean, geom="line")+
+  
+  theme_bw()+
+  ggtitle(expression(paste(italic("Ya")," Inaccuracy")))+
+  ylab("Posterior Median") + xlab("log Half-life")+
+  scale_color_npg(name=expression(italic("Vy")))
+#+
+#      scale_x_discrete(breaks=seq(log(0), log(2), 0.1))
+
+
+Ya.inac.plot
+
+
+```
+
+
+```{r}
+library(ggpubr)
+pdf("blouch_adapt_bpa.pdf", width=9, height=6)
+ggarrange(theta.bias.plot,theta.imp.plot,theta.inac.plot,optimal.bias.plot,optimal.imp.plot,optimal.inac.plot,hl.bias.plot,hl.imp.plot,hl.inac.plot,Ya.bias.plot,Ya.imp.plot,Ya.inac.plot,ncol=3,nrow=4)
+dev.off()
+
+```
+
