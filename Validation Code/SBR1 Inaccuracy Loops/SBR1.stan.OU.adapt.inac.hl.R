@@ -1,8 +1,7 @@
 #SBR1 OU - Calculating Inacuracy in hl code
 #1. Calculate innacuracies given a list of hl values to explore - 10 reps per half life value
 #Calculates bias, precision, and innacuracy in optimal slopes and half-lives
-#Works with blouchOU_v1_7.stan and blouchOU.setup.mv_v1_3.R
-#Adaptive model including estimation of Ya and b0
+#Works with blouchOU_v1_9.stan and blouchOU.setup.mv_v1_3.R
 
 stan.adapt.OU.data.setup<-function(OUBMparameters,tree,N){
   #source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro (1)/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_3.R")
