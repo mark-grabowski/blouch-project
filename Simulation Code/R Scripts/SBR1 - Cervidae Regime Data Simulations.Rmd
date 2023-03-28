@@ -1,0 +1,415 @@
+---
+title: "Blouch SBR1 - Cervidae Tree Fixed Regime Data Simulation"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+Code to simulate fixed regimes on Cervidae Tree
+
+
+Setup Workspace and load packages
+```{r}
+rm(list=ls())
+library(devtools)
+#devtools::install_github("Mark-Grabowski/blouch")
+
+#library(blouch)
+#load_all()
+# Load necessary packages
+library(ape)
+library(slouch)
+library(rstan)
+library(treeplyr)
+library(ggplot2)
+library(ggsci)
+library(bridgesampling)
+library(mvSLOUCH)
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores())
+#options(mc.cores = 8)
+rstan_options(auto_write = TRUE)
+
+dotR <- file.path(Sys.getenv("HOME"), ".R")
+if (!file.exists(dotR)) dir.create(dotR)
+M <- file.path(dotR, "Makevars")
+if (!file.exists(M)) file.create(M)
+arch <- ifelse(R.version$arch == "aarch64", "arm64", "x86_64")
+cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256"),
+    file = M, sep = "\n", append = FALSE)
+
+```
+
+Data Prep
+```{r}
+#cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/cervidae_renamed.tre") #Macbook Pro
+
+cervid.tree<-read.nexus("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/cervidae_renamed.tre") #Mac Studio
+
+#cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/updated_mean_dat_no_OL_MG.csv") #Macbook Pro
+
+cervid.dataset<-read.csv("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/updated_mean_dat_no_OL_MG.csv") #Mac Studio
+
+#Remove Muntiacus_atherodes, Elaphodus_cephalophus - rudamentary and female Rangifer. 
+cervid.dataset<-filter(cervid.dataset,Genus_Species != "Sinomegaloceros_yabei" & ! Genus_Species =="Alces_alces_gigas"  & ! Genus_Species == "Muntiacus_truongsonensis" & ! Genus_Species ==  "Mazama_temama"& ! Genus_Species ==  "Muntiacus_feae" & ! Genus_Species ==  "Muntiacus_atherodes" & ! Genus_Species ==  "Elaphodus_cephalophus")
+
+
+cervid.trdata <- make.treedata(cervid.tree, cervid.dataset,name_column="Genus_Species")
+
+cervid.trdata<-filter(cervid.trdata,!(is.na(log_ant_vol)) & !(is.na(log_psl)))
+cervid.trdata<-mutate(cervid.trdata,mc.log_psl=cervid.trdata$dat$log_psl-(mean(cervid.trdata$dat$log_psl)))
+
+cervid.trdata<-mutate(cervid.trdata,me.log_ant_vol=cervid.trdata$dat$log_vol_var_est/cervid.trdata$dat$n)
+cervid.trdata<-mutate(cervid.trdata,me.log_psl=cervid.trdata$dat$log_psl_var_est/cervid.trdata$dat$n)
+cervid.trdata<-filter(cervid.trdata,!(is.na(me.log_ant_vol)) & !(is.na(me.log_psl)))
+
+
+cervid.trdata
+
+```
+
+Rescale Tree to Height =1
+```{r}
+l.tree<-max(branching.times(cervid.trdata$phy))
+cervid.trdata$phy$edge.length<-cervid.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(cervid.trdata$phy))
+
+```
+
+Set regimes - manually - 2 regimes
+Locate nodes
+```{r}
+plot(cervid.trdata$phy)
+tiplabels(cex=0.5)
+nodelabels(cex=0.5)
+#Using node 71
+```
+
+
+Set regimes - manually - 2 regimes
+Locate nodes
+```{r}
+plot(cervid.trdata$phy)
+tiplabels(cex=0.5)
+nodelabels(cex=0.5)
+#Using node 71
+```
+
+Set regimes
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
+source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+shifts<-c(71) #Location of nodes with regime shifts
+cervid.2reg.trdata<-set.converge.regimes(cervid.trdata,shifts)
+
+
+```
+
+Check if manual setting code worked
+```{r}
+shifts.total<-c(cervid.2reg.trdata$dat$regimes,cervid.2reg.trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[cervid.2reg.trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(cervid.2reg.trdata$dat$regimes)))
+
+print(reg.colors)
+plot(cervid.2reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+
+```
+
+
+```{r}
+#Direct and Random model - 1 trait each
+name.response.trait<-c("log_ant_vol")
+names.adaptive.traits<-c("mc.log_psl")
+names.direct.traits<-c("mc.log_psl")
+name.response.me.trait<-c("me.log_ant_vol")
+names.adaptive.me.traits<-c("me.log_psl")
+names.direct.me.traits<-c("me.log_psl")
+
+names.fixed.fact<-c("regimes")
+
+```
+
+
+
+Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+
+source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+
+Sxx<-1
+vX0<-0
+optima<-c(4,5,0.8)
+
+#One direct covariate w/o ME
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.2reg.trdata,names.fixed.fact,num.direct=1,num.random=0,hl=0.1,vy=0.01,beta=optima)
+
+cervid.2reg.trdata$dat<-cbind(cervid.2reg.trdata$dat,stan_sim_data$direct_cov)
+```
+
+
+Simulate data
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
+
+
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+
+stan_model <- stan_model("simRegimes_XY.stan")
+
+fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
+
+#For downstream analysis and plots
+ext.fit.simdata <- rstan::extract(fit.simdata)
+
+```
+
+
+Add simulated code to dataset
+```{r}
+#Extract simulated brain mass data
+Y_pred_sim<-as.data.frame(ext.fit.simdata$Y_pred)
+
+#names(brain_mass_g_log_mean.sim)<-paste(names(brain_mass_g_log_mean.sim)
+
+test<-data.frame(t(Y_pred_sim[1:100,]))
+names(test)<-paste("Sim",1:100,sep="")
+
+#Add to original dataset
+cervid.2reg.trdata$dat<-cbind(cervid.2reg.trdata$dat,test)
+```
+
+Plot simulated relationships
+```{r}
+ggplot(data=cervid.2reg.trdata$dat,aes(x=trait_1,y=Sim1))+
+  geom_point()
+
+test<-cervid.2reg.trdata$dat$Sim1
+names(test)<-cervid.2reg.trdata$phy$tip.label
+dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+```
+
+Set regimes - manually - 3 regimes
+Locate nodes
+```{r}
+plot(cervid.trdata$phy)
+tiplabels(cex=0.5)
+nodelabels(cex=0.5)
+#Using node 71
+```
+
+Set regimes
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
+source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+
+shifts<-c(71,52) #Location of nodes with regime shifts
+cervid.3reg.trdata<-set.converge.regimes(cervid.trdata,shifts)
+
+
+```
+
+Check if manual setting code worked
+```{r}
+shifts.total<-c(cervid.3reg.trdata$dat$regimes,cervid.3reg.trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[cervid.3reg.trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(cervid.3reg.trdata$dat$regimes)))
+
+print(reg.colors)
+plot(cervid.3reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+
+```
+
+
+
+Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+
+source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+
+
+Sxx<-1
+vX0<-0
+optima<-c(4,5,6,0.8)
+
+#One direct covariate w/o ME
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.3reg.trdata,names.fixed.fact,num.direct=1,num.random=0,hl=0.1,vy=0.01,beta=optima)
+
+cervid.3reg.trdata$dat<-cbind(cervid.3reg.trdata$dat,stan_sim_data$direct_cov)
+```
+
+
+Simulate data
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan")
+
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+
+
+stan_model <- stan_model("simRegimes_XY.stan")
+
+fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
+
+#For downstream analysis and plots
+ext.fit.simdata <- rstan::extract(fit.simdata)
+
+```
+
+
+Add simulated code to dataset
+```{r}
+#Extract simulated brain mass data
+Y_pred_sim<-as.data.frame(ext.fit.simdata$Y_pred)
+
+#names(brain_mass_g_log_mean.sim)<-paste(names(brain_mass_g_log_mean.sim)
+
+test<-data.frame(t(Y_pred_sim[1:100,]))
+names(test)<-paste("Sim",1:100,sep="")
+
+#Add to original dataset
+cervid.3reg.trdata$dat<-cbind(cervid.3reg.trdata$dat,test)
+```
+
+Plot simulated relationships
+```{r}
+ggplot(data=cervid.3reg.trdata$dat,aes(x=trait_1,y=Sim1))+
+  geom_point()
+
+test<-cervid.3reg.trdata$dat$Sim1
+names(test)<-cervid.3reg.trdata$phy$tip.label
+dotTree(cervid.3reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+```
+
+
+Set regimes - manually - 4 regimes
+Locate nodes
+```{r}
+plot(cervid.trdata$phy)
+tiplabels(cex=0.5)
+nodelabels(cex=0.5)
+#Using node 71
+```
+
+Set regimes
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
+source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+
+shifts<-c(71,52,59) #Location of nodes with regime shifts
+cervid.4reg.trdata<-set.converge.regimes(cervid.trdata,shifts)
+
+
+```
+
+Check if manual setting code worked
+```{r}
+shifts.total<-c(cervid.4reg.trdata$dat$regimes,cervid.4reg.trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[cervid.4reg.trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(cervid.4reg.trdata$dat$regimes)))
+
+print(reg.colors)
+plot(cervid.4reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+
+```
+
+
+Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+
+source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+
+Sxx<-1
+vX0<-0
+optima<-c(3,4,5,6,0.8)
+
+#One direct covariate w/o ME
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.4reg.trdata,names.fixed.fact,num.direct=1,num.random=0,hl=0.1,vy=0.01,beta=optima)
+
+cervid.4reg.trdata$dat<-cbind(cervid.4reg.trdata$dat,stan_sim_data$direct_cov)
+```
+
+
+Simulate data
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
+
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+
+stan_model <- stan_model("simRegimes_XY.stan")
+
+fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
+
+#For downstream analysis and plots
+ext.fit.simdata <- rstan::extract(fit.simdata)
+
+```
+
+
+Add simulated code to dataset
+```{r}
+#Extract simulated brain mass data
+Y_pred_sim<-as.data.frame(ext.fit.simdata$Y_pred)
+
+#names(brain_mass_g_log_mean.sim)<-paste(names(brain_mass_g_log_mean.sim)
+
+test<-data.frame(t(Y_pred_sim[1:100,]))
+names(test)<-paste("Sim",1:100,sep="")
+
+#Add to original dataset
+cervid.4reg.trdata$dat<-cbind(cervid.4reg.trdata$dat,test)
+```
+
+Plot simulated relationships
+```{r}
+ggplot(data=cervid.4reg.trdata$dat,aes(x=trait_1,y=Sim1))+
+  geom_point()
+
+test<-cervid.4reg.trdata$dat$Sim1
+names(test)<-cervid.4reg.trdata$phy$tip.label
+dotTree(cervid.4reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+```
+
+
+
+

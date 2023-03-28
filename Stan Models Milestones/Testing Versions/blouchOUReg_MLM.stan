@@ -1,6 +1,7 @@
 functions {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Blouch Fixed Niches Code - multilevel optima - correlated features
+  //Blouch Fixed Niches Code - multilevel optima - correlated features
+  //Based on blouchOUReg_v1_5.stan
   //08.05.2022 - Revised for SBR1 to be use multivariate predictors, no need to use different random and direct datasets, and can use combo direct and response traits
   //09.04.2022 - Added code to allow for correlated predictors - Hansen et al. (2008)
   //02.09.2023 - Added code for multilevel optima
