@@ -8,7 +8,18 @@ Using simulated data fromm SBR1 Cervidae Regime Simulation Code
 Testing Multi-Level Regimes/Intercepts Model
 ```{r}
 
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
 
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")#Mac Studio
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOUReg_MLI.stan") #Mac Studio
+
+stan_model <- stan_model("blouchOUReg_MLI.stan")
+
+fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
+
+#For downstream analysis and plots
+ext.fit.simdata <- rstan::extract(fit.simdata)
 
 
 ```
