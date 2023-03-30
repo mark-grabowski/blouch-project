@@ -11,7 +11,7 @@
 
 
 
-<title>SBR1 Cervidae Regime Simulation Analysis</title>
+<title>Blouch SBR1 - Cervidae Regime Simulation Analysis</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1682,23 +1682,17 @@ overflow-y: auto;
 border: 1px solid #ddd;
 border-radius: 4px;
 }
-.tabset-dropdown > .nav-tabs > li.active:before {
-content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+content: "\e259";
 font-family: 'Glyphicons Halflings';
 display: inline-block;
 padding: 10px;
 border-right: 1px solid #ddd;
 }
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-content: "";
-border: none;
-}
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-content: "";
+content: "\e258";
 font-family: 'Glyphicons Halflings';
-display: inline-block;
-padding: 10px;
-border-right: 1px solid #ddd;
+border: none;
 }
 .tabset-dropdown > .nav-tabs > li.active {
 display: block;
@@ -1752,7 +1746,7 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">SBR1 Cervidae Regime Simulation
+<h1 class="title toc-ignore">Blouch SBR1 - Cervidae Regime Simulation
 Analysis</h1>
 
 </div>
@@ -1760,92 +1754,115 @@ Analysis</h1>
 
 <!-- rnb-text-begin -->
 <p>Using simulated data fromm SBR1 Cervidae Regime Simulation Code</p>
-<p>Testing Multi-Level Regimes/Intercepts Model</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0d2QoXCIvVXNlcnMvbWFya2dyYWJvd3NraS9MaWJyYXJ5L0Nsb3VkU3RvcmFnZS9Hb29nbGVEcml2ZS1tYXJrLndhbHRlci5ncmFib3dza2lAZ21haWwuY29tL090aGVyIGNvbXB1dGVycy9NeSBNYWNCb29rIFByby9Eb2N1bWVudHMvQWNhZGVtaWMvUmVzZWFyY2gvQ3VycmVudCBQcm9qZWN0cy9CbG91Y2ggcHJvamVjdC9SMSBibG91Y2gtdGVzdGluZyBicmFuY2gvU3RhbiBNb2RlbHMgTWlsZXN0b25lcy9UZXN0aW5nIFZlcnNpb25zL1wiKSNNYWMgU3R1ZGlvXG5cbmBgYCJ9 -->
-<pre class="r"><code>setwd(&quot;/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/&quot;)#Mac Studio
-</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZzogVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIC9Vc2Vycy9tYXJrZ3JhYm93c2tpL0xpYnJhcnkvQ2xvdWRTdG9yYWdlL0dvb2dsZURyaXZlLW1hcmsud2FsdGVyLmdyYWJvd3NraUBnbWFpbC5jb20vT3RoZXIgY29tcHV0ZXJzL015IE1hY0Jvb2sgUHJvL0RvY3VtZW50cy9BY2FkZW1pYy9SZXNlYXJjaC9DdXJyZW50IFByb2plY3RzL0Jsb3VjaCBwcm9qZWN0L1IxIGJsb3VjaC10ZXN0aW5nIGJyYW5jaC9TdGFuIE1vZGVscyBNaWxlc3RvbmVzL1Rlc3RpbmcgVmVyc2lvbnMgaW5zaWRlIGEgbm90ZWJvb2sgY2h1bmsuIFRoZSB3b3JraW5nIGRpcmVjdG9yeSB3aWxsIGJlIHJlc2V0IHdoZW4gdGhlIGNodW5rIGlzIGZpbmlzaGVkIHJ1bm5pbmcuIFVzZSB0aGUga25pdHIgcm9vdC5kaXIgb3B0aW9uIGluIHRoZSBzZXR1cCBjaHVuayB0byBjaGFuZ2UgdGhlIHdvcmtpbmcgZGlyZWN0b3J5IGZvciBub3RlYm9vayBjaHVua3MuXG4ifQ== -->
-<pre><code>Warning: The working directory was changed to /Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3RhbmMoXCIvVXNlcnMvbWFya2dyYWJvd3NraS9MaWJyYXJ5L0Nsb3VkU3RvcmFnZS9Hb29nbGVEcml2ZS1tYXJrLndhbHRlci5ncmFib3dza2lAZ21haWwuY29tL090aGVyIGNvbXB1dGVycy9NeSBNYWNCb29rIFByby9Eb2N1bWVudHMvQWNhZGVtaWMvUmVzZWFyY2gvQ3VycmVudCBQcm9qZWN0cy9CbG91Y2ggcHJvamVjdC9SMSBibG91Y2gtdGVzdGluZyBicmFuY2gvU3RhbiBNb2RlbHMgTWlsZXN0b25lcy9UZXN0aW5nIFZlcnNpb25zL2Jsb3VjaE9VUmVnX01MSS5zdGFuXCIpICNNYWMgU3R1ZGlvXG5gYGAifQ== -->
-<pre class="r"><code>stanc(&quot;/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOUReg_MLI.stan&quot;) #Mac Studio</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gc3RhbmMoXCIvVXNlcnMvbWFya2dyYWJvd3NraS9MaWJyYXJ5L0Nsb3VkU3RvcmFnZS9Hb29nbGVEcml2ZS1tYXJrLndhbHRlci5ncmFib3dza2lAZ21haWwuY29tL090aGVyIGNvbXB1dGVycy9NeSBNYWNCb29rIFByby9Eb2N1bWVudHMvQWNhZGVtaWMvUmVzZWFyY2gvQ3VycmVudCBQcm9qZWN0cy9CbG91Y2ggcHJvamVjdC9SMSBibG91Y2gtdGVzdGluZyBicmFuY2gvU3RhbiBNb2RlbHMgTWlsZXN0b25lcy9UZXN0aW5nIFZlcnNpb25zL2Jsb3VjaE9VUmVnX01MSS5zdGFuXCIpIDogXG4gIDBcblxuU3ludGF4IGVycm9yIGluICdzdHJpbmcnLCBsaW5lIDI3MywgY29sdW1uIDYgdG8gY29sdW1uIDksIHBhcnNpbmcgZXJyb3I6XG5cbklsbC1mb3JtZWQgZXhwcmVzc2lvbi4gRm91bmQgaWRlbnRpZmllci4gVGhlcmUgYXJlIG1hbnkgd2F5cyB0byBjb21wbGV0ZSB0aGlzIHRvIGEgd2VsbC1mb3JtZWQgZXhwcmVzc2lvbi5cbiJ9 -->
-<pre><code>Error in stanc(&quot;/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOUReg_MLI.stan&quot;) : 
-  0
-
-Syntax error in &#39;string&#39;, line 273, column 6 to column 9, parsing error:
-
-Ill-formed expression. Found identifier. There are many ways to complete this to a well-formed expression.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
 <p>Inaccuracy loops for simulated repeated optima</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc291cmNlKFwiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SXCIpXG5cbm5hbWVzLnRyYWl0czwtYyhcIm1jLmxvZ19wc2xcIixcIk5BXCIsXCJyZWdpbWVzXCIpXG4jbmFtZS5yZXNwb25zZS50cmFpdDwtYyhcImxvZ19hbnRfdm9sXCIpXG4jbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKFwibWMubG9nX3BzbFwiKVxuI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoXCJtYy5sb2dfcHNsXCIpXG4jbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYyhcIm1lLmxvZ19hbnRfdm9sXCIpXG4jbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKFwibWUubG9nX3BzbFwiKVxuI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoXCJtZS5sb2dfcHNsXCIpXG4jbmFtZXMuZml4ZWQuZmFjdDwtYyhcInJlZ2ltZXNcIilcblxuZXJyb3IuY29tcGFyaXNvbi4ycmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC4zcmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpXG5lcnJvci5jb21wYXJpc29uLjJyZWdcbmBgYCJ9 -->
-<pre class="r"><code>source(&quot;/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc291cmNlKFxcL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SXFwpXG5cbm5hbWVzLnRyYWl0czwtYyhcXG1jLmxvZ19wc2xcXCxcXE5BXFwsXFxyZWdpbWVzXFwpXG4jbmFtZS5yZXNwb25zZS50cmFpdDwtYyhcXGxvZ19hbnRfdm9sXFwpXG4jbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKFxcbWMubG9nX3BzbFxcKVxuI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoXFxtYy5sb2dfcHNsXFwpXG4jbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYyhcXG1lLmxvZ19hbnRfdm9sXFwpXG4jbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKFxcbWUubG9nX3BzbFxcKVxuI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoXFxtZS5sb2dfcHNsXFwpXG4jbmFtZXMuZml4ZWQuZmFjdDwtYyhcXHJlZ2ltZXNcXClcblxuZXJyb3IuY29tcGFyaXNvbi4ycmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC4zcmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpXG5lcnJvci5jb21wYXJpc29uLjJyZWdcbmBgYFxuYGBgIn0= -->
+<pre class="r"><code>```r
+source(\/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R\)
 
-names.traits&lt;-c(&quot;mc.log_psl&quot;,&quot;NA&quot;,&quot;regimes&quot;)
-#name.response.trait&lt;-c(&quot;log_ant_vol&quot;)
-#names.adaptive.traits&lt;-c(&quot;mc.log_psl&quot;)
-#names.direct.traits&lt;-c(&quot;mc.log_psl&quot;)
-#name.response.me.trait&lt;-c(&quot;me.log_ant_vol&quot;)
-#names.adaptive.me.traits&lt;-c(&quot;me.log_psl&quot;)
-#names.direct.me.traits&lt;-c(&quot;me.log_psl&quot;)
-#names.fixed.fact&lt;-c(&quot;regimes&quot;)
+names.traits&lt;-c(\mc.log_psl\,\NA\,\regimes\)
+#name.response.trait&lt;-c(\log_ant_vol\)
+#names.adaptive.traits&lt;-c(\mc.log_psl\)
+#names.direct.traits&lt;-c(\mc.log_psl\)
+#name.response.me.trait&lt;-c(\me.log_ant_vol\)
+#names.adaptive.me.traits&lt;-c(\me.log_psl\)
+#names.direct.me.traits&lt;-c(\me.log_psl\)
+#names.fixed.fact&lt;-c(\regimes\)
 
 error.comparison.2reg&lt;-repeated_optima_sim(cervid.3reg.trdata,n=10,names.traits,head(optima,-1))
 error.comparison.2reg</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc291cmNlKFwiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SXCIpXG5cbm5hbWVzLnRyYWl0czwtYyhcIm1jLmxvZ19wc2xcIixcIk5BXCIsXCJyZWdpbWVzXCIpXG4jbmFtZS5yZXNwb25zZS50cmFpdDwtYyhcImxvZ19hbnRfdm9sXCIpXG4jbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKFwibWMubG9nX3BzbFwiKVxuI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoXCJtYy5sb2dfcHNsXCIpXG4jbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYyhcIm1lLmxvZ19hbnRfdm9sXCIpXG4jbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKFwibWUubG9nX3BzbFwiKVxuI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoXCJtZS5sb2dfcHNsXCIpXG4jbmFtZXMuZml4ZWQuZmFjdDwtYyhcInJlZ2ltZXNcIilcblxuZXJyb3IuY29tcGFyaXNvbi4zcmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC4zcmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpXG5lcnJvci5jb21wYXJpc29uLjNyZWdcbmBgYCJ9 -->
-<pre class="r"><code>source(&quot;/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R&quot;)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
 
-names.traits&lt;-c(&quot;mc.log_psl&quot;,&quot;NA&quot;,&quot;regimes&quot;)
-#name.response.trait&lt;-c(&quot;log_ant_vol&quot;)
-#names.adaptive.traits&lt;-c(&quot;mc.log_psl&quot;)
-#names.direct.traits&lt;-c(&quot;mc.log_psl&quot;)
-#name.response.me.trait&lt;-c(&quot;me.log_ant_vol&quot;)
-#names.adaptive.me.traits&lt;-c(&quot;me.log_psl&quot;)
-#names.direct.me.traits&lt;-c(&quot;me.log_psl&quot;)
-#names.fixed.fact&lt;-c(&quot;regimes&quot;)
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc291cmNlKFxcL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SXFwpXG5cbm5hbWVzLnRyYWl0czwtYyhcXG1jLmxvZ19wc2xcXCxcXE5BXFwsXFxyZWdpbWVzXFwpXG4jbmFtZS5yZXNwb25zZS50cmFpdDwtYyhcXGxvZ19hbnRfdm9sXFwpXG4jbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKFxcbWMubG9nX3BzbFxcKVxuI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoXFxtYy5sb2dfcHNsXFwpXG4jbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYyhcXG1lLmxvZ19hbnRfdm9sXFwpXG4jbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKFxcbWUubG9nX3BzbFxcKVxuI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoXFxtZS5sb2dfcHNsXFwpXG4jbmFtZXMuZml4ZWQuZmFjdDwtYyhcXHJlZ2ltZXNcXClcblxuZXJyb3IuY29tcGFyaXNvbi4zcmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC4zcmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpXG5lcnJvci5jb21wYXJpc29uLjNyZWdcbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+source(\/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R\)
+
+names.traits&lt;-c(\mc.log_psl\,\NA\,\regimes\)
+#name.response.trait&lt;-c(\log_ant_vol\)
+#names.adaptive.traits&lt;-c(\mc.log_psl\)
+#names.direct.traits&lt;-c(\mc.log_psl\)
+#name.response.me.trait&lt;-c(\me.log_ant_vol\)
+#names.adaptive.me.traits&lt;-c(\me.log_psl\)
+#names.direct.me.traits&lt;-c(\me.log_psl\)
+#names.fixed.fact&lt;-c(\regimes\)
 
 error.comparison.3reg&lt;-repeated_optima_sim(cervid.3reg.trdata,n=10,names.traits,head(optima,-1))
 error.comparison.3reg</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc291cmNlKFwiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SXCIpXG5cbm5hbWVzLnRyYWl0czwtYyhcIm1jLmxvZ19wc2xcIixcIk5BXCIsXCJyZWdpbWVzXCIpXG4jbmFtZS5yZXNwb25zZS50cmFpdDwtYyhcImxvZ19hbnRfdm9sXCIpXG4jbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKFwibWMubG9nX3BzbFwiKVxuI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoXCJtYy5sb2dfcHNsXCIpXG4jbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYyhcIm1lLmxvZ19hbnRfdm9sXCIpXG4jbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKFwibWUubG9nX3BzbFwiKVxuI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoXCJtZS5sb2dfcHNsXCIpXG4jbmFtZXMuZml4ZWQuZmFjdDwtYyhcInJlZ2ltZXNcIilcblxuZXJyb3IuY29tcGFyaXNvbi40cmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC40cmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpXG5lcnJvci5jb21wYXJpc29uLjRyZWdcbmBgYCJ9 -->
-<pre class="r"><code>source(&quot;/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R&quot;)
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
 
-names.traits&lt;-c(&quot;mc.log_psl&quot;,&quot;NA&quot;,&quot;regimes&quot;)
-#name.response.trait&lt;-c(&quot;log_ant_vol&quot;)
-#names.adaptive.traits&lt;-c(&quot;mc.log_psl&quot;)
-#names.direct.traits&lt;-c(&quot;mc.log_psl&quot;)
-#name.response.me.trait&lt;-c(&quot;me.log_ant_vol&quot;)
-#names.adaptive.me.traits&lt;-c(&quot;me.log_psl&quot;)
-#names.direct.me.traits&lt;-c(&quot;me.log_psl&quot;)
-#names.fixed.fact&lt;-c(&quot;regimes&quot;)
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc291cmNlKFxcL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SXFwpXG5cbm5hbWVzLnRyYWl0czwtYyhcXG1jLmxvZ19wc2xcXCxcXE5BXFwsXFxyZWdpbWVzXFwpXG4jbmFtZS5yZXNwb25zZS50cmFpdDwtYyhcXGxvZ19hbnRfdm9sXFwpXG4jbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKFxcbWMubG9nX3BzbFxcKVxuI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoXFxtYy5sb2dfcHNsXFwpXG4jbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYyhcXG1lLmxvZ19hbnRfdm9sXFwpXG4jbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKFxcbWUubG9nX3BzbFxcKVxuI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoXFxtZS5sb2dfcHNsXFwpXG4jbmFtZXMuZml4ZWQuZmFjdDwtYyhcXHJlZ2ltZXNcXClcblxuZXJyb3IuY29tcGFyaXNvbi40cmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC40cmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpXG5lcnJvci5jb21wYXJpc29uLjRyZWdcbmBgYFxuYGBgIn0= --&gt;
+
+```r
+```r
+source(\/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R\)
+
+names.traits&lt;-c(\mc.log_psl\,\NA\,\regimes\)
+#name.response.trait&lt;-c(\log_ant_vol\)
+#names.adaptive.traits&lt;-c(\mc.log_psl\)
+#names.direct.traits&lt;-c(\mc.log_psl\)
+#name.response.me.trait&lt;-c(\me.log_ant_vol\)
+#names.adaptive.me.traits&lt;-c(\me.log_psl\)
+#names.direct.me.traits&lt;-c(\me.log_psl\)
+#names.fixed.fact&lt;-c(\regimes\)
 
 error.comparison.4reg&lt;-repeated_optima_sim(cervid.4reg.trdata,n=10,names.traits,head(optima,-1))
 error.comparison.4reg</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<p>Plot Regimes</p>
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZXJyb3JzLmNvbWJpbmVkPC1kYXRhLmZyYW1lKHQoY2JpbmQoZXJyb3IuY29tcGFyaXNvbi4ycmVnW1szXV0sZXJyb3IuY29tcGFyaXNvbi4zcmVnW1szXV0sZXJyb3IuY29tcGFyaXNvbi40cmVnW1szXV0pKSlcbmVycm9ycy5jb21iaW5lZDwtY2JpbmQoZXJyb3JzLmNvbWJpbmVkLHJlcHM9MTozMCxyZWdpbWVzPWMocmVwKDIsMTApLHJlcCgzLDEwKSxyZXAoNCwxMCkpKVxucmVnaW1lczwtYygyLDMsNClcbm1lYW4uZXJyb3JzLmNvbWJpbmVkPC1kYXRhLmZyYW1lKGVycm9ycy5jb21iaW5lZCU+JWdyb3VwX2J5KHJlZ2ltZXMpJT4lbXV0YXRlKG1sbS5tZWFuPW1lYW4obWxtLmluYWNjdXJhY3kpLG5wbS5tZWFuPW1lYW4obnBtLmluYWNjdXJhY3kpKSlcblxubWVhbi5lcnJvcnMuY29tYmluZWQlPiVncm91cF9ieShyZWdpbWVzKSU+JVxuI2Vycm9ycy5jb21iaW5lZCU+JVxuICBnZ3Bsb3QoYWVzKHg9cmVwcyxncm91cD1yZWdpbWVzKSkrXG4gIGdlb21fcG9pbnQoYWVzKHk9bWxtLmluYWNjdXJhY3kpLHNpemU9Mi4wLGFscGhhPTAuOCkrXG4gIGdlb21fcG9pbnQoYWVzKHk9bnBtLmluYWNjdXJhY3kpLHNoYXBlPTIxLHNpemU9Mi4wLGFscGhhPTAuOCkrXG4gIGdlb21fbGluZShhZXMoeD1yZXBzLHk9bWxtLm1lYW4pLGxpbmV0eXBlPVwic29saWRcIikrXG4gIGdlb21fbGluZShhZXMoeD1yZXBzLHk9bnBtLm1lYW4pLGxpbmV0eXBlPVwiZGFzaGVkXCIpK1xuICBnZW9tX3ZsaW5lKHhpbnRlcmNlcHQ9YygxMC41LDIwLjUpLGFscGhhPTAuNzUsbGluZXR5cGU9XCJkb3R0ZWRcIikrXG4gIHlsYWIoXCJJbXByZWNpc2lvblwiKSArIHhsYWIoXCJSZWdpbWVzXCIpK1xuICB0aGVtZV9idygpK1xuICBzY2FsZV9jb2xvcl9ucGcoKStcbiAgI3RoZW1lKGxlZ2VuZC50ZXh0KVxuICBzY2FsZV94X2NvbnRpbnVvdXMoYnJlYWtzPWMoNSwxNSwyNSksbGFiZWxzPXJlZ2ltZXMpXG4gICNnZW9tX2xhYmVsKGxhYmVsPWMoXCJcIikpXG5cblxuICBcblxuXG5gYGAifQ== -->
-<pre class="r"><code>errors.combined&lt;-data.frame(t(cbind(error.comparison.2reg[[3]],error.comparison.3reg[[3]],error.comparison.4reg[[3]])))
+<pre><code>
+&lt;!-- rnb-source-end --&gt;
+
+&lt;!-- rnb-chunk-end --&gt;
+
+
+&lt;!-- rnb-text-begin --&gt;
+
+
+
+
+Plot Regimes
+
+&lt;!-- rnb-text-end --&gt;
+
+
+&lt;!-- rnb-chunk-begin --&gt;
+
+
+&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuZXJyb3JzLmNvbWJpbmVkPC1kYXRhLmZyYW1lKHQoY2JpbmQoZXJyb3IuY29tcGFyaXNvbi4ycmVnW1szXV0sZXJyb3IuY29tcGFyaXNvbi4zcmVnW1szXV0sZXJyb3IuY29tcGFyaXNvbi40cmVnW1szXV0pKSlcbmVycm9ycy5jb21iaW5lZDwtY2JpbmQoZXJyb3JzLmNvbWJpbmVkLHJlcHM9MTozMCxyZWdpbWVzPWMocmVwKDIsMTApLHJlcCgzLDEwKSxyZXAoNCwxMCkpKVxucmVnaW1lczwtYygyLDMsNClcbm1lYW4uZXJyb3JzLmNvbWJpbmVkPC1kYXRhLmZyYW1lKGVycm9ycy5jb21iaW5lZCU+JWdyb3VwX2J5KHJlZ2ltZXMpJT4lbXV0YXRlKG1sbS5tZWFuPW1lYW4obWxtLmluYWNjdXJhY3kpLG5wbS5tZWFuPW1lYW4obnBtLmluYWNjdXJhY3kpKSlcblxubWVhbi5lcnJvcnMuY29tYmluZWQlPiVncm91cF9ieShyZWdpbWVzKSU+JVxuI2Vycm9ycy5jb21iaW5lZCU+JVxuICBnZ3Bsb3QoYWVzKHg9cmVwcyxncm91cD1yZWdpbWVzKSkrXG4gIGdlb21fcG9pbnQoYWVzKHk9bWxtLmluYWNjdXJhY3kpLHNpemU9Mi4wLGFscGhhPTAuOCkrXG4gIGdlb21fcG9pbnQoYWVzKHk9bnBtLmluYWNjdXJhY3kpLHNoYXBlPTIxLHNpemU9Mi4wLGFscGhhPTAuOCkrXG4gIGdlb21fbGluZShhZXMoeD1yZXBzLHk9bWxtLm1lYW4pLGxpbmV0eXBlPVxcc29saWRcXCkrXG4gIGdlb21fbGluZShhZXMoeD1yZXBzLHk9bnBtLm1lYW4pLGxpbmV0eXBlPVxcZGFzaGVkXFwpK1xuICBnZW9tX3ZsaW5lKHhpbnRlcmNlcHQ9YygxMC41LDIwLjUpLGFscGhhPTAuNzUsbGluZXR5cGU9XFxkb3R0ZWRcXCkrXG4gIHlsYWIoXFxJbXByZWNpc2lvblxcKSArIHhsYWIoXFxSZWdpbWVzXFwpK1xuICB0aGVtZV9idygpK1xuICBzY2FsZV9jb2xvcl9ucGcoKStcbiAgI3RoZW1lKGxlZ2VuZC50ZXh0KVxuICBzY2FsZV94X2NvbnRpbnVvdXMoYnJlYWtzPWMoNSwxNSwyNSksbGFiZWxzPXJlZ2ltZXMpXG4gICNnZW9tX2xhYmVsKGxhYmVsPWMoXFxcXCkpXG5cblxuICBcblxuXG5gYGBcbmBgYCJ9 --&gt;
+
+```r
+```r
+errors.combined&lt;-data.frame(t(cbind(error.comparison.2reg[[3]],error.comparison.3reg[[3]],error.comparison.4reg[[3]])))
 errors.combined&lt;-cbind(errors.combined,reps=1:30,regimes=c(rep(2,10),rep(3,10),rep(4,10)))
 regimes&lt;-c(2,3,4)
 mean.errors.combined&lt;-data.frame(errors.combined%&gt;%group_by(regimes)%&gt;%mutate(mlm.mean=mean(mlm.inaccuracy),npm.mean=mean(npm.inaccuracy)))
@@ -1855,23 +1872,24 @@ mean.errors.combined%&gt;%group_by(regimes)%&gt;%
   ggplot(aes(x=reps,group=regimes))+
   geom_point(aes(y=mlm.inaccuracy),size=2.0,alpha=0.8)+
   geom_point(aes(y=npm.inaccuracy),shape=21,size=2.0,alpha=0.8)+
-  geom_line(aes(x=reps,y=mlm.mean),linetype=&quot;solid&quot;)+
-  geom_line(aes(x=reps,y=npm.mean),linetype=&quot;dashed&quot;)+
-  geom_vline(xintercept=c(10.5,20.5),alpha=0.75,linetype=&quot;dotted&quot;)+
-  ylab(&quot;Imprecision&quot;) + xlab(&quot;Regimes&quot;)+
+  geom_line(aes(x=reps,y=mlm.mean),linetype=\solid\)+
+  geom_line(aes(x=reps,y=npm.mean),linetype=\dashed\)+
+  geom_vline(xintercept=c(10.5,20.5),alpha=0.75,linetype=\dotted\)+
+  ylab(\Imprecision\) + xlab(\Regimes\)+
   theme_bw()+
   scale_color_npg()+
   #theme(legend.text)
   scale_x_continuous(breaks=c(5,15,25),labels=regimes)
-  #geom_label(label=c(&quot;&quot;))
+  #geom_label(label=c(\\))
 
 
   
 </code></pre>
+<p>```</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiU0JSMSBDZXJ2aWRhZSBSZWdpbWUgU2ltdWxhdGlvbiBBbmFseXNpcyIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKVXNpbmcgc2ltdWxhdGVkIGRhdGEgZnJvbW0gU0JSMSBDZXJ2aWRhZSBSZWdpbWUgU2ltdWxhdGlvbiBDb2RlCgpUZXN0aW5nIE11bHRpLUxldmVsIFJlZ2ltZXMvSW50ZXJjZXB0cyBNb2RlbApgYGB7cn0KCiNzZXR3ZCgiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1NpbXVsYXRpb24gQ29kZS9TdGFuIE1vZGVscy8iKSAjTWFjYm9vayBQcm8KI3N0YW5jKCIvVXNlcnMvbWFya2dyYWJvd3NraS9Eb2N1bWVudHMvQWNhZGVtaWMvUmVzZWFyY2gvQ3VycmVudCBQcm9qZWN0cy9CbG91Y2ggcHJvamVjdC9SMSBibG91Y2gtdGVzdGluZyBicmFuY2gvU2ltdWxhdGlvbiBDb2RlL1N0YW4gTW9kZWxzL3NpbVJlZ2ltZXNfWFkuc3RhbiIpICNNYWNib29rIFBybwoKc2V0d2QoIi9Vc2Vycy9tYXJrZ3JhYm93c2tpL0xpYnJhcnkvQ2xvdWRTdG9yYWdlL0dvb2dsZURyaXZlLW1hcmsud2FsdGVyLmdyYWJvd3NraUBnbWFpbC5jb20vT3RoZXIgY29tcHV0ZXJzL015IE1hY0Jvb2sgUHJvL0RvY3VtZW50cy9BY2FkZW1pYy9SZXNlYXJjaC9DdXJyZW50IFByb2plY3RzL0Jsb3VjaCBwcm9qZWN0L1IxIGJsb3VjaC10ZXN0aW5nIGJyYW5jaC9TdGFuIE1vZGVscyBNaWxlc3RvbmVzL1Rlc3RpbmcgVmVyc2lvbnMvIikjTWFjIFN0dWRpbwpzdGFuYygiL1VzZXJzL21hcmtncmFib3dza2kvTGlicmFyeS9DbG91ZFN0b3JhZ2UvR29vZ2xlRHJpdmUtbWFyay53YWx0ZXIuZ3JhYm93c2tpQGdtYWlsLmNvbS9PdGhlciBjb21wdXRlcnMvTXkgTWFjQm9vayBQcm8vRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1N0YW4gTW9kZWxzIE1pbGVzdG9uZXMvVGVzdGluZyBWZXJzaW9ucy9ibG91Y2hPVVJlZ19NTEkuc3RhbiIpICNNYWMgU3R1ZGlvCgpzdGFuX21vZGVsIDwtIHN0YW5fbW9kZWwoImJsb3VjaE9VUmVnX01MSS5zdGFuIikKCmZpdC5zaW1kYXRhPC0gcnN0YW46OnNhbXBsaW5nKG9iamVjdCA9IHN0YW5fbW9kZWwsZGF0YSA9IHN0YW5fc2ltX2RhdGEsY2hhaW5zID0gMixpdGVyID0gMjAwMCxjb250cm9sPWxpc3QoYWRhcHRfZGVsdGE9MC45NSksYWxnb3JpdGhtPWMoIkZpeGVkX3BhcmFtIikpCgojRm9yIGRvd25zdHJlYW0gYW5hbHlzaXMgYW5kIHBsb3RzCmV4dC5maXQuc2ltZGF0YSA8LSByc3Rhbjo6ZXh0cmFjdChmaXQuc2ltZGF0YSkKCgpgYGAKCgoKCkluYWNjdXJhY3kgbG9vcHMgZm9yIHNpbXVsYXRlZCByZXBlYXRlZCBvcHRpbWEKYGBge3J9CnNvdXJjZSgiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SIikKCm5hbWVzLnRyYWl0czwtYygibWMubG9nX3BzbCIsIk5BIiwicmVnaW1lcyIpCiNuYW1lLnJlc3BvbnNlLnRyYWl0PC1jKCJsb2dfYW50X3ZvbCIpCiNuYW1lcy5hZGFwdGl2ZS50cmFpdHM8LWMoIm1jLmxvZ19wc2wiKQojbmFtZXMuZGlyZWN0LnRyYWl0czwtYygibWMubG9nX3BzbCIpCiNuYW1lLnJlc3BvbnNlLm1lLnRyYWl0PC1jKCJtZS5sb2dfYW50X3ZvbCIpCiNuYW1lcy5hZGFwdGl2ZS5tZS50cmFpdHM8LWMoIm1lLmxvZ19wc2wiKQojbmFtZXMuZGlyZWN0Lm1lLnRyYWl0czwtYygibWUubG9nX3BzbCIpCiNuYW1lcy5maXhlZC5mYWN0PC1jKCJyZWdpbWVzIikKCmVycm9yLmNvbXBhcmlzb24uMnJlZzwtcmVwZWF0ZWRfb3B0aW1hX3NpbShjZXJ2aWQuM3JlZy50cmRhdGEsbj0xMCxuYW1lcy50cmFpdHMsaGVhZChvcHRpbWEsLTEpKQplcnJvci5jb21wYXJpc29uLjJyZWcKYGBgCgpgYGB7cn0Kc291cmNlKCIvVXNlcnMvbWFya2dyYWJvd3NraS9Eb2N1bWVudHMvQWNhZGVtaWMvUmVzZWFyY2gvQ3VycmVudCBQcm9qZWN0cy9CbG91Y2ggcHJvamVjdC9SMSBibG91Y2gtdGVzdGluZyBicmFuY2gvVmFsaWRhdGlvbiBDb2RlL1NCUjEgSW5hY2N1cmFjeSBMb29wcy9yZXBlYXRlZF9vcHRpbWFfc2ltLlIiKQoKbmFtZXMudHJhaXRzPC1jKCJtYy5sb2dfcHNsIiwiTkEiLCJyZWdpbWVzIikKI25hbWUucmVzcG9uc2UudHJhaXQ8LWMoImxvZ19hbnRfdm9sIikKI25hbWVzLmFkYXB0aXZlLnRyYWl0czwtYygibWMubG9nX3BzbCIpCiNuYW1lcy5kaXJlY3QudHJhaXRzPC1jKCJtYy5sb2dfcHNsIikKI25hbWUucmVzcG9uc2UubWUudHJhaXQ8LWMoIm1lLmxvZ19hbnRfdm9sIikKI25hbWVzLmFkYXB0aXZlLm1lLnRyYWl0czwtYygibWUubG9nX3BzbCIpCiNuYW1lcy5kaXJlY3QubWUudHJhaXRzPC1jKCJtZS5sb2dfcHNsIikKI25hbWVzLmZpeGVkLmZhY3Q8LWMoInJlZ2ltZXMiKQoKZXJyb3IuY29tcGFyaXNvbi4zcmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC4zcmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpCmVycm9yLmNvbXBhcmlzb24uM3JlZwpgYGAKCgpgYGB7cn0Kc291cmNlKCIvVXNlcnMvbWFya2dyYWJvd3NraS9Eb2N1bWVudHMvQWNhZGVtaWMvUmVzZWFyY2gvQ3VycmVudCBQcm9qZWN0cy9CbG91Y2ggcHJvamVjdC9SMSBibG91Y2gtdGVzdGluZyBicmFuY2gvVmFsaWRhdGlvbiBDb2RlL1NCUjEgSW5hY2N1cmFjeSBMb29wcy9yZXBlYXRlZF9vcHRpbWFfc2ltLlIiKQoKbmFtZXMudHJhaXRzPC1jKCJtYy5sb2dfcHNsIiwiTkEiLCJyZWdpbWVzIikKI25hbWUucmVzcG9uc2UudHJhaXQ8LWMoImxvZ19hbnRfdm9sIikKI25hbWVzLmFkYXB0aXZlLnRyYWl0czwtYygibWMubG9nX3BzbCIpCiNuYW1lcy5kaXJlY3QudHJhaXRzPC1jKCJtYy5sb2dfcHNsIikKI25hbWUucmVzcG9uc2UubWUudHJhaXQ8LWMoIm1lLmxvZ19hbnRfdm9sIikKI25hbWVzLmFkYXB0aXZlLm1lLnRyYWl0czwtYygibWUubG9nX3BzbCIpCiNuYW1lcy5kaXJlY3QubWUudHJhaXRzPC1jKCJtZS5sb2dfcHNsIikKI25hbWVzLmZpeGVkLmZhY3Q8LWMoInJlZ2ltZXMiKQoKZXJyb3IuY29tcGFyaXNvbi40cmVnPC1yZXBlYXRlZF9vcHRpbWFfc2ltKGNlcnZpZC40cmVnLnRyZGF0YSxuPTEwLG5hbWVzLnRyYWl0cyxoZWFkKG9wdGltYSwtMSkpCmVycm9yLmNvbXBhcmlzb24uNHJlZwpgYGAKCgoKUGxvdCBSZWdpbWVzCmBgYHtyfQplcnJvcnMuY29tYmluZWQ8LWRhdGEuZnJhbWUodChjYmluZChlcnJvci5jb21wYXJpc29uLjJyZWdbWzNdXSxlcnJvci5jb21wYXJpc29uLjNyZWdbWzNdXSxlcnJvci5jb21wYXJpc29uLjRyZWdbWzNdXSkpKQplcnJvcnMuY29tYmluZWQ8LWNiaW5kKGVycm9ycy5jb21iaW5lZCxyZXBzPTE6MzAscmVnaW1lcz1jKHJlcCgyLDEwKSxyZXAoMywxMCkscmVwKDQsMTApKSkKcmVnaW1lczwtYygyLDMsNCkKbWVhbi5lcnJvcnMuY29tYmluZWQ8LWRhdGEuZnJhbWUoZXJyb3JzLmNvbWJpbmVkJT4lZ3JvdXBfYnkocmVnaW1lcyklPiVtdXRhdGUobWxtLm1lYW49bWVhbihtbG0uaW5hY2N1cmFjeSksbnBtLm1lYW49bWVhbihucG0uaW5hY2N1cmFjeSkpKQoKbWVhbi5lcnJvcnMuY29tYmluZWQlPiVncm91cF9ieShyZWdpbWVzKSU+JQojZXJyb3JzLmNvbWJpbmVkJT4lCiAgZ2dwbG90KGFlcyh4PXJlcHMsZ3JvdXA9cmVnaW1lcykpKwogIGdlb21fcG9pbnQoYWVzKHk9bWxtLmluYWNjdXJhY3kpLHNpemU9Mi4wLGFscGhhPTAuOCkrCiAgZ2VvbV9wb2ludChhZXMoeT1ucG0uaW5hY2N1cmFjeSksc2hhcGU9MjEsc2l6ZT0yLjAsYWxwaGE9MC44KSsKICBnZW9tX2xpbmUoYWVzKHg9cmVwcyx5PW1sbS5tZWFuKSxsaW5ldHlwZT0ic29saWQiKSsKICBnZW9tX2xpbmUoYWVzKHg9cmVwcyx5PW5wbS5tZWFuKSxsaW5ldHlwZT0iZGFzaGVkIikrCiAgZ2VvbV92bGluZSh4aW50ZXJjZXB0PWMoMTAuNSwyMC41KSxhbHBoYT0wLjc1LGxpbmV0eXBlPSJkb3R0ZWQiKSsKICB5bGFiKCJJbXByZWNpc2lvbiIpICsgeGxhYigiUmVnaW1lcyIpKwogIHRoZW1lX2J3KCkrCiAgc2NhbGVfY29sb3JfbnBnKCkrCiAgI3RoZW1lKGxlZ2VuZC50ZXh0KQogIHNjYWxlX3hfY29udGludW91cyhicmVha3M9Yyg1LDE1LDI1KSxsYWJlbHM9cmVnaW1lcykKICAjZ2VvbV9sYWJlbChsYWJlbD1jKCIiKSkKCgogIAoKCmBgYA==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQmxvdWNoIFNCUjEgLSBDZXJ2aWRhZSBSZWdpbWUgU2ltdWxhdGlvbiBBbmFseXNpcyIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKVXNpbmcgc2ltdWxhdGVkIGRhdGEgZnJvbW0gU0JSMSBDZXJ2aWRhZSBSZWdpbWUgU2ltdWxhdGlvbiBDb2RlCgpJbmFjY3VyYWN5IGxvb3BzIGZvciBzaW11bGF0ZWQgcmVwZWF0ZWQgb3B0aW1hCmBgYHtyfQpzb3VyY2UoIi9Vc2Vycy9tYXJrZ3JhYm93c2tpL0RvY3VtZW50cy9BY2FkZW1pYy9SZXNlYXJjaC9DdXJyZW50IFByb2plY3RzL0Jsb3VjaCBwcm9qZWN0L1IxIGJsb3VjaC10ZXN0aW5nIGJyYW5jaC9WYWxpZGF0aW9uIENvZGUvU0JSMSBJbmFjY3VyYWN5IExvb3BzL3JlcGVhdGVkX29wdGltYV9zaW0uUiIpCgpuYW1lcy50cmFpdHM8LWMoIm1jLmxvZ19wc2wiLCJOQSIsInJlZ2ltZXMiKQojbmFtZS5yZXNwb25zZS50cmFpdDwtYygibG9nX2FudF92b2wiKQojbmFtZXMuYWRhcHRpdmUudHJhaXRzPC1jKCJtYy5sb2dfcHNsIikKI25hbWVzLmRpcmVjdC50cmFpdHM8LWMoIm1jLmxvZ19wc2wiKQojbmFtZS5yZXNwb25zZS5tZS50cmFpdDwtYygibWUubG9nX2FudF92b2wiKQojbmFtZXMuYWRhcHRpdmUubWUudHJhaXRzPC1jKCJtZS5sb2dfcHNsIikKI25hbWVzLmRpcmVjdC5tZS50cmFpdHM8LWMoIm1lLmxvZ19wc2wiKQojbmFtZXMuZml4ZWQuZmFjdDwtYygicmVnaW1lcyIpCgplcnJvci5jb21wYXJpc29uLjJyZWc8LXJlcGVhdGVkX29wdGltYV9zaW0oY2VydmlkLjNyZWcudHJkYXRhLG49MTAsbmFtZXMudHJhaXRzLGhlYWQob3B0aW1hLC0xKSkKZXJyb3IuY29tcGFyaXNvbi4ycmVnCmBgYAoKYGBge3J9CnNvdXJjZSgiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SIikKCm5hbWVzLnRyYWl0czwtYygibWMubG9nX3BzbCIsIk5BIiwicmVnaW1lcyIpCiNuYW1lLnJlc3BvbnNlLnRyYWl0PC1jKCJsb2dfYW50X3ZvbCIpCiNuYW1lcy5hZGFwdGl2ZS50cmFpdHM8LWMoIm1jLmxvZ19wc2wiKQojbmFtZXMuZGlyZWN0LnRyYWl0czwtYygibWMubG9nX3BzbCIpCiNuYW1lLnJlc3BvbnNlLm1lLnRyYWl0PC1jKCJtZS5sb2dfYW50X3ZvbCIpCiNuYW1lcy5hZGFwdGl2ZS5tZS50cmFpdHM8LWMoIm1lLmxvZ19wc2wiKQojbmFtZXMuZGlyZWN0Lm1lLnRyYWl0czwtYygibWUubG9nX3BzbCIpCiNuYW1lcy5maXhlZC5mYWN0PC1jKCJyZWdpbWVzIikKCmVycm9yLmNvbXBhcmlzb24uM3JlZzwtcmVwZWF0ZWRfb3B0aW1hX3NpbShjZXJ2aWQuM3JlZy50cmRhdGEsbj0xMCxuYW1lcy50cmFpdHMsaGVhZChvcHRpbWEsLTEpKQplcnJvci5jb21wYXJpc29uLjNyZWcKYGBgCgoKYGBge3J9CnNvdXJjZSgiL1VzZXJzL21hcmtncmFib3dza2kvRG9jdW1lbnRzL0FjYWRlbWljL1Jlc2VhcmNoL0N1cnJlbnQgUHJvamVjdHMvQmxvdWNoIHByb2plY3QvUjEgYmxvdWNoLXRlc3RpbmcgYnJhbmNoL1ZhbGlkYXRpb24gQ29kZS9TQlIxIEluYWNjdXJhY3kgTG9vcHMvcmVwZWF0ZWRfb3B0aW1hX3NpbS5SIikKCm5hbWVzLnRyYWl0czwtYygibWMubG9nX3BzbCIsIk5BIiwicmVnaW1lcyIpCiNuYW1lLnJlc3BvbnNlLnRyYWl0PC1jKCJsb2dfYW50X3ZvbCIpCiNuYW1lcy5hZGFwdGl2ZS50cmFpdHM8LWMoIm1jLmxvZ19wc2wiKQojbmFtZXMuZGlyZWN0LnRyYWl0czwtYygibWMubG9nX3BzbCIpCiNuYW1lLnJlc3BvbnNlLm1lLnRyYWl0PC1jKCJtZS5sb2dfYW50X3ZvbCIpCiNuYW1lcy5hZGFwdGl2ZS5tZS50cmFpdHM8LWMoIm1lLmxvZ19wc2wiKQojbmFtZXMuZGlyZWN0Lm1lLnRyYWl0czwtYygibWUubG9nX3BzbCIpCiNuYW1lcy5maXhlZC5mYWN0PC1jKCJyZWdpbWVzIikKCmVycm9yLmNvbXBhcmlzb24uNHJlZzwtcmVwZWF0ZWRfb3B0aW1hX3NpbShjZXJ2aWQuNHJlZy50cmRhdGEsbj0xMCxuYW1lcy50cmFpdHMsaGVhZChvcHRpbWEsLTEpKQplcnJvci5jb21wYXJpc29uLjRyZWcKYGBgCgoKClBsb3QgUmVnaW1lcwpgYGB7cn0KZXJyb3JzLmNvbWJpbmVkPC1kYXRhLmZyYW1lKHQoY2JpbmQoZXJyb3IuY29tcGFyaXNvbi4ycmVnW1szXV0sZXJyb3IuY29tcGFyaXNvbi4zcmVnW1szXV0sZXJyb3IuY29tcGFyaXNvbi40cmVnW1szXV0pKSkKZXJyb3JzLmNvbWJpbmVkPC1jYmluZChlcnJvcnMuY29tYmluZWQscmVwcz0xOjMwLHJlZ2ltZXM9YyhyZXAoMiwxMCkscmVwKDMsMTApLHJlcCg0LDEwKSkpCnJlZ2ltZXM8LWMoMiwzLDQpCm1lYW4uZXJyb3JzLmNvbWJpbmVkPC1kYXRhLmZyYW1lKGVycm9ycy5jb21iaW5lZCU+JWdyb3VwX2J5KHJlZ2ltZXMpJT4lbXV0YXRlKG1sbS5tZWFuPW1lYW4obWxtLmluYWNjdXJhY3kpLG5wbS5tZWFuPW1lYW4obnBtLmluYWNjdXJhY3kpKSkKCm1lYW4uZXJyb3JzLmNvbWJpbmVkJT4lZ3JvdXBfYnkocmVnaW1lcyklPiUKI2Vycm9ycy5jb21iaW5lZCU+JQogIGdncGxvdChhZXMoeD1yZXBzLGdyb3VwPXJlZ2ltZXMpKSsKICBnZW9tX3BvaW50KGFlcyh5PW1sbS5pbmFjY3VyYWN5KSxzaXplPTIuMCxhbHBoYT0wLjgpKwogIGdlb21fcG9pbnQoYWVzKHk9bnBtLmluYWNjdXJhY3kpLHNoYXBlPTIxLHNpemU9Mi4wLGFscGhhPTAuOCkrCiAgZ2VvbV9saW5lKGFlcyh4PXJlcHMseT1tbG0ubWVhbiksbGluZXR5cGU9InNvbGlkIikrCiAgZ2VvbV9saW5lKGFlcyh4PXJlcHMseT1ucG0ubWVhbiksbGluZXR5cGU9ImRhc2hlZCIpKwogIGdlb21fdmxpbmUoeGludGVyY2VwdD1jKDEwLjUsMjAuNSksYWxwaGE9MC43NSxsaW5ldHlwZT0iZG90dGVkIikrCiAgeWxhYigiSW1wcmVjaXNpb24iKSArIHhsYWIoIlJlZ2ltZXMiKSsKICB0aGVtZV9idygpKwogIHNjYWxlX2NvbG9yX25wZygpKwogICN0aGVtZShsZWdlbmQudGV4dCkKICBzY2FsZV94X2NvbnRpbnVvdXMoYnJlYWtzPWMoNSwxNSwyNSksbGFiZWxzPXJlZ2ltZXMpCiAgI2dlb21fbGFiZWwobGFiZWw9YygiIikpCgoKICAKCgpgYGA=</div>
 
 
 

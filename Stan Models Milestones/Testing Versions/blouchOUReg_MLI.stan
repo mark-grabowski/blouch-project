@@ -1,8 +1,9 @@
 functions {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//Blouch Fixed Niches Code
-//08.05.2022 - Revised for SBR1 to be use multivariate predictors, no need to use different random and direct datasets, and can use combo direct and response traits
+//Blouch Fixed Niches - Multilevel Model - Varying Intercepts Code, centered priors
+//03.30.2023 - Added varying intercepts code, but centered priors
 //09.04.2022 - Added code to allow for correlated predictors - Hansen et al. (2008)
+//08.05.2022 - Revised for SBR1 to be use multivariate predictors, no need to use different random and direct datasets, and can use combo direct and response traits
 //////////////////////////////////////////////////////////////////////////////////////////////////////
  matrix calc_optima(real a, int n_regimes, int n_lineages, int max_node_length, matrix nodes, matrix nodes_time, 
                        matrix t_end, matrix t_beginning, matrix regime_time, int[,] regimes_matrix){
@@ -88,7 +89,6 @@ int Z, int Z_direct, int Z_random){
   vector[Z_random] ones;
   
   ones = rep_vector(1,Z_random);
-
 
   if(sum(random_cov) != 0){
       if(Z_random>1){
@@ -204,8 +204,7 @@ data {
   real ols_intercept;
   vector[Z] ols_slope;
   
-  //Fixed regimes
-  int n_regimes;
+  int n_regimes; //Fixed regimes
   int n_lineages;
   int max_node_length;
   
@@ -223,18 +222,15 @@ data {
 parameters {
   real <lower = 0, upper = 3> hl;
   real <lower = 0> vy;
-  //real <lower = 0> a;
-  //real <lower = 0> sigma2_y; //Added for SBR1
-  //real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
   vector[Z + n_regimes] beta; //OU beta
   vector[Z_random] beta_e; //OU beta
-
+  real beta_bar; //average prior for regimes
+  real sigma; //standard deviation for regimes
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //Transformed Parameter Block
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 transformed parameters {
-
 
 
 }
@@ -253,31 +249,24 @@ model {
   real sigma2_y;
   real rho;
 
-
 //Priors
   hl ~ lognormal(-0.5,1.5); //Tree length = 1 Ma
-  vy ~ cauchy(0,0.1);
-
-  beta[1:n_regimes] ~ normal(ols_intercept,1); //Added for SBR1; 3 regimes prior
-
-  //beta[1:n_regimes] ~ student_t(2,0,1); //Mean standardized Y beforehand
-  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Added for SBR1; 3 regimes prior
-
+  vy ~ exponential(1);
+  beta_bar ~ normal(0,1);
+  sigma ~ exponential(1);
   
-//////////////////////////////////////////////////////////////////////////////////////////////////////
+  beta[1:n_regimes] ~ normal(beta_bar,sigma); //Varying intercepts model
+  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Static slope
+
   a = log(2)/hl;
   sigma2_y = vy*(2*a);
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-//Regression - either constraint for direct cov or adaptive for random cov
-
-//Set up X matrix
+  
+  //Regression - either constraint for direct cov or adaptive for random cov
   X = design_matrix(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, t_end,
-  t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);
+  t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);//Set up X matrix
 
-  //Set up V matix
   Vt = varcov_model(N,  tij,  tja,  ta,  random_cov, sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term, n_regimes, 
-  Z, Z_direct, Z_random);
+  Z, Z_direct, Z_random);//Set up V matix
   if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
     V_me = varcov_measurement(N, ta, direct_cov, mv_direct_cov,mv_random_cov, sigma_squared_x, beta, n_regimes, Z, Z_direct, Z_random, a, T_term);
       if(sum(mv_response)!= 0){
@@ -286,6 +275,7 @@ model {
           V = Vt + V_me; //Hansen & Bartoszek (2012) - Eq 10
           }
   }else{
+    V_me = rep_matrix(0,N,N);
     if(sum(mv_response)!= 0){
        V = Vt + diag_matrix(mv_response);
     }else{V = Vt;}
@@ -299,68 +289,50 @@ model {
   Y ~ multi_normal_cholesky(mu , L_V);
 
   rho = (1 - (1 - exp(-a * T_term[1]))./(a * T_term[1])); //For OU model
-  
   for(i in 1:Z_random){
     beta_e[i] ~ normal(beta[n_regimes+Z_direct+i]* rho,0.2);
     }  
+  //target += log_lik;  // automatically sums
 
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 generated quantities {
-  //real <lower = 0, upper=3> hl;
-  //real <lower = 0> vy;
-  real <lower = 0> sigma2_y;
-  real <lower = 0> a;
-  vector[N] pred_mean;
-  real grand_mean;
-  real sst;
-  real sse;
-  real r_squared;
-
-  matrix[N,Z+n_regimes] X_opt;
-  vector[Z+n_regimes] beta_opt;
+  vector[N] mu;
+  matrix[N,N] V;
+  matrix[N,N] Vt;
+  matrix[N,N] V_me;
+  matrix[N, N] L_V;
+  matrix[N,Z+n_regimes] X;
+  real a;
+  real sigma2_y;
+  //vector[N] log_lik;
+  real log_lik;
   
-  matrix[N,N] V_opt;
-  matrix[N,N] V_me_opt;
-  matrix[N,N] Vt_opt;
-
   a = log(2)/hl;
-  sigma2_y = vy/(2*a);
+  sigma2_y = vy*(2*a);
 
-  //hl = log(2)/a;
-  //vy = sigma2_y/(2*a);
+  X = design_matrix(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, t_end,
+  t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);//Set up X matrix
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-  //Calculate optimal regression slope  
-  X_opt = design_matrix(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, 
-  t_end, t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);
-  
-  Vt_opt = varcov_model(N,  tij,  tja,  ta,  random_cov,  sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,T_term, n_regimes, Z, Z_direct, Z_random);
-
+  Vt = varcov_model(N,  tij,  tja,  ta,  random_cov, sigma2_y,  a, brownian_mean,  sigma_squared_x,  beta,  T_term, n_regimes, 
+  Z, Z_direct, Z_random);//Set up V matix
   if((sum(mv_direct_cov)!= 0) || (sum(mv_random_cov)!= 0)){
-    V_me_opt = varcov_measurement(N, ta, direct_cov, mv_direct_cov, mv_random_cov, sigma_squared_x, beta, n_regimes, Z, Z_direct, Z_random, a, T_term);
+    V_me = varcov_measurement(N, ta, direct_cov, mv_direct_cov,mv_random_cov, sigma_squared_x, beta, n_regimes, Z, Z_direct, Z_random, a, T_term);
+      if(sum(mv_response)!= 0){
+          V = Vt + V_me + diag_matrix(mv_response);
+      }else{
+          V = Vt + V_me; //Hansen & Bartoszek (2012) - Eq 10
+          }
+  }else{
+    V_me = rep_matrix(0,N,N);
     if(sum(mv_response)!= 0){
-      V_opt = Vt_opt + V_me_opt + diag_matrix(mv_response);}
-  else{
-    V_opt = Vt_opt + V_me_opt;} //Hansen & Bartoszek (2012) - Eq 10
-  }else if(sum(mv_response)!= 0){
-      V_me_opt = rep_matrix(0,N,N);
-      V_opt = Vt_opt + diag_matrix(mv_response); //Hansen & Bartoszek (2012) - Eq 10
-    }else{
-      V_me_opt = rep_matrix(0,N,N);
-      V_opt = Vt_opt;  
-    }
+       V = Vt + diag_matrix(mv_response);
+    }else{V = Vt;}
+  }
 
-  beta_opt = inverse(X_opt'*inverse(V_opt)*X_opt)*(X_opt'*inverse(V_opt)*Y); //Hansen et al. 2008
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-  //Calculate r2 based on constraint or adaptive regression
-  pred_mean = X_opt*beta_opt;
-  grand_mean = ((rep_vector(1,N))' * inverse(V_opt) * Y) / sum(inverse(V_opt));
-  sst = ((Y - grand_mean)' * inverse(V_opt) * (Y - grand_mean));
-  sse = ((Y - pred_mean)' * inverse(V_opt) * (Y - pred_mean));
-  r_squared = (sst - sse) / sst;
-
-///////////
-
+  V = Vt;
+  L_V = cholesky_decompose(V);
+  mu = X*beta;
+  log_lik = multi_normal_lpdf(Y | mu, V);
 
 }

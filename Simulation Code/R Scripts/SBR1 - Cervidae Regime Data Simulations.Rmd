@@ -41,13 +41,13 @@ cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256
 
 Data Prep
 ```{r}
-#cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/cervidae_renamed.tre") #Macbook Pro
+cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/cervidae_renamed.tre") #Macbook Pro
 
-cervid.tree<-read.nexus("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/cervidae_renamed.tre") #Mac Studio
+#cervid.tree<-read.nexus("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/cervidae_renamed.tre") #Mac Studio
 
-#cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/updated_mean_dat_no_OL_MG.csv") #Macbook Pro
+cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/updated_mean_dat_no_OL_MG.csv") #Macbook Pro
 
-cervid.dataset<-read.csv("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/updated_mean_dat_no_OL_MG.csv") #Mac Studio
+#cervid.dataset<-read.csv("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Sharable Data/updated_mean_dat_no_OL_MG.csv") #Mac Studio
 
 #Remove Muntiacus_atherodes, Elaphodus_cephalophus - rudamentary and female Rangifer. 
 cervid.dataset<-filter(cervid.dataset,Genus_Species != "Sinomegaloceros_yabei" & ! Genus_Species =="Alces_alces_gigas"  & ! Genus_Species == "Muntiacus_truongsonensis" & ! Genus_Species ==  "Mazama_temama"& ! Genus_Species ==  "Muntiacus_feae" & ! Genus_Species ==  "Muntiacus_atherodes" & ! Genus_Species ==  "Elaphodus_cephalophus")
@@ -96,9 +96,9 @@ nodelabels(cex=0.5)
 
 Set regimes
 ```{r}
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 
-source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
 shifts<-c(71) #Location of nodes with regime shifts
 cervid.2reg.trdata<-set.converge.regimes(cervid.trdata,shifts)
@@ -143,9 +143,9 @@ names.fixed.fact<-c("regimes")
 
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
 
-source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
 
 Sxx<-1
 vX0<-0
@@ -160,12 +160,12 @@ cervid.2reg.trdata$dat<-cbind(cervid.2reg.trdata$dat,stan_sim_data$direct_cov)
 
 Simulate data
 ```{r}
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
-#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
 
 
-setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
-stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
 
 stan_model <- stan_model("simRegimes_XY.stan")
 
@@ -213,9 +213,9 @@ nodelabels(cex=0.5)
 
 Set regimes
 ```{r}
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 
-source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
 
 shifts<-c(71,52) #Location of nodes with regime shifts
@@ -247,9 +247,9 @@ plot(cervid.3reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 
 
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
 
-source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
 
 
 Sxx<-1
@@ -265,11 +265,11 @@ cervid.3reg.trdata$dat<-cbind(cervid.3reg.trdata$dat,stan_sim_data$direct_cov)
 
 Simulate data
 ```{r}
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")
-#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan")
 
-setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
-stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
 
 
 stan_model <- stan_model("simRegimes_XY.stan")
@@ -319,9 +319,9 @@ nodelabels(cex=0.5)
 
 Set regimes
 ```{r}
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 
-source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
 
 shifts<-c(71,52,59) #Location of nodes with regime shifts
@@ -352,9 +352,9 @@ plot(cervid.4reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 
 
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
 
-source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
 
 Sxx<-1
 vX0<-0
@@ -369,11 +369,11 @@ cervid.4reg.trdata$dat<-cbind(cervid.4reg.trdata$dat,stan_sim_data$direct_cov)
 
 Simulate data
 ```{r}
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
-#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
 
-setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
-stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
 
 stan_model <- stan_model("simRegimes_XY.stan")
 

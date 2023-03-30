@@ -294,6 +294,7 @@ model {
           V = Vt + V_me; //Hansen & Bartoszek (2012) - Eq 10
           }
   }else{
+    V_me = rep_matrix(0,N,N);
     if(sum(mv_response)!= 0){
        V = Vt + diag_matrix(mv_response);
     }else{V = Vt;}
@@ -331,6 +332,10 @@ generated quantities {
   matrix[N,N] V_opt;
   matrix[N,N] V_me_opt;
   matrix[N,N] Vt_opt;
+  matrix[N, N] L_V;
+
+  vector[N] mu;
+  real log_lik;
 
   a = log(2)/hl;
   sigma2_y = vy/(2*a);
@@ -358,8 +363,12 @@ generated quantities {
       V_me_opt = rep_matrix(0,N,N);
       V_opt = Vt_opt;  
     }
+  L_V = cholesky_decompose(V_opt);
+  mu = X_opt*beta;
 
   beta_opt = inverse(X_opt'*inverse(V_opt)*X_opt)*(X_opt'*inverse(V_opt)*Y); //Hansen et al. 2008
+  log_lik = multi_normal_cholesky_lpdf(Y | mu, L_V);
+
   //////////////////////////////////////////////
   //Calculate r2 based on constraint or adaptive regression
   pred_mean = X_opt*beta_opt;
