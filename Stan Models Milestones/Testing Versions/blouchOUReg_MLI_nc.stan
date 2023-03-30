@@ -1,6 +1,6 @@
 functions {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//Blouch Fixed Niches - Multilevel Model - Varying Intercepts Code, non-centered priors
+//Blouch Fixed Niches - Multilevel Model - Varying Intercepts Code, centered priors
 //03.30.2023 - Added varying intercepts code, but centered priors
 //09.04.2022 - Added code to allow for correlated predictors - Hansen et al. (2008)
 //08.05.2022 - Revised for SBR1 to be use multivariate predictors, no need to use different random and direct datasets, and can use combo direct and response traits
@@ -222,17 +222,24 @@ data {
 parameters {
   real <lower = 0, upper = 3> hl;
   real <lower = 0> vy;
-  vector[Z + n_regimes] beta; //OU beta
+  vector[Z] slopes;
+  vector[n_regimes] z_beta; //OU beta
   vector[Z_random] beta_e; //OU beta
   real beta_bar; //average prior for regimes
-  real sigma; //standard deviation for regimes
+  real <lower = 0> sigma; //standard deviation for regimes
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //Transformed Parameter Block
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 transformed parameters {
-  
-
+  vector[Z+n_regimes] beta;
+  //z_beta = (beta - beta_bar)/sigma
+  //z_beta*sigma+beta_bar = beta
+  for (i in 1:n_regimes){
+      beta[i] = beta_bar+z_beta[i]*sigma;
+  }
+  //beta[1:n_regimes] = beta_bar+z_beta*sigma;
+  beta[n_regimes+1:n_regimes+Z] = slopes; //Static slope
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -255,8 +262,11 @@ model {
   beta_bar ~ normal(0,1);
   sigma ~ exponential(1);
   
-  beta[1:n_regimes] ~ normal(beta_bar,sigma); //Varying intercepts model
-  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Static slope
+  //beta[1:n_regimes] ~ normal(beta_bar,sigma); //Varying intercepts model
+  //z_beta = (beta - beta_bar)/sigma
+  //z_beta*sigma+beta_bar = beta
+  z_beta ~ normal(0,1);
+  slopes ~ normal(ols_slope,0.5); //Static slope
 
   a = log(2)/hl;
   sigma2_y = vy*(2*a);

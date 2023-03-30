@@ -13,11 +13,11 @@ Known regime values - 4 and 5 with slope of 0.8
 
 Setup stan data file using simulated data - 2 regimes - direct slope covariate
 ```{r}
-library(loo)
+#library(loo)
 
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOUReg.setup.mv_v1_3.R")
 
-name.response.trait<-paste("Sim",1,sep="")
+name.response.trait<-paste("Sim",2,sep="")
 print(name.response.trait)
         
 #One direct covariate w/o ME
@@ -25,7 +25,7 @@ stan_test_data<-blouchOUReg.setup.mv(cervid.2reg.trdata,names.fixed.fact,name.re
 ```
 
 
-Testing Code
+Multilevel model - Varying Intercepts, centered priors
 ```{r}
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOUReg_MLI.stan") #Macbook Pro
@@ -41,6 +41,7 @@ print(fit.mli.regimes,pars = c("hl","beta_bar","sigma","beta","beta_e","vy","log
 
 #For downstream analysis and plots
 ```
+
 
 Plotting
 ```{r}
@@ -66,6 +67,25 @@ pairs(fit.mli.regimes,pars=c("hl","beta","vy"))
 
 ```
 
+Multilevel model - Varying Intercepts, non-centered priors
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOUReg_MLI_nc.stan") #Macbook Pro
+
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")#Mac Studio
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOUReg_MLI.stan") #Mac Studio
+
+stan_model <- stan_model("blouchOUReg_MLI_nc.stan")
+
+fit.mli.nc.regimes<- rstan::sampling(object = stan_model,data = stan_test_data,chains = 2,iter = 2000,control=list(adapt_delta=0.9))
+
+print(fit.mli.nc.regimes,pars = c("hl","beta_bar","sigma","beta","beta_e","vy","log_lik"))
+
+#For downstream analysis and plots
+```
+
+
+
 Basic no varying intercepts model
 ```{r}
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Current Working Versions/") #Macbook Pro
@@ -84,6 +104,13 @@ Model Comparisons
 ```{r}
 log_lik_M.mli<-extract_log_lik(fit.mli.regimes, merge_chains = FALSE)
 log_lik_M.npi<-extract_log_lik(fit.npi.regimes, merge_chains = FALSE)
+
+log_ratios <- -1 * log_lik_M.mli
+r_eff <- relative_eff(exp(-log_ratios))
+psis_result <- psis(log_ratios, r_eff = r_eff)
+str(psis_result)
+plot(psis_result)
+
 
 r_eff <- relative_eff(exp(log_lik_M.mli), cores = 2) 
 loo_1 <- loo(log_lik_M.mli, r_eff = r_eff, cores = 2)

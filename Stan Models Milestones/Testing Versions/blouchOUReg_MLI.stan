@@ -225,7 +225,7 @@ parameters {
   vector[Z + n_regimes] beta; //OU beta
   vector[Z_random] beta_e; //OU beta
   real beta_bar; //average prior for regimes
-  real sigma; //standard deviation for regimes
+  real <lower=0> sigma; //standard deviation for regimes
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //Transformed Parameter Block
