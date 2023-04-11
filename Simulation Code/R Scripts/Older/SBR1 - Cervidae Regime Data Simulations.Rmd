@@ -75,15 +75,6 @@ max(branching.times(cervid.trdata$phy))
 
 ```
 
-Set regimes - manually - 2 regimes
-Locate nodes
-```{r}
-plot(cervid.trdata$phy)
-tiplabels(cex=0.5)
-nodelabels(cex=0.5)
-#Using node 71
-```
-
 
 Set regimes - manually - 2 regimes
 Locate nodes
@@ -126,81 +117,55 @@ plot(cervid.2reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 
 ```
 
 
-```{r}
-#Direct and Random model - 1 trait each
-name.response.trait<-c("log_ant_vol")
-names.adaptive.traits<-c("mc.log_psl")
-names.direct.traits<-c("mc.log_psl")
-name.response.me.trait<-c("me.log_ant_vol")
-names.adaptive.me.traits<-c("me.log_psl")
-names.direct.me.traits<-c("me.log_psl")
-
-names.fixed.fact<-c("regimes")
-
-```
-
-
 
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.mvSlouch.setup.R")
 
-#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+slope<-0.25
+#hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
+hl<-0.1
 
-Sxx<-1
-vX0<-0
-optima<-c(4,5,0.8)
+vY0 <- 2
+vX0 <- 4
+#vY0<-0
+#vX0<-0
+vy<-0.001
 
-#One direct covariate w/o ME
-stan_sim_data<-blouchsimXYOUReg.setup(cervid.2reg.trdata,names.fixed.fact,num.direct=1,num.random=0,hl=0.1,vy=0.01,beta=optima)
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.2reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE) #Direct effect model
 
-cervid.2reg.trdata$dat<-cbind(cervid.2reg.trdata$dat,stan_sim_data$direct_cov)
-```
-
-
-Simulate data
-```{r}
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.2reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE) #Direct effect model
 
 
-#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
-#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.2reg.trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE) #Adaptive model
 
-stan_model <- stan_model("simRegimes_XY.stan")
-
-fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
-
-#For downstream analysis and plots
-ext.fit.simdata <- rstan::extract(fit.simdata)
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.2reg.trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE) #Adaptive model
 
 ```
 
-
-Add simulated code to dataset
-```{r}
-#Extract simulated brain mass data
-Y_pred_sim<-as.data.frame(ext.fit.simdata$Y_pred)
-
-#names(brain_mass_g_log_mean.sim)<-paste(names(brain_mass_g_log_mean.sim)
-
-test<-data.frame(t(Y_pred_sim[1:100,]))
-names(test)<-paste("Sim",1:100,sep="")
-
-#Add to original dataset
-cervid.2reg.trdata$dat<-cbind(cervid.2reg.trdata$dat,test)
-```
 
 Plot simulated relationships
 ```{r}
-ggplot(data=cervid.2reg.trdata$dat,aes(x=trait_1,y=Sim1))+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov) #Direct effect model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
   geom_point()
+lm(Y~X,df)
 
-test<-cervid.2reg.trdata$dat$Sim1
-names(test)<-cervid.2reg.trdata$phy$tip.label
-dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$random_cov) #Adaptive Model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+
+#dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
 
 ```
+
+
+
+
 
 Set regimes - manually - 3 regimes
 Locate nodes
@@ -244,69 +209,44 @@ plot(cervid.3reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 
 ```
 
 
-
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.mvSlouch.setup.R")
 
-#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
+slope<-0.25
+#hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
+hl<-0.1
+
+vY0 <- 2
+vX0 <- 4
+#vY0<-0
+#vX0<-0
+vy<-0.001
+
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.3reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=TRUE)
+
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.3reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=FALSE)
+
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.3reg.trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=TRUE)
+
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.3reg.trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=FALSE)
 
 
-Sxx<-1
-vX0<-0
-optima<-c(4,5,6,0.8)
-
-#One direct covariate w/o ME
-stan_sim_data<-blouchsimXYOUReg.setup(cervid.3reg.trdata,names.fixed.fact,num.direct=1,num.random=0,hl=0.1,vy=0.01,beta=optima)
-
-cervid.3reg.trdata$dat<-cbind(cervid.3reg.trdata$dat,stan_sim_data$direct_cov)
+#Adaptive model
 ```
 
-
-Simulate data
-```{r}
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan")
-
-#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
-#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
-
-
-stan_model <- stan_model("simRegimes_XY.stan")
-
-fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
-
-#For downstream analysis and plots
-ext.fit.simdata <- rstan::extract(fit.simdata)
-
-```
-
-
-Add simulated code to dataset
-```{r}
-#Extract simulated brain mass data
-Y_pred_sim<-as.data.frame(ext.fit.simdata$Y_pred)
-
-#names(brain_mass_g_log_mean.sim)<-paste(names(brain_mass_g_log_mean.sim)
-
-test<-data.frame(t(Y_pred_sim[1:100,]))
-names(test)<-paste("Sim",1:100,sep="")
-
-#Add to original dataset
-cervid.3reg.trdata$dat<-cbind(cervid.3reg.trdata$dat,test)
-```
 
 Plot simulated relationships
 ```{r}
-ggplot(data=cervid.3reg.trdata$dat,aes(x=trait_1,y=Sim1))+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
   geom_point()
+lm(Y~X,df)
 
-test<-cervid.3reg.trdata$dat$Sim1
-names(test)<-cervid.3reg.trdata$phy$tip.label
-dotTree(cervid.3reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+#dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
 
 ```
-
 
 Set regimes - manually - 4 regimes
 Locate nodes
@@ -349,67 +289,39 @@ plot(cervid.4reg.trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 
 
 ```
 
-
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Macbook Pro
 
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.mvSlouch.setup.R")
 #source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/R Scripts/blouch_simXYOUReg.setup.R") #Mac Studio
 
-Sxx<-1
+slope<-0.25
+#hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
+hl<-0.1
+
+#vY0 <- 2
+#vX0 <- 4
+vY0<-0
 vX0<-0
-optima<-c(3,4,5,6,0.8)
+vy<-0.001
 
-#One direct covariate w/o ME
-stan_sim_data<-blouchsimXYOUReg.setup(cervid.4reg.trdata,names.fixed.fact,num.direct=1,num.random=0,hl=0.1,vy=0.01,beta=optima)
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.4reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5,4.75),direct=0) #Direct effect model
 
-cervid.4reg.trdata$dat<-cbind(cervid.4reg.trdata$dat,stan_sim_data$direct_cov)
+stan_sim_data<-blouchsimXYOUReg.setup(cervid.4reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5,4.75)) #Adaptive model
 ```
 
-
-Simulate data
-```{r}
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Macbook Pro
-
-#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/")#Mac Studio
-#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Stan Models/simRegimes_XY.stan") #Mac Studio
-
-stan_model <- stan_model("simRegimes_XY.stan")
-
-fit.simdata<- rstan::sampling(object = stan_model,data = stan_sim_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95),algorithm=c("Fixed_param"))
-
-#For downstream analysis and plots
-ext.fit.simdata <- rstan::extract(fit.simdata)
-
-```
-
-
-Add simulated code to dataset
-```{r}
-#Extract simulated brain mass data
-Y_pred_sim<-as.data.frame(ext.fit.simdata$Y_pred)
-
-#names(brain_mass_g_log_mean.sim)<-paste(names(brain_mass_g_log_mean.sim)
-
-test<-data.frame(t(Y_pred_sim[1:100,]))
-names(test)<-paste("Sim",1:100,sep="")
-
-#Add to original dataset
-cervid.4reg.trdata$dat<-cbind(cervid.4reg.trdata$dat,test)
-```
 
 Plot simulated relationships
 ```{r}
-ggplot(data=cervid.4reg.trdata$dat,aes(x=trait_1,y=Sim1))+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
   geom_point()
+lm(Y~X,df)
 
-test<-cervid.4reg.trdata$dat$Sim1
-names(test)<-cervid.4reg.trdata$phy$tip.label
-dotTree(cervid.4reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+#dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
 
 ```
-
-
 
 

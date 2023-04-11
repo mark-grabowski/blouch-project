@@ -4,9 +4,9 @@ functions {
 //08.05.2022 - Revised for SBR1 to be use multivariate predictors, no need to use different random and direct datasets, and can use combo direct and response traits
 //09.04.2022 - Added code to allow for correlated predictors - Hansen et al. (2008)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- matrix calc_optima(real a, int n_regimes, int n_lineages, int max_node_length, matrix nodes, matrix nodes_time, 
-                       matrix t_end, matrix t_beginning, matrix regime_time, int[,] regimes_matrix){
-      matrix[n_lineages,n_regimes] optima_matrix =rep_matrix(0,n_lineages,n_regimes);
+matrix calc_optima(real a, int n_regimes, int n_lineages, int max_node_length, matrix nodes, matrix nodes_time, 
+                     matrix t_end, matrix t_beginning, matrix regime_time, int[,] regimes_matrix){
+    matrix[n_lineages,n_regimes] optima_matrix =rep_matrix(0,n_lineages,n_regimes);
       
       for(i in 1:n_lineages){
         int max_j = max_node_length;
@@ -140,7 +140,8 @@ vector beta, int n_regimes, int Z, int Z_direct, int Z_random, real a, vector T_
   Vxtd = rep_array(rep_matrix(0,N,N),Z_direct);
 
   direct_rho2 = rep_matrix(1,N,Z_direct);
-  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term))^2,Z_random); //For OU model
+//  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term))^2,Z_random); //Problem starting on 040723
+  random_rho2 = rep_matrix(square(1 - (1 - exp(-a * T_term))./(a * T_term)),Z_random); //For OU model
   
   rho2s = append_col(direct_rho2,random_rho2);
 
@@ -255,19 +256,19 @@ model {
 
 
 //Priors
-  hl ~ lognormal(-0.5,1.5); //Tree length = 1 Ma
-  vy ~ cauchy(0,0.1);
+  hl ~ lognormal(log(0.4),1); //Tree length = 1 Ma
+  vy ~ exponential(0.1);
 
   //a ~ lognormal(1.0,1.0); //a = log(2)/half-life
   //sigma2_y ~ cauchy(0,0.1); //For using a and sigma2_y as priors
 
 
-  beta[1:n_regimes] ~ normal(ols_intercept,1); //Added for SBR1; 3 regimes prior
+  beta[1:n_regimes] ~ normal(ols_intercept,0.25); //Added for SBR1; 3 regimes prior
   //beta[1:n_regimes] ~ normal(ols_intercept,0.5); //Added for SBR1; 5 regimes prior
   //beta[1:n_regimes] ~ normal(ols_intercept,0.5); //Added for SBR1; 7 regimes prior
 
   //beta[1:n_regimes] ~ student_t(2,0,1); //Mean standardized Y beforehand
-  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Added for SBR1; 3 regimes prior
+  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.1); //Added for SBR1; 3 regimes prior
   //beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Added for SBR1; 5 regimes prior
   //beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Added for SBR1; 7 regimes prior
 

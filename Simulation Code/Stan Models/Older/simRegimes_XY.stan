@@ -164,7 +164,7 @@ vector beta, int n_regimes, int Z, int Z_direct, int Z_random, real a, vector T_
   Vxtd = rep_array(rep_matrix(0,N,N),Z_direct);
 
   direct_rho2 = rep_matrix(1,N,Z_direct);
-  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term))^2,Z_random); //For OU model
+  random_rho2 = rep_matrix(square(1 - (1 - exp(-a * T_term))./(a * T_term)),Z_random); //For OU model
   
   rho2s = append_col(direct_rho2,random_rho2);
 
@@ -267,8 +267,8 @@ model {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 generated quantities {
-  matrix[N,Z+1] X_opt;
-  matrix[N,Z+1] X_evol;
+  matrix[N,n_regimes+Z] X_opt;
+  matrix[N,n_regimes+Z] X_evol;
   matrix[N,N] Vt_opt;
   matrix[N,N] V_me_opt;
   matrix[N,N] V_opt;
@@ -288,14 +288,10 @@ generated quantities {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
 //Calculate X matrix  
-    X_opt = design_matrix(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, 
-                            t_end, t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);
-    X_evol = design_matrix_evol(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, 
-                            t_end, t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);
-  
-
+  X_opt = design_matrix(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, t_end, t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);
+  X_evol = design_matrix_evol(N,  a,  T_term, direct_cov,random_cov, n_regimes, n_lineages,max_node_length, nodes, nodes_time, t_end, t_beginning,regime_time,regimes_matrix, Z, Z_direct, Z_random);
   L_V_pred = cholesky_decompose(V_opt);
-  Y_pred = multi_normal_cholesky_rng(X_evol*beta, L_V_pred);
+  Y_pred = multi_normal_cholesky_rng(X_opt*beta, L_V_pred);
 
 
 }

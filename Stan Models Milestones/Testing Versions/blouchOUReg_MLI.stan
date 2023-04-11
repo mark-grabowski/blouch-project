@@ -140,7 +140,7 @@ vector beta, int n_regimes, int Z, int Z_direct, int Z_random, real a, vector T_
   Vxtd = rep_array(rep_matrix(0,N,N),Z_direct);
 
   direct_rho2 = rep_matrix(1,N,Z_direct);
-  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term))^2,Z_random); //For OU model
+  random_rho2 = rep_matrix(square(1 - (1 - exp(-a * T_term))./(a * T_term)),Z_random); //For OU model
   
   rho2s = append_col(direct_rho2,random_rho2);
 
@@ -250,13 +250,13 @@ model {
   real rho;
 
 //Priors
-  hl ~ lognormal(-0.5,1.5); //Tree length = 1 Ma
+  hl ~ lognormal(log(0.4),1); //Tree length = 1 Ma
   vy ~ exponential(1);
-  beta_bar ~ normal(0,1);
-  sigma ~ exponential(1);
+  beta_bar ~ normal(ols_intercept,0.1);
+  sigma ~ exponential(5);
   
   beta[1:n_regimes] ~ normal(beta_bar,sigma); //Varying intercepts model
-  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Static slope
+  beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.05); //Static slope
 
   a = log(2)/hl;
   sigma2_y = vy*(2*a);
@@ -297,16 +297,17 @@ model {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 generated quantities {
-  vector[N] mu;
   matrix[N,N] V;
   matrix[N,N] Vt;
   matrix[N,N] V_me;
-  matrix[N, N] L_V;
   matrix[N,Z+n_regimes] X;
   real a;
   real sigma2_y;
   //vector[N] log_lik;
-  real log_lik;
+  vector[N] g_i_v;
+  real g_i;
+  real c_ii;
+  vector[N] log_lik;
   
   a = log(2)/hl;
   sigma2_y = vy*(2*a);
@@ -331,8 +332,12 @@ generated quantities {
   }
 
   V = Vt;
-  L_V = cholesky_decompose(V);
-  mu = X*beta;
-  log_lik = multi_normal_lpdf(Y | mu, V);
+  g_i_v = inverse(V)*Y;
+  for(i in 1:N){
+    g_i = g_i_v[i];
+    c_ii = inverse(V)[i,i];
+    log_lik[i] = -0.5*log(2*3.141593)+0.5*log(c_ii)-0.5*(g_i^2)/c_ii;
+  }
+
 
 }

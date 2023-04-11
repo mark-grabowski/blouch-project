@@ -1,4 +1,5 @@
-blouchsimXYOUReg.setup<-function(trdata,names.fixed.fact,num.direct,num.random,VX0= 0,Sxx=1,hl,vy,beta){
+blouchsimXYOUReg.setup<-function(trdata,N,num.direct,num.random,slope,hl,vy,vY0,vX0,regimes,direct=0){
+
   #Added for SBR1 - mv code
   #Modified to allow for correlated predictors - works ith blouchOUReg_v1_5.stan
   #First simulates logged X using fastBM
@@ -7,12 +8,54 @@ blouchsimXYOUReg.setup<-function(trdata,names.fixed.fact,num.direct,num.random,V
   #Works with blouchOUReg_test
   n<-length(trdata$phy$tip.label)
   num.X<-num.direct+num.random
-  names.random.traits<-NULL
-  names.direct.traits<-NULL
+  tree<-trdata$phy
+  Sxx <- 1
   ##############  
-  #Simulate X data under BM Model - one trait to start
-  BMparameters<-list(vX0=matrix(vX0,nrow=num.X,ncol=1),Sxx=matrix(Sxx,nrow=num.X,ncol=num.X))
-  X<-simulBMProcPhylTree(trdata$phy,X0=BMparameters$vX0,Sigma=BMparameters$Sxx)
+  if(direct==0){ #Direct effect model simulation
+    A<-log(2)/hl.list
+    B<- -A*slope
+    Syy<-sqrt(vy*(2*A))
+    times <- ape::node.depth.edgelength(tree)
+    T.term <- times[1:n]     
+    reg.matrix<-matrix(regimes,ncol=length(regimes),nrow=length(num.direct))
+    names(reg.matrix)<-paste("OU",1:length(regimes),sep="")
+    
+    expected.slope<-direct.slope*(Syy^2+Sxx)*(1-exp(-A*T.term[1]))/(2*Sxx*T.term[1])
+    
+    OUBMparameters<-list(vY0=matrix(vY0,ncol=1,nrow=1),A=matrix(A,ncol=1,nrow=1),
+                         B=matrix(B,ncol=1,nrow=1),mPsi=reg.matrix,
+                         Syy=matrix(Syy,ncol=1,nrow=1),vX0=matrix(vX0,ncol=1,nrow=1),Sxx=matrix(Sxx,ncol=1,nrow=1),
+                         Syx=matrix(0,ncol=1,nrow=1),Sxy=matrix(0,ncol=1,nrow=1),
+                         starting_point_for_optim=list(A=matrix(A,ncol=1,nrow=1),
+                         Syy=matrix(Syy,ncol=1,nrow=1),B=matrix(B,ncol=1,nrow=1),Sxx=matrix(Sxx,ncol=1,nrow=1)),regimes=regimes)
+    
+    stan_data<-stan.direct.OU.data.setup(OUBMparameters,tree,N)
+    
+    
+  }
+  
+  
+  A<-log(2)/hl
+  B<- -A*slope
+  Syy<-sqrt(vy*(2*A))
+  
+  tip.num<-length(trdata$phylo$tip.label)
+  times <- ape::node.depth.edgelength(tree)
+  T.term <- times[1:tip.num]              
+  
+  #Evolutionary sloperession based on optimal sloperession and A  
+  rho<- (1-(1 - exp(-A * T.term))/(A * T.term))
+  evol.slope<-(rho*opt.slope)[1]
+  
+  OUBMparameters<-list(vY0=matrix(vY0,ncol=1,nrow=1),A=matrix(A,ncol=1,nrow=1),
+                       B=matrix(B,ncol=1,nrow=1),mPsi=matrix(theta,ncol=1,nrow=1),
+                       Syy=matrix(Syy,ncol=1,nrow=1),vX0=matrix(vX0,ncol=1,nrow=1),Sxx=matrix(Sxx,ncol=1,nrow=1),
+                       Syx=matrix(0,ncol=1,nrow=1),Sxy=matrix(0,ncol=1,nrow=1),starting_point_for_optim=list(A=matrix(A,ncol=1,nrow=1),Syy=matrix(Syy,ncol=1,nrow=1),B=matrix(B,ncol=1,nrow=1),Sxx=matrix(Sxx,ncol=1,nrow=1)))
+  
+  
+  
+  
+  
   #return(X)
   trdata$dat<-cbind(trdata$dat,X)
   if(num.direct>0){

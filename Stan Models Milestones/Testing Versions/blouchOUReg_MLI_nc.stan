@@ -266,7 +266,7 @@ model {
   //z_beta = (beta - beta_bar)/sigma
   //z_beta*sigma+beta_bar = beta
   z_beta ~ normal(0,1);
-  slopes ~ normal(ols_slope,0.5); //Static slope
+  slopes ~ normal(ols_slope,0.05); //Static slope
 
   a = log(2)/hl;
   sigma2_y = vy*(2*a);
