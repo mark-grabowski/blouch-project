@@ -1,4 +1,4 @@
-blouch_simXYOUReg.mvSlouch.setup<-function(trdata,num.direct,num.random,slope,hl,vy,vY0,vX0,reg.values=NULL,reg=NULL){
+blouch_simXYOUReg.mvSlouch.setup<-function(trdata,num.direct,num.random,slope,hl,vy,vY0,vX0,reg.values=NULL,reg=NULL,mc=NULL){
   #Added for SBR1 - mv code
   #Modified to allow for correlated predictors - works ith blouchOUReg_v1_5.stan
   #Simulates Y and Xs following direct effect or adaptive model using mvSlouch
@@ -125,15 +125,18 @@ blouch_simXYOUReg.mvSlouch.setup<-function(trdata,num.direct,num.random,slope,hl
     random<-matrix(0,nrow=n,ncol=0)}  
   
   if(num.direct!=0){
-    direct<-as.data.frame(trdata$dat %>%
+    direct<-data.frame(trdata$dat %>%
                             select(any_of(names.direct.traits)))
+    if(mc==TRUE){
+      direct<-direct-colMeans(direct)}
   }
   
   if(num.random!=0){
     random<-as.data.frame(trdata$dat %>%
                             select(any_of(names.random.traits)))
+    if(mc==TRUE){
+      random<-random-colMeans(random)}
   }
-  
   mv.response<-data.frame(rep(0,n))
 
   
@@ -193,9 +196,10 @@ blouch_simXYOUReg.mvSlouch.setup<-function(trdata,num.direct,num.random,slope,hl
     brownian_mean <- matrix(0,0,1)
   }
   
-  combo.data<-as.data.frame(trdata$dat %>%
-                        select(any_of(c(name.response.trait,
-                                        names.direct.traits,names.random.traits))))
+  #combo.data<-as.data.frame(trdata$dat %>%
+  #                      select(any_of(c(name.response.trait,
+  #                                      names.direct.traits,names.random.traits))))
+  combo.data<-cbind(response,direct,random)
   names(combo.data)[1]<-"y"
   
   coef<-lm(y ~ ., data=combo.data)$coef

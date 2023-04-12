@@ -259,19 +259,10 @@ model {
   hl ~ lognormal(log(0.4),1); //Tree length = 1 Ma
   vy ~ exponential(0.1);
 
-  //a ~ lognormal(1.0,1.0); //a = log(2)/half-life
-  //sigma2_y ~ cauchy(0,0.1); //For using a and sigma2_y as priors
 
-
-  beta[1:n_regimes] ~ normal(ols_intercept,0.25); //Added for SBR1; 3 regimes prior
-  //beta[1:n_regimes] ~ normal(ols_intercept,0.5); //Added for SBR1; 5 regimes prior
-  //beta[1:n_regimes] ~ normal(ols_intercept,0.5); //Added for SBR1; 7 regimes prior
-
-  //beta[1:n_regimes] ~ student_t(2,0,1); //Mean standardized Y beforehand
+  beta[1:n_regimes] ~ normal(ols_intercept,0.15); //Added for SBR1; 3 regimes prior
   beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.1); //Added for SBR1; 3 regimes prior
-  //beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Added for SBR1; 5 regimes prior
-  //beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.5); //Added for SBR1; 7 regimes prior
-
+  
   
 //////////////////////////////////////////////////////////////////////////////////////////////////////
   a = log(2)/hl;

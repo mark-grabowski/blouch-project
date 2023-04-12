@@ -103,22 +103,22 @@ source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch
 
 slope<-0.25
 #hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
-hl<-0.1
+hl<-0.25
 
-vY0 <- 2
-vX0 <- 4
+vY0 <- 4
+vX0 <- 0
 #vY0<-0
 #vX0<-0
 vy<-0.01
 
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE) #Direct effect model
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE) #Direct effect model
 
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE) #Direct effect model
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE,mc=FALSE) #Direct effect model
 
 
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE) #Adaptive model
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE) #Adaptive model
 
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE) #Adaptive model
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE,mc=FALSE) #Adaptive model
 
 ```
 

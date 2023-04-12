@@ -253,8 +253,9 @@ transformed parameters {
       real sigma2_y;
       real rho;
       //Priors
-      hl ~ lognormal(-0.5,1.5); //Tree length = 1 Ma
-      vy ~ exponential(1);
+//Priors
+  hl ~ lognormal(log(0.4),1); //Tree length = 1 Ma
+  vy ~ exponential(1);
       /////////////////////////////////////////////////////////////////////////
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -35,7 +35,7 @@ library(ggsci)
 
 intercept_test<-rnorm(100,stan_sim_data$ols_intercept,0.1)
 #slope_test<-rnorm(100,ols.slope,0.5)
-slope_test<-rnorm(100,stan_sim_data$ols_slope,0.05)
+slope_test<-rnorm(100,stan_sim_data$ols_slope,0.1)
 
 df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
 names(df)<-c("Y","X")
