@@ -11,6 +11,7 @@ Half life - asssume phylogeny is scaled to unit length
 #hl ~ lognormal(-0.5,1.5); //Tree length = 1 Ma
 hl.sims<-rlnorm(n=1000,meanlog=log(0.4),sdlog=1)
 plot(density(hl.sims),main="Half-life prior distribution")
+abline(v=c(0.1,1))
 quantile(hl.sims,probs=c(0.1,0.5,0.75,0.9))
 
 
@@ -19,25 +20,59 @@ quantile(hl.sims,probs=c(0.1,0.5,0.75,0.9))
 
 Vy - asssume phylogeny is scaled to unit length
 ```{r}
-#hl ~ lognormal(-0.5,1.5); //Tree length = 1 Ma
 vy.sims<-rexp(n=1000,rate=1)
 plot(density(vy.sims),main="Vy prior distribution")
-quantile(hl.sims,probs=c(0.1,0.5,0.75,0.9))
+quantile(vy.sims,probs=c(0.1,0.5,0.75,0.9))
 
 
 ```
 
 
+Slope and intercept - simple one level no regimes model
+```{r}
+library(ggsci)
+#Direct Model
+#intercept_test<-rnorm(100,stan_sim_data$ols_intercept,0.2)
+#slope_test<-rnorm(100,stan_sim_data$ols_slope,0.1)
+
+#Adaptive Model
+intercept_test<-rnorm(100,stan_sim_data$ols_intercept,0.3)
+slope_test<-rnorm(100,stan_sim_data$ols_slope,0.1)
+
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$random_cov)
+
+names(df)<-c("Y","X")
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.prior.plot<-ggplot(data=df,aes(y=Y,x=X))+  
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("Trait 1") + xlab("Trait 2")+
+  scale_color_npg()
+
+slope.prior.plot
+```
+
 
 Slope and intercept - simple one level regime model
 ```{r}
 library(ggsci)
+#Direct Model
+#intercept_test<-rnorm(100,stan_sim_data$ols_intercept,0.2)
+#slope_test<-rnorm(100,stan_sim_data$ols_slope,0.1)
 
+#Adaptive Model
 intercept_test<-rnorm(100,stan_sim_data$ols_intercept,0.1)
-#slope_test<-rnorm(100,ols.slope,0.5)
 slope_test<-rnorm(100,stan_sim_data$ols_slope,0.1)
 
-df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$random_cov)
+
 names(df)<-c("Y","X")
 
 #slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
@@ -56,10 +91,9 @@ slope.prior.plot
 Multilevel model - Normal Y data
 ```{r}
 #beta_raw<-rnorm(100,0,1)
-beta_bar<-rnorm(100,stan_sim_data$ols_intercept,0.1)
-sd_beta<-rexp(100,5)
+beta_bar<-rnorm(100,stan_sim_data$ols_intercept,0.05)
+sd_beta<-rexp(100,7)
 beta<-rnorm(100,beta_bar,sd_beta)
-
 slope_test<-rnorm(100,stan_sim_data$ols_slope,0.05)
 
 df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)

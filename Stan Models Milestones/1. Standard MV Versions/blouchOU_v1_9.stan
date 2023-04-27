@@ -118,7 +118,7 @@ vector beta, int Z, int Z_direct, int Z_random, real a, vector T_term){
   Vxtd = rep_array(rep_matrix(0,N,N),Z_direct);
 
   direct_rho2 = rep_matrix(1,N,Z_direct);
-  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term))^2,Z_random); //For OU model
+  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term)).*(1 - (1 - exp(-a * T_term))./(a * T_term)),Z_random); //For OU model
   
   rho2s = append_col(direct_rho2,random_rho2);
 
@@ -182,21 +182,16 @@ data {
   matrix[Z_random,Z_random] sigma_squared_x;
   real ols_intercept;
   vector[Z] ols_slope;
-  real Ya_prior;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Parameter Block
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 parameters {
-  real <lower = 0, upper = 3> hl;
-  //real <lower = 0> hl;
-
-  //real <lower = 0> vy;
-  real <lower = 0, upper = variance(Y)*4> vy; //Added to limit the variance based on Kjetil's suggestion
-
+  real <lower = 0> hl;
+  //real <lower = 0, upper=3> hl;
+  real <lower = 0> vy;
   //real <lower = 0, upper = variance(Y)*4> sigma2_y; //Added to limit the variance based on Kjetil's suggestion
-  //real <lower = 0> sigma2_y; //
 
   vector[Z+1] beta; //OU beta
   vector[Z_random] beta_e; //OU beta
@@ -226,20 +221,19 @@ model {
   //vector[N] z;
   vector[N] rho = rep_vector(1,N);
   //Priors
-  //hl ~ lognormal(-1.4,1.1); //Tree length = 1, for original Cervidae tree = 17 Ma - simulations
-  //hl ~ lognormal(-2.0,1); //Tree length = 1, for original Ruminant tree = 27 Ma
-  hl ~ lognormal(-1.5,1); //Tree length = 1, for original Primate tree = 88 Ma - simulations
+  hl ~ lognormal(-1.5,1);
+  //hl ~ lognormal(log(0.4),1); 
 
-  //vy ~ exp(1);
-  vy ~ cauchy(0,0.01);
+  vy ~ exponential(1);
+  //vy ~ cauchy(0,0.01);
   
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   a = log(2)/hl;
   sigma2_y = vy*(2*a);
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  beta[1] ~ normal(ols_intercept, 0.1); //Slope originally 0.4
-  beta[2:Z+1] ~ normal(ols_slope, 0.1); //Slope originally 0.4
+  beta[1] ~ normal(ols_intercept, 0.3); 
+  beta[2:Z+1] ~ normal(ols_slope, 0.1); 
   
   //////////////////////////////////////////////////////////////////////////////////////////////////////
 //Regression - either constraint for direct cov or adaptive for random cov

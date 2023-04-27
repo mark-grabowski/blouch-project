@@ -54,6 +54,74 @@ sampled.tree.10K$edge.length<-sampled.tree.10K$edge.length/l.tree ## rescale tre
 ```
 
 
+Simulate X and Y variable for Single Covariates
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/Simulate OU Data.R")
+
+slope<-0.25
+hl<-0.1
+Sxx<-1
+vY0 <- 2
+vX0 <- 4
+theta<-4
+vy<-0.1
+
+```
+
+#Direct effect model - w/o ME
+```{r}
+stan_sim_data<-simulate.OU.direct(sampled.tree.10K,hl,vy,slope,vX0,vY0,Sxx=10,theta,num.X = 1)
+
+```
+
+#Adaptive model - w/o ME
+```{r}
+stan_sim_data<-simulate.OU.adaptive(sampled.tree.10K,hl,vy,slope,vX0,vY0,Sxx=10,theta,num.X = 1)
+
+```
+
+
+```{r}
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov) #Direct effect model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+```
+
+
+```{r}
+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$random_cov) #Direct effect model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+```
+
+
+
+```{r}
+tip.label<-sampled.tree.10K$tip.label
+Dmat<-cophenetic(sampled.tree.10K)
+Dmat<-Dmat[tip.label,tip.label]/max(Dmat)
+N<-length(tip.label)
+```
+
+
+  int N; 
+  int Z; 
+  vector[N] Y;
+  matrix[N,Z] X;
+  matrix[N,N] Dmat;
+
+
+
+
+
+
+
+
 Set regimes - manually - 2 regimes
 Locate nodes
 ```{r}
@@ -99,26 +167,43 @@ plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2
 
 Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
 ```{r}
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/blouch_simXYOUReg.mvSlouch.setup.R")
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/Simulate OU Data.R")
 
 slope<-0.25
 #hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
-hl<-0.25
+hl<-0.01
 
-vY0 <- 4
-vX0 <- 0
+vY0 <- 2
+vX0 <- 4
+theta<-4
+
 #vY0<-0
 #vX0<-0
-vy<-0.01
-
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE) #Direct effect model
-
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE,mc=FALSE) #Direct effect model
+vy<-0.1
 
 
-stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE) #Adaptive model
+```
+
+```{r}
+#Direct effect model, 1 trait
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE,sim.errors=FALSE) #Direct effect model
+
+#Direct effect model, 1 trait + ME
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,num.ME.direct=1,num.ME.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE,sim.errors =TRUE) #Direct effect model
+
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE,sim.errors=FALSE) #Adaptive Nodel no ME
 
 stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE,mc=FALSE) #Adaptive model
+
+```
+
+No regimes
+```{r}
+stan_sim_data<-blouch_simXYOU.mvSlouch.setup(trdata,num.direct=1,num.random=0,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,theta,mc=TRUE,sim.errors=FALSE) #Direct Effect Nodel no ME
+
+
+stan_sim_data<-blouch_simXYOU.mvSlouch.setup(trdata,num.direct=0,num.random=1,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,theta,mc=FALSE,sim.errors=FALSE) #Adaptive Nodel no ME
 
 ```
 

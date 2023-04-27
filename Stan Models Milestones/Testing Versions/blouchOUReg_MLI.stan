@@ -140,7 +140,8 @@ vector beta, int n_regimes, int Z, int Z_direct, int Z_random, real a, vector T_
   Vxtd = rep_array(rep_matrix(0,N,N),Z_direct);
 
   direct_rho2 = rep_matrix(1,N,Z_direct);
-  random_rho2 = rep_matrix(square(1 - (1 - exp(-a * T_term))./(a * T_term)),Z_random); //For OU model
+//  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term))^2,Z_random); //Problem starting on 040723
+  random_rho2 = rep_matrix((1 - (1 - exp(-a * T_term))./(a * T_term)).*(1 - (1 - exp(-a * T_term))./(a * T_term)),Z_random); //For OU model
   
   rho2s = append_col(direct_rho2,random_rho2);
 
@@ -163,7 +164,8 @@ vector beta, int n_regimes, int Z, int Z_direct, int Z_random, real a, vector T_
   for (i in 1:Z){ //Adding variance matrices together for individual traits 
     Vx[i] = Vxt[i] + Vu[i];
     Vu_given_x[i] = diagonal(Vu[i] - Vu[i] * inverse(Vx[i]) * Vu[i]);
-    beta2_Vu_given_x[i] = to_vector(Vu_given_x[i] * square(beta[i+n_regimes]) .* rho2s[,i]); //Changed to element-wise, appears to be same as R
+    //beta2_Vu_given_x[i] = to_vector(Vu_given_x[i] * square(beta[i+n_regimes]) .* rho2s[,i]); //Changed to element-wise, appears to be same as R
+    beta2_Vu_given_x[i] = to_vector(Vu_given_x[i] * (beta[i+n_regimes].*beta[i+n_regimes]) .* rho2s[,i]); //Changed on 04/12/23 - appears to work?
     }  
 
  
@@ -252,8 +254,8 @@ model {
 //Priors
   hl ~ lognormal(log(0.4),1); //Tree length = 1 Ma
   vy ~ exponential(1);
-  beta_bar ~ normal(ols_intercept,0.1);
-  sigma ~ exponential(5);
+  beta_bar ~ normal(ols_intercept,0.05);
+  sigma ~ exponential(7);
   
   beta[1:n_regimes] ~ normal(beta_bar,sigma); //Varying intercepts model
   beta[n_regimes+1:n_regimes+Z] ~ normal(ols_slope,0.05); //Static slope
@@ -281,7 +283,7 @@ model {
     }else{V = Vt;}
   }
 
-  V = Vt;
+  //V = Vt;
   L_V = cholesky_decompose(V);
   
   //OU with random covariates
