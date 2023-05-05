@@ -16,19 +16,22 @@ arch <- ifelse(R.version$arch == "aarch64", "arm64", "x86_64")
 cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256"),
     file = M, sep = "\n", append = FALSE)
 
-
-#Statistical Rethinking approach to calculating V/CV
+########################################################################################################
+#Milestone 1
+#Direct effect model with Statistical Rethinking approach to calculating V/CV
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_SR.stan") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_SR.stan") #Macbook Pro
 
-stan_model <- stan_model("blouchOU_SR.stan")
+stan_model <- stan_model("blouchOU_direct_SR.stan")
 
-fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter = 4000,control=list(adapt_delta=0.80))
+fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter = 2000,control=list(adapt_delta=0.80))
 
 print(fit.npi.direct,pars = c("hl","alpha","beta","var_anc"))
 
-
-#Using direct effect model from Hansen (1997) for V/CV matrix
+########################################################################################################
+#Milestone 1
+#Using direct effect model w/o ME from Hansen (1997) for V/CV matrix
+#Works for multiple traits
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct.stan") #Macbook Pro
 
@@ -38,9 +41,65 @@ fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter 
 
 print(fit.npi.direct,pars = c("hl","vy","alpha","beta","sigma2_y"))
 
+########################################################################################################
+#Milestone 1
+#Using direct effect model with ME - Statistical Rethinking Version
+#Also works fo multivariariate Xs
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_ME_SR.stan") #Macbook Pro
 
+stan_model <- stan_model("blouchOU_direct_ME_SR.stan")
 
+fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
 
+print(fit.npi.direct,pars = c("hl","vy","alpha","beta","sigma2_y"))
+########################################################################################################
+#Milestone 2
+#Using adaptive model w/o ME
+#Also works fo multivariariate Xs
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_adaptive.stan") #Macbook Pro
+
+stan_model <- stan_model("blouchOU_adaptive.stan")
+
+fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.adaptive,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
+#Milestone 2
+#Using adaptive model with ME - Statistical Rethinking Version
+#Also works fo multivariariate Xs
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_adaptive_ME_SR.stan") #Macbook Pro
+
+stan_model <- stan_model("blouchOU_adaptive_ME_SR.stan")
+
+fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.adaptive,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
+#Milestone 3
+#Combination of direct effect and adaptive predictors
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive.stan")
+
+stan_model <- stan_model("blouchOU_direct_adaptive.stan")
+
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
+#Milestone 3
+#Combination of direct effect and adaptive predictors with ME
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive_ME.stan")
+
+stan_model <- stan_model("blouchOU_direct_adaptive_ME.stan")
+
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
 
 
 
