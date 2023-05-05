@@ -79,7 +79,7 @@ fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,ite
 print(fit.npi.adaptive,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
 ########################################################################################################
 #Milestone 3
-#Combination of direct effect and adaptive predictors
+#Combination of direct effect and adaptive predictors w/o ME
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive.stan")
 
@@ -91,6 +91,39 @@ print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
 ########################################################################################################
 #Milestone 3
 #Combination of direct effect and adaptive predictors with ME
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive_ME.stan")
+
+stan_model <- stan_model("blouchOU_direct_adaptive_ME.stan")
+
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
+#Milestone 4
+#Regime model
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive_ME.stan")
+
+stan_model <- stan_model("blouchOU_direct_adaptive_ME.stan")
+
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
+#Milestone 4
+#Regime model with direct effect variables
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive_ME.stan")
+
+stan_model <- stan_model("blouchOU_direct_adaptive_ME.stan")
+
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+
+print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+########################################################################################################
+#Milestone 4
+#Regime model with adaptive variables
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive_ME.stan")
 

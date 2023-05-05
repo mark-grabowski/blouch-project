@@ -25,16 +25,9 @@ calc_adaptive_V<-function(a, sigma2_y, ta,  tij,  tja,  T_term,  beta,  sigma2_x
   ti<-matrix(T_term,length(T_term),N);
   if(Z==1){var_opt<-beta^2*sigma2_x[1,1]}
   else(var_opt<-as.numeric(matrix(beta,nrow=1,ncol=Z)^2 %*% sigma2_x %*% ones))
-  #else(var_opt<-as.numeric(matrix(beta,nrow=1,ncol=Z) %*% sigma2_x %*% ones))
   term0 = ((var_opt + sigma2_y) / (2 * a)) * (1 - exp( -2 * a * ta)) * exp(-a * tij)
   term1 = (1 - exp(-a * ti)) / (a * ti)
   term2 = exp(-a * tja) * (1 - exp(-a * ti)) / (a * ti)
-  
-  #term0 <- ((s1 + sigma2_y) / (2 * a)) * (1 - exp( -2 * a * ta)) * exp(-a * tij)
-  #term1 <- (1 - exp(-a * ti))/(a * ti) 
-  #term2 <- exp(-a * tja) * (1 - exp(-a * ti)) / (a * ti) 
-  
-  
   Vt<-term0 + var_opt * (ta * term1 * t(term1) - ((1 - exp(-a * ta)) / a) * (term2 + t(term2))) 
   return(Vt)
 }
