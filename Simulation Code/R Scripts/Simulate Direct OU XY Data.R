@@ -36,11 +36,10 @@ library(phytools)
 library(ggplot2)
 #Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij)); //From Hansen (1997) Original Stan
 
-tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
-#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+#tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
 N<-50 #Number of species
-Z<-1 #Number of traits
-#set.seed(1) #Set seed to get same random species each time
+set.seed(10) #Set seed to get same random species each time
 
 phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
 phy<-multi2di(phy)
@@ -52,33 +51,32 @@ tip.label<-phy$tip.label
 Dmat<-cophenetic(phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
 #Dmat<-Dmat[tip.label,tip.label]/max(Dmat)
 
+
+
+
 ########################################################################################################
 #Direct Effect Model
 #Setup parameters
-hl<-0.1
+Z<-1 #Number of traits
+hl<-0.75 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
-#a<-6.931472 #Half life of 0.1, fast evoluion
-sigma2_y<-1
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+
 vX0<-0
 vY0 <- 0
-vy<-0.1
+
 Sxx<-10 #Look at effects
 #var_y_anc<-1
 ts<-ts_fxn(phy)
 ta<-ts[[1]]
 tij<-ts[[2]]
 
-#var_y_anc<-sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)))
-#var_y_anc<-var_y_anc[1,1]
-
-#V<-calc_SR_V(Dmat,var_y_anc,a)
-#SR_V<-var_y_anc*V
-
 V<-calc_direct_V(phy,sigma2_y,a)
 X<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
 phenogram(phy,X,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
 
-alpha<-4 #Intecept
+alpha<-2 #Intecept
 beta<-0.25 #Slope
 
 mu<-alpha+X*beta #Simulate mu for Y
@@ -91,9 +89,24 @@ names(df)<-c("Y","X")
 ggplot(data=df,aes(x=X,y=Y))+
   geom_point()
 summary(lm(Y~X,df))
+
+
+
+
+
 ########################################################################################################
 #Direct effect model w/o ME - Statistical Rethinking Approach to V
 dat<-list(N=N,Z=Z,Y=Y,X=matrix(X,nrow=N,ncol=Z),Dmat=Dmat)
+
+
+#Slouch testing
+library(slouch)
+slouch.results<-slouch.fit(phy = phy,
+                           species = phy$tip.label,
+                           response = dat$Y,
+                           direct.cov = X)
+
+summary(slouch.results)
 
 ########################################################################################################
 #Direct effect model w/o ME following Hansen et al. (2008)
@@ -101,10 +114,10 @@ dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z),ta=ta,tij=tij)
 
 ########################################################################################################
 #Simulate errors - original Hansen setup
-X_error<-matrix(0.1,nrow=N,ncol=Z)
-Y_error<-rep(0.1,N)
-Y_with_error<-Y+rnorm(N,0,0.1)
-X_with_error<-X+rnorm(N,0,0.1)
+X_error<-matrix(0.01,nrow=N,ncol=Z)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-X+rnorm(N,0,0.01)
 
 #Direct effect model w/ Statistical Rethinking ME Correction
 dat<-list(N=N,Z=Z,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z),Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z),ta=ta,tij=tij)
@@ -112,8 +125,24 @@ dat<-list(N=N,Z=Z,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z),Y_
 ########################################################################################################
 #Simulate multiple X traits - correlated
 Z<-2
-vcv<-matrix(c(1,0.75,0.75,1),2,2) #Correlation between traits
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
+a<-log(2)/hl
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+
+vX0<-0
+vY0 <- 0
+Sxx<-10 #Look at effe
+ts<-ts_fxn(phy)
+ta<-ts[[1]]
+tij<-ts[[2]]
+
+V<-calc_direct_V(phy,sigma2_y,a)
+#vcv<-matrix(c(1,0.75,0.75,1),2,2) #Correlation between traits
+vcv<-matrix(c(1,0,0,1),2,2) #No correlation between traits
+
 Xs<-sim.corrs(phy,vcv) #Simulated correlated BM Xs
+alpha<-2
 beta<-c(0.35,0.1) #Slope
 mu<-alpha+Xs%*%beta #Simulate mu for Y
 
@@ -138,12 +167,70 @@ dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(Xs,nrow=N,ncol=Z),ta=ta,tij=tij)
 
 ########################################################################################################
 #Simulate errors with multiple traits - original Hansen setup
-X_error<-matrix(0.1,nrow=N,ncol=Z)
-Y_error<-rep(0.1,N)
-Y_with_error<-Y+rnorm(N,0,0.1)
-X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.1)})
+X_error<-matrix(0.01,nrow=N,ncol=Z)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.01)})
 #X_with_error<-X+rnorm(N,0,0.1)
 
 #Direct effect model w/ Statistical Rethinking ME Correction
 dat<-list(N=N,Z=Z,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z),Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z),ta=ta,tij=tij)
+
+########################################################################################################
+#Simulate multiple X traits - correlated
+Z<-3
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
+a<-log(2)/hl
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+
+vX0<-0
+vY0 <- 0
+Sxx<-10 #Look at effe
+ts<-ts_fxn(phy)
+ta<-ts[[1]]
+tij<-ts[[2]]
+
+V<-calc_direct_V(phy,sigma2_y,a)
+vcv<-matrix(c(1,0,0,0,1,0,0,0,1),3,3) #Correlation between traits
+Xs<-sim.corrs(phy,vcv) #Simulated correlated BM Xs
+alpha<-2
+beta<-c(0.5,0.35,0.1) #Slope
+mu<-alpha+Xs%*%beta #Simulate mu for Y
+
+#Simulate direct effect Y trait
+Y<-mvrnorm(n=1,mu,V)
+df<-data.frame(Y=Y,X=Xs)
+
+ggplot(data=df,aes(x=X.1,y=X.2))+
+  geom_point()
+summary(lm(X.2~X.1,df))
+
+ggplot(data=df,aes(x=X.1,y=Y))+
+  geom_point()
+summary(lm(Y~X.1,df))
+
+ggplot(data=df,aes(x=X.2,y=Y))+
+  geom_point()
+summary(lm(Y~X.2,df))
+
+ggplot(data=df,aes(x=X.3,y=Y))+
+  geom_point()
+summary(lm(Y~X.3,df))
+
+#Without ME
+dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(Xs,nrow=N,ncol=Z),ta=ta,tij=tij)
+
+########################################################################################################
+#Simulate errors with multiple traits - original Hansen setup
+X_error<-matrix(0.01,nrow=N,ncol=Z)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.01)})
+#X_with_error<-X+rnorm(N,0,0.1)
+
+#Direct effect model w/ Statistical Rethinking ME Correction
+dat<-list(N=N,Z=Z,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z),Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z),ta=ta,tij=tij)
+
+
 

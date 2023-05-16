@@ -36,7 +36,7 @@ model {
   matrix[N,N] K_v;
   matrix[N,N] L_v;
   
-  hl ~ lognormal(log(0.4),1); 
+  hl ~ lognormal(log(0.25),0.75); 
   //vy ~ exponential(1);
   var_anc ~ exponential(0.1);
   alpha ~ normal(4,0.2);

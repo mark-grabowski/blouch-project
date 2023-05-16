@@ -19,64 +19,84 @@ cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256
 ########################################################################################################
 #Milestone 1
 #Direct effect model with Statistical Rethinking approach to calculating V/CV
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_SR.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_SR.stan")
+
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_SR.stan") #Macbook Pro
 
 stan_model <- stan_model("blouchOU_direct_SR.stan")
 
 fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter = 2000,control=list(adapt_delta=0.80))
 
 print(fit.npi.direct,pars = c("hl","alpha","beta","var_anc"))
+post<-extract(fit.npi.direct)
 
 ########################################################################################################
 #Milestone 1
 #Using direct effect model w/o ME from Hansen (1997) for V/CV matrix
 #Works for multiple traits
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct.stan") #Macbook Pro
-
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/")
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/blouchOU_direct.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/blouchOU_direct.stan")
 stan_model <- stan_model("blouchOU_direct.stan")
 
-fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter = 2000,control=list(adapt_delta=0.80))
+fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter = 2000)
 
 print(fit.npi.direct,pars = c("hl","vy","alpha","beta","sigma2_y"))
+post<-extract(fit.npi.direct)
 
 ########################################################################################################
 #Milestone 1
 #Using direct effect model with ME - Statistical Rethinking Version
 #Also works fo multivariariate Xs
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_ME_SR.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/")
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/blouchOU_direct_ME_SR.stan")
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_ME_SR.stan") #Macbook Pro
 
 stan_model <- stan_model("blouchOU_direct_ME_SR.stan")
 
-fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+fit.npi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000)
 
 print(fit.npi.direct,pars = c("hl","vy","alpha","beta","sigma2_y"))
+post<-extract(fit.npi.direct)
+
 ########################################################################################################
 #Milestone 2
 #Using adaptive model w/o ME
 #Also works fo multivariariate Xs
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_adaptive.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/")
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/blouchOU_adaptive.stan")
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_adaptive.stan") #Macbook Pro
 
 stan_model <- stan_model("blouchOU_adaptive.stan")
 
-fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000)
 
 print(fit.npi.adaptive,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+post<-extract(fit.npi.adaptive)
+
 ########################################################################################################
 #Milestone 2
 #Using adaptive model with ME - Statistical Rethinking Version
 #Also works fo multivariariate Xs
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_adaptive_ME_SR.stan") #Macbook Pro
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/")
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Milestones Reached/blouchOU_adaptive_ME_SR.stan")
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/") #Macbook Pro
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_adaptive_ME_SR.stan") #Macbook Pro
 
 stan_model <- stan_model("blouchOU_adaptive_ME_SR.stan")
 
-fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+fit.npi.adaptive<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000)
 
 print(fit.npi.adaptive,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+post<-extract(fit.npi.adaptive)
+
 ########################################################################################################
 #Milestone 3
 #Combination of direct effect and adaptive predictors w/o ME
@@ -85,7 +105,7 @@ stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch 
 
 stan_model <- stan_model("blouchOU_direct_adaptive.stan")
 
-fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000)
 
 print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
 ########################################################################################################
@@ -96,20 +116,25 @@ stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch 
 
 stan_model <- stan_model("blouchOU_direct_adaptive_ME.stan")
 
-fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000)
 
 print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
 ########################################################################################################
 #Milestone 4
 #Regime model
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_direct_adaptive_ME.stan")
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
+setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
 
-stan_model <- stan_model("blouchOU_direct_adaptive_ME.stan")
+stan_model <- stan_model("blouchOU_reg.stan")
 
-fit.npi.mixed<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,control=list(adapt_delta=0.80))
+fit.npi.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =2000)
+                                  #,control=list(adapt_delta=0.80))
 
-print(fit.npi.mixed,pars = c("hl","vy","alpha","beta","beta_e","sigma2_y"))
+print(fit.npi.regimes,pars = c("hl","vy","optima","sigma2_y"))
+
+post<-extract(fit.npi.regimes)
 ########################################################################################################
 #Milestone 4
 #Regime model with direct effect variables

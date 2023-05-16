@@ -50,7 +50,8 @@ parameters {
   real <lower = 0> hl;
   vector<lower=0>[Z] beta; 
   real alpha;
-  real <lower=0> sigma2_y;
+  //real <lower=0> sigma2_y;
+  real <lower=0> vy;
   vector[N] Y;
   matrix[N,Z] X;
 }
@@ -62,10 +63,11 @@ model {
   matrix[N,N] V;
   matrix[N,N] L_v;
   matrix[N,Z] dmX;
-  hl ~ lognormal(log(0.4),1); 
-  sigma2_y ~ exponential(1);
-  alpha ~ normal(4,0.2);
-  beta ~ lognormal(log(0.4),1);
+  hl ~ lognormal(log(0.25),0.75);
+  vy ~ exponential(5);
+  real sigma2_y = vy*(2*(log(2)/hl));
+  alpha ~ normal(2,0.2); //intercept from OLS
+  beta ~ normal(0,0.25); 
   a = log(2)/hl;
   V = calc_V(a,sigma2_y,ta,tij,tja,T_term,beta,sigma2_x);
   L_v = cholesky_decompose(V);
@@ -80,7 +82,7 @@ model {
 }
 generated quantities {
   real a = log(2)/hl;
-  real vy = sigma2_y/(2*(log(2)/hl));
+  real sigma2_y = vy*(2*(log(2)/hl));
   vector[N] rho = (1 - (1 - exp(-a * T_term))./(a * T_term)); 
   vector[Z] beta_e;
   for(i in 1:Z){

@@ -54,10 +54,10 @@ library(phytools)
 library(ggplot2)
 #Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij)); //From Hansen (1997) Original Stan
 
-tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
-#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+#tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
 N<-50 #Number of species
-#set.seed(1) #Set seed to get same random species each time
+set.seed(10) #Set seed to get same random species each time
 
 phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
 phy<-multi2di(phy)
@@ -69,6 +69,11 @@ tip.label<-phy$tip.label
 Dmat<-cophenetic(phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
 #Dmat<-Dmat[tip.label,tip.label]/max(Dmat)
 
+ts<-ts_fxn(phy)
+ta<-ts[[1]]
+tij<-ts[[2]]
+T_term<-ts[[3]]
+tja<-ts[[4]]
 
 ########################################################################################################
 #Adaptive Model
@@ -76,26 +81,21 @@ Dmat<-cophenetic(phy) #Time separating tips, same as tij matrix in Slouch/Blouch
 Z<-1 #Number of traits
 hl<-0.1
 a<-log(2)/hl
-#a<-6.931472 #Half life of 0.1, fast evoluion
-sigma2_y<-0.01
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
 vX0<-0
 vY0 <- 0
 vy<-0.1
-Sxx<-1 #Look at effects
-alpha<-4 #Intecept
-beta<-0.25 #Slope
-ts<-ts_fxn(phy)
-ta<-ts[[1]]
-tij<-ts[[2]]
-T_term<-ts[[3]]
-tja<-ts[[4]]
+Sxx<-10 #Look at effects
+
+
 #rho<-(1 - (1 - exp(-a * T_term))/(a * T_term))
 
 X<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
 phenogram(phy,X,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
 sigma2_x<-matrix(1,1,1)
 
-alpha<-4 #Intecept
+alpha<-2 #Intecept
 beta<-0.25 #Slope
 
 dmX<-calc_dmX(a,T_term,X) #Calculate the design matrix
@@ -114,28 +114,43 @@ ggplot(data=df,aes(x=X,y=Y))+
 
 summary(lm(Y~X,df))
 
+
+
+########################################################################################################
 #Adaptive model w/o ME- blouchOU_adaptive.stan
 dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z),ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
 ########################################################################################################
 #Simulate errors
 Z_X_error<-1 #Number of X traits with error
-X_error<-matrix(0.1,nrow=N,ncol=Z)
-Y_error<-rep(0.1,N)
-Y_with_error<-Y+rnorm(N,0,0.1)
-X_with_error<-X+rnorm(N,0,0.1)
+X_error<-matrix(0.01,nrow=N,ncol=Z)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-X+rnorm(N,0,0.01)
 
 #Adaptive model w/ Statistical Rethinking ME Correction - blouchOU_adaptive_ME_SR.stan
 dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z),Y_error=Y_error,X_error=X_error,ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
 ########################################################################################################
+
+
 #Multiple Xs
 #Simulate multiple X traits - correlated
 Z<-2
+hl<-0.1
+a<-log(2)/hl
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+vX0<-0
+vY0 <- 0
+#Sxx<-10 #Look at effects
+alpha<-2 #Intecept
+#beta<-0.25 #Slope
+
 #vcv<-matrix(c(1,0.75,0.75,1),2,2) #Correlation between traits
-vcv<-matrix(c(1,0.75,0.75,1),2,2) #No correlation between traits
+vcv<-matrix(c(1,0,0,1),2,2) #No correlation between traits
 Xs<-sim.corrs(phy,vcv) #Simulated correlated BM Xs
 sigma2_x<-ratematrix(phy,Xs) #Calculate evolutionary v/cv matrix
 
-beta<-c(0.35,0.15) #Slope
+beta<-c(0.35,0.1) #Slope
 dmX<-calc_dmX(a,T_term,Xs)
 mu<-alpha+dmX%*%beta #Simulate mu for Y
 
@@ -163,10 +178,73 @@ dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z),ta=ta,tij=tij,tja=tja,T_
 ########################################################################################################
 ########################################################################################################
 #Simulate errors with multiple traits - original Hansen setup
-X_error<-matrix(0.1,nrow=N,ncol=Z)
-Y_error<-rep(0.1,N)
-Y_with_error<-Y+rnorm(N,0,0.1)
-X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.1)})
+X_error<-matrix(0.01,nrow=N,ncol=Z)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.01)})
+#X_with_error<-X+rnorm(N,0,0.1)
+
+#Adaptive model w/ Statistical Rethinking ME Correction - blouchOU_adaptive_ME_SR.stan
+dat<-list(N=N,Z=Z,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z),Y_error=Y_error,X_error=X_error,ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
+########################################################################################################
+Three traits
+
+#Multiple Xs
+#Simulate multiple X traits - correlated
+Z<-3
+hl<-0.1
+a<-log(2)/hl
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+vX0<-0
+vY0 <- 0
+#Sxx<-10 #Look at effects
+alpha<-2 #Intecept
+#beta<-0.25 #Slope
+
+#vcv<-matrix(c(1,0.75,0.75,1),2,2) #Correlation between traits
+vcv<-matrix(c(1,0,0,0,1,0,0,0,1),3,3) #No correlation between traits
+Xs<-sim.corrs(phy,vcv) #Simulated correlated BM Xs
+sigma2_x<-ratematrix(phy,Xs) #Calculate evolutionary v/cv matrix
+
+beta<-c(0.5,0.35,0.1) #Slope
+dmX<-calc_dmX(a,T_term,Xs)
+mu<-alpha+dmX%*%beta #Simulate mu for Y
+
+V<-calc_adaptive_V(a, sigma2_y, ta,  tij,  tja,  T_term,  beta,  sigma2_x)
+Y<-mvrnorm(n=1,mu,V)
+
+df<-data.frame(Y=Y,X=Xs)
+
+ggplot(data=df,aes(x=X.1,y=X.2))+
+  geom_point()
+summary(lm(X.2~X.1,df))
+
+ggplot(data=df,aes(x=X.1,y=Y))+
+  geom_point()
+
+summary(lm(Y~X.1,df))
+
+ggplot(data=df,aes(x=X.2,y=Y))+
+  geom_point()
+
+summary(lm(Y~X.2,df))
+
+ggplot(data=df,aes(x=X.3,y=Y))+
+  geom_point()
+
+summary(lm(Y~X.3,df))
+
+
+#Adaptive model w/o ME- blouchOU_adaptive.stan
+dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z),ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
+########################################################################################################
+########################################################################################################
+#Simulate errors with multiple traits - original Hansen setup
+X_error<-matrix(0.01,nrow=N,ncol=Z)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.01)})
 #X_with_error<-X+rnorm(N,0,0.1)
 
 #Adaptive model w/ Statistical Rethinking ME Correction - blouchOU_adaptive_ME_SR.stan
