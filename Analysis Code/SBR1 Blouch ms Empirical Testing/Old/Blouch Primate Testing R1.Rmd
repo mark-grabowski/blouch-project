@@ -1,0 +1,799 @@
+---
+title: "Blouch ms Primate mv Analysis - Example"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+rm(list=ls())
+library(rstan)
+library(treeplyr)
+library(slouch)
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+
+```
+
+Data Prep
+```{r}
+###
+#2021 Tree with updated names to match means dataset
+primate.tree<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Data Sets/My Data Sets/My Phylogenies/Latest Tree 2021/Trees/10Kprimate_Dembo2016_Miocene_2021_updated.tre")
+
+BoM.trait.means.data<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Miocene Body Mass/Data/Data 2021/Finals/Trait_Means_BrBo_ME_032621.csv")
+
+
+BoM.trait.means.data<-filter(BoM.trait.means.data,Sex=="Sp")
+
+#Take out Homo sapiens
+BoM.trait.means.data<-filter(BoM.trait.means.data,Genus_Species!="Homo_sapiens")
+#Take out Lucy
+BoM.trait.means.data<-filter(BoM.trait.means.data,Genus_Species!="Australopithecus_afarensis")
+
+########
+BoM.trait.means.trdata <- make.treedata(primate.tree, BoM.trait.means.data,name_column="Genus_Species")
+
+
+```
+
+
+```{r}
+################Add measurement error columns
+BoM.trait.means.trdata<-mutate(BoM.trait.means.trdata,me.SIHW.species=BoM.trait.means.trdata$dat$predict.sp.ln_SI.Head.W/BoM.trait.means.trdata$dat$SI.Head.W_sum)
+BoM.trait.means.trdata<-mutate(BoM.trait.means.trdata,me.TPW.species=BoM.trait.means.trdata$dat$predict.sp.ln_Plafond.width/BoM.trait.means.trdata$dat$Plafond.width_sum)
+BoM.trait.means.trdata<-mutate(BoM.trait.means.trdata,me.BoM.species=BoM.trait.means.trdata$dat$predict.sp.ln_Body.mass/BoM.trait.means.trdata$dat$N.body.mass.species)
+
+##################Log traits
+BoM.trait.means.trdata<-mutate(BoM.trait.means.trdata,log_SI.Head.W_mean=log(SI.Head.W_mean))
+BoM.trait.means.trdata<-mutate(BoM.trait.means.trdata,log_Plafond.width_mean=log(Plafond.width_mean))
+BoM.trait.means.trdata<-mutate(BoM.trait.means.trdata,log_Body.mass.species.mean=log(Body.mass.species.mean))
+
+#######################Filter out NAs for all traits
+BoM.trait.means.trdata<-filter(BoM.trait.means.trdata,!(is.na(SI.Head.W_mean)) & !(is.na(me.SIHW.species)))
+BoM.trait.means.trdata<-filter(BoM.trait.means.trdata,!(is.na(Plafond.width_mean)) & !(is.na(me.TPW.species)))
+
+#########################Only extant species
+BoM.trait.means.extant.trdata<-filter(BoM.trait.means.trdata, !(is.na(Body.mass.species.mean)) & !(is.na(me.BoM.species)) & (Status == "Extant"))
+
+#####################Extinct data will have both extant and extinct
+BoM.trait.means.extinct.trdata<-BoM.trait.means.trdata
+
+##############Mean center all traits
+BoM.trait.means.extant.trdata<-mutate(BoM.trait.means.extant.trdata, mc.log_SI.Head.W_mean = log(SI.Head.W_mean)-mean(log(SI.Head.W_mean)))
+
+BoM.trait.means.extant.trdata<-mutate(BoM.trait.means.extant.trdata, mc.log_Plafond.width_mean = log(Plafond.width_mean)-mean(log(Plafond.width_mean)))
+
+BoM.trait.means.extant.trdata<-mutate(BoM.trait.means.extant.trdata, mc.log_Body.mass.species.mean = log(Body.mass.species.mean)-mean(log(Body.mass.species.mean)))
+
+
+
+```
+
+
+Rescale Tree to Height =1
+```{r}
+l.tree<-max(branching.times(BoM.trait.means.extant.trdata$phy))
+BoM.trait.means.extant.trdata$phy$edge.length<-BoM.trait.means.extant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(BoM.trait.means.extant.trdata$phy))
+
+```
+
+Running Blouch Data Setup Function - 1st trait is adapting to 2
+
+Here we will create a R object called stan_data which has all the data we are sending to Blouch in the Stan format. This includes a list called dist.values, which provides parameter values of the distributions we are going to be using for our runs. Initially these values can be any that seem reasonable - below is code to zoom in on the parameters that best fit your data.
+
+First we will run Blouch without including Measurement Error
+```{r}
+par(mfrow = c(1,1))
+
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_1.R")
+
+#blouchOU.setup.mv<-function(trdata,name.response.trait,names.direct.traits=NULL,names.adaptive.traits=NULL,names.response.me.traits=NULL,names.direct.me.traits=NULL,names.adaptive.me.traits=NULL){
+
+name.response.trait<-c("log_Body.mass.species.mean")
+names.adaptive.traits<-c("mc.log_SI.Head.W_mean","mc.log_Plafond.width_mean")
+names.direct.traits<-c("mc.log_SI.Head.W_mean","mc.log_Plafond.width_mean")
+name.response.me.trait<-c("me.BoM.species")
+names.direct.me.traits<-c("me.SIHW.species","me.TPW.species")
+names.adaptive.me.traits<-c("me.SIHW.species","me.TPW.species")
+#Data must be logged before entry into blouchOU.setup
+
+stan_data<-blouchOU.setup.mv(BoM.trait.means.extant.trdata,name.response.trait,names.direct.traits,names.adaptive.traits=NULL,name.response.me.trait,names.direct.me.traits,names.adaptive.me.traits=NULL)
+
+#stan_data<-blouchOU.setup.mv(BoM.trait.means.extant.trdata,name.response.trait,names.direct.traits=NULL,names.adaptive.traits,name.response.me.trait,names.direct.me.traits=NULL,names.adaptive.me.traits)
+
+
+stan_data<-stan_data[[1]]
+stan_OU1_data<-stan_data[[2]]
+
+```
+
+
+# Direct Effect Models
+Blouch implements the model of constrained evolution (Hansen & Bartoszek, 2012) previously implemented in Grabowski et al. (2016), which can be used to test for allometric constraints.
+
+Here we run this model using 2 chains and 4000 iterations per chain.
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchOU_v1_1.stan")
+
+stan_model <- stan_model("blouchOU_v1_1.stan")
+
+fit.direct<- rstan::sampling(object = stan_model,data = stan_data,chains = 1,iter = 1000,control=list(adapt_delta=0.95))
+
+print(fit.direct,pars = c("a","hl","alpha","beta","vy","r_squared","sigma2_y"))
+
+#print(fit.adaptive,pars = c("a","hl","beta","beta_evol","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.direct <- rstan::extract(fit.direct)
+
+```
+
+Constraint Model
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = BoM.trait.means.extant.trdata$phy,
+                              species = BoM.trait.means.extant.trdata$phy$tip.label,
+                              response = BoM.trait.means.extant.trdata$dat$log_Body.mass.species.mean,
+                              direct.cov = data.frame(BoM.trait.means.extant.trdata$dat$mc.log_SI.Head.W_mean,BoM.trait.means.extant.trdata$dat$mc.log_Plafond.width_mean),
+                              mv.response = BoM.trait.means.extant.trdata$dat$me.BoM.species,
+                              mv.direct.cov = data.frame(BoM.trait.means.extant.trdata$dat$me.SIHW.species,BoM.trait.means.extant.trdata$dat$me.TPW.species),
+                              hl_values = seq(0.00001, 0.5, length.out = 50),
+                              vy_values = seq(0.00001, 0.1, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+#Adaptive Model
+Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.
+
+Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
+
+```{r}
+par(mfrow = c(1,1))
+
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_1b.R")
+
+#blouchOU.setup.mv<-function(trdata,name.response.trait,names.direct.traits=NULL,names.adaptive.traits=NULL,names.response.me.traits=NULL,names.direct.me.traits=NULL,names.adaptive.me.traits=NULL){
+
+name.response.trait<-c("log_Body.mass.species.mean")
+names.adaptive.traits<-c("mc.log_SI.Head.W_mean","mc.log_Plafond.width_mean")
+names.direct.traits<-c("mc.log_SI.Head.W_mean","mc.log_Plafond.width_mean")
+name.response.me.trait<-c("me.BoM.species")
+names.direct.me.traits<-c("me.SIHW.species","me.TPW.species")
+names.adaptive.me.traits<-c("me.SIHW.species","me.TPW.species")
+#Data must be logged before entry into blouchOU.setup
+
+#stan_data<-blouchOU.setup.mv(BoM.trait.means.extant.trdata,name.response.trait,names.direct.traits,names.adaptive.traits=NULL,name.response.me.trait,names.direct.me.traits,names.adaptive.me.traits=NULL)
+
+stan_data<-blouchOU.setup.mv(BoM.trait.means.extant.trdata,name.response.trait,names.direct.traits=NULL,names.adaptive.traits,name.response.me.trait,names.direct.me.traits=NULL,names.adaptive.me.traits)
+
+
+stan_data<-stan_data[[1]]
+stan_OU1_data<-stan_data[[2]]
+
+```
+
+
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchOU_v1_1.stan")
+
+stan_model <- stan_model("blouchOU_v1_1.stan")
+
+fit.adaptive<- rstan::sampling(object = stan_model,data = stan_data,chains = 1,iter = 1000,control=list(adapt_delta=0.95))
+
+print(fit.adaptive,pars = c("a","hl","alpha","beta","beta_evol","vy","r_squared","sigma2_y"))
+#print(fit.adaptive,pars = c("a","hl","beta","beta_evol","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.adaptive <- rstan::extract(fit.adaptive)
+
+```
+
+
+Slouch Results for Comparison
+Adaptation model
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = BoM.trait.means.extant.trdata$phy,
+                              species = BoM.trait.means.extant.trdata$phy$tip.label,
+                              response = BoM.trait.means.extant.trdata$dat$log_Body.mass.species.mean,
+                              random.cov = data.frame(BoM.trait.means.extant.trdata$dat$mc.log_SI.Head.W_mean,BoM.trait.means.extant.trdata$dat$mc.log_Plafond.width_mean),
+                              mv.response = BoM.trait.means.extant.trdata$dat$me.BoM.species,
+                              mv.random.cov = data.frame(BoM.trait.means.extant.trdata$dat$me.SIHW.species,BoM.trait.means.extant.trdata$dat$me.TPW.species),
+                              hl_values = seq(0.00001, 0.1, length.out = 50),
+                              vy_values = seq(0.00001, 0.05, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Trace and Density Plots for estimated parameters
+```{r}
+par(mfrow = c(1,3))
+
+traceplot(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
+stan_dens(fit.direct,c("a","hl","alpha","beta[1]","vy","sigma2_y"))
+#3X8
+```
+
+#Adaptive Model
+Blouch also implements the model of adaptive evolution introduced by Hansen et al. (2008). Here the response variable evolves according to an Ornstein-Uhlenbeck process towards an optimal state that is modeled as a function of the predictor variable.
+
+Here the code is mostly the same, but the data type sent to Stan is a different format from the stan_constraint_data above.
+```{r}
+#setwd("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1")
+#stanc("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOU_test.stan")
+#stan_model <- stan_model("blouchOU_test.stan")
+
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/blouch/R/R Functions/Blouch Functions/blouchOU_vtest.stan")
+
+stan_model <- stan_model("blouchOU_vtest.stan")
+
+fit.adaptive<- rstan::sampling(object = stan_model,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+
+print(fit.adaptive,pars = c("a","hl","alpha","beta","beta_evol","vy","r_squared","sigma2_y"))
+#print(fit.adaptive,pars = c("a","hl","beta","beta_evol","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+ext.fit.adaptive <- rstan::extract(fit.adaptive)
+
+```
+
+```{r}
+par(mfrow = c(1,3))
+
+traceplot(fit.adaptive,c("a","hl","alpha","beta","vy","sigma2_y"))
+stan_dens(fit.adaptive,c("a","hl","alpha","beta","vy","sigma2_y"))
+#3X8
+```
+
+# Model Comparison using Bayes Factors
+While using a Direct Effect or Adaptive model should be driven by the biological hypotheses being tested, it is simple to compare between different models using Bayes Factors. Here we use the bridgesampling R package.
+
+```{r}
+library(bridgesampling)
+
+lml.fit.direct<-bridge_sampler(fit.direct,silent=TRUE)
+lml.fit.adaptive<-bridge_sampler(fit.adaptive,silent=TRUE)
+BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.adaptive)
+BF_att
+
+```
+Old function
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1")
+setwd("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1")
+stanc("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOU_test.stan")
+stan_model <- stan_model("blouchOU_test.stan")
+
+fit.adaptive<- rstan::sampling(object = stan_model,data = stan_adaptive_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+
+  
+print(fit.adaptive,pars = c("a","hl","alpha","beta","beta_evol","vy","r_squared","sigma2_y"))
+
+#For downstream analysis and plots
+posterior.fit.adaptive <- rstan::extract(fit.adaptive)s
+```
+
+## Estimated Bayes factor in favor of lml_pupil over lml_pupil_null: 0.99924
+
+We find that the data is 0.999 more likely under a model that assumes XX
+
+
+# Brownian Model
+Blouch can also fit a Brownian motion model to the data, which can then be compared to the other models using Bayes Factors. Note that while this is possible with Blouch, it is assuming your data follows this model of evolution, rather than testing for it using the Direct Effect or Adaptive models above. 
+
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1/blouchBM_v1.stan")
+stan_model <- stan_model("blouchBM_v1.stan")
+
+fit.BM.hc<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+
+print(fit.BM.hc,pars = c("alpha","beta","r_squared","sigma2_y"))
+
+```
+
+
+
+BM Model - with sigma2y ~ uniform
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1/blouchBM_v1.stan")
+stan_model <- stan_model("blouchBM_v1.stan")
+
+fit.BM.uni<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95))
+
+print(fit.BM.uni,pars = c("alpha","beta","r_squared","sigma2_y"))
+
+```
+
+
+Model Comparison using Bayes Factors
+```{r}
+library(bridgesampling)
+lml.fit.BM.hc<-bridge_sampler(fit.BM.hc,silent=TRUE)
+lml.fit.BM.uni<-bridge_sampler(fit.BM.uni,silent=TRUE)
+#lml.fit.hc.direct<-bridge_sampler(fit.hc.direct,silent=TRUE)
+#lml.fit.BM<-bridge_sampler(fit.BM,silent=TRUE)
+#BF_att <- bridgesampling::bf(lml.fit.direct, lml.fit.BM)
+BF_att <- bridgesampling::bf(lml.fit.BM.uni, lml.fit.BM.hc)
+BF_att
+
+```
+
+Direct vs. BM Model Comparison using BF
+```{r}
+library(bridgesampling)
+lml.fit.uni.direct<-bridge_sampler(fit.uni.direct,silent=TRUE)
+lml.fit.BM.uni<-bridge_sampler(fit.BM.uni,silent=TRUE)
+
+BF_att <- bridgesampling::bf(lml.fit.uni.direct, lml.fit.BM.uni)
+BF_att
+
+```
+
+
+Make plots for Figure
+```{r}
+library(ggsci)
+library(ggplot2)
+
+```
+
+Fig S1
+```{r}
+old.par <- par(mar = c(0, 0, 0, 0))
+par(old.par)
+
+
+ggplot(ruminant.trdata$dat,aes(y=log_ant_vol,x=log_psl))+
+  geom_abline(intercept=mean(posterior.fit.uni.direct$alpha),slope = mean(posterior.fit.uni.direct$beta),lty=1)+
+  geom_abline(intercept=-1.16,slope = 5.89,lty=2)+
+
+  geom_point(aes(color=Tribe),size=2.0,alpha=0.8)+
+  theme_bw()+
+  theme(legend.position="bottom")+
+  ylab("log Antler Volume (l)") + xlab("log Posterior Skull Length (mm)")+
+  scale_color_npg()
+ 
+#5.25 X 5
+
+```
+
+
+
+
+
+Rerun for predicting Irish Elk Antler length
+Data Prep
+```{r}
+#cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Data/Antler Dataset/cervidae_renamed.tre")
+cervid.tree<-read.nexus("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Data/Antler Dataset/cervidae_renamed.tre")
+
+#cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Data/Antler Dataset/deer_mean_dat.csv")
+
+cervid.dataset<-read.csv("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Data/Antler Dataset/deer_mean_dat.csv")
+
+
+
+#Remove Muntiacus_atherodes, Elaphodus_cephalophus - rudamentary and female Rangifer. 
+cervid.dataset<-filter(cervid.dataset,Genus_Species != "Sinomegaloceros_yabei" & ! Genus_Species =="Alces_alces_gigas"  & ! Genus_Species == "Muntiacus_truongsonensis" & ! Genus_Species ==  "Mazama_temama"& ! Genus_Species ==  "Muntiacus_feae" & ! Genus_Species ==  "Muntiacus_atherodes" & ! Genus_Species ==  "Elaphodus_cephalophus")
+
+
+ruminant.trdata <- make.treedata(cervid.tree, cervid.dataset,name_column="Genus_Species")
+ruminant.trdata<-mutate(ruminant.trdata,me.log_ant_vol=ruminant.trdata$dat$log_vol_var_est/ruminant.trdata$dat$n)
+ruminant.trdata<-mutate(ruminant.trdata,me.log_psl=ruminant.trdata$dat$log_psl_var_est/ruminant.trdata$dat$n)
+
+#names.traits<-c("log_ant_vol","log_psl",NA,NA)
+
+names.traits<-c("log_ant_vol","log_psl","me.log_ant_vol","me.log_psl")
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(log_ant_vol)) & !(is.na(log_psl)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(me.log_ant_vol)) & !(is.na(me.log_psl)))
+
+#Only for reduced Cervini analysis
+#ruminant.trdata<-filter(ruminant.trdata, (Tribe == "Cervini")) #Only non-fossil species
+
+cervid.ext.trdata<-filter(ruminant.trdata, (Status == "Extant")) #Only non-fossil species
+
+#Mean Standardized
+ruminant.trdata$dat$log_psl<-ruminant.trdata$dat$log_psl-mean(ruminant.trdata$dat$log_psl)
+cervid.ext.trdata$dat$log_psl<-cervid.ext.trdata$dat$log_psl-mean(cervid.ext.trdata$dat$log_psl)
+
+
+```
+
+Rescale Tree to Height =1
+```{r}
+l.tree<-max(branching.times(ruminant.trdata$phy))
+ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.trdata$phy))
+
+l.tree<-max(branching.times(cervid.ext.trdata$phy))
+cervid.ext.trdata$phy$edge.length<-cervid.ext.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(cervid.ext.trdata$phy))
+
+
+```
+
+
+Running Blouch Data Setup Function - 1st trait is adapting to 2
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1/Blouch Setup Files/blouchOUPredict.setup.v1.R")
+
+source("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/Blouch Setup Files/blouchOUPredict.setup.v1.R")
+
+#Data must be logged before entry into blouch.setup
+#names.traits = c(response, predictor, me.response, me.predictor) - classical = 0 for inverse regression
+stan_data<-blouchOUPredict.setup.v1(cervid.ext.trdata,ruminant.trdata,names.traits,classical=0)
+
+stan_constraint_data<-stan_data[[1]]
+stan_adaptive_data<-stan_data[[2]]
+
+```
+
+Constraint Model
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOUPredict_v1.stan")
+
+setwd("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1")
+#stanc("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOUPredict_v1.stan")
+
+stanc("/Users/markgrabowski/Google Drive/Shared with Macbook/Current Projects/Blouch project/Stan Functions/blouch v1/blouchOUPredict_test.stan")
+
+#stan_model <- stan_model("blouchOUPredict_v1.stan")
+stan_model <- stan_model("blouchOUPredict_test.stan")
+
+#fit.direct<- stan(file = stan_model,data = stan_constraint_data,chains = 1,iter = 400,control=list(adapt_delta=0.95))
+fit.fos.direct<- rstan::sampling(object = stan_model,data = stan_constraint_data,chains = 2,iter = 4000,control=list(adapt_delta=0.95),save_warmup=FALSE)
+
+print(fit.fos.direct,pars = c("a","hl","alpha","beta","vy","r_squared","sigma2_y","RMSE","RMSE_mu","Y_pred_fos_means"))
+posterior.fit.fos.direct <- rstan::extract(fit.fos.direct)
+
+```
+
+
+```{r}
+par(mfrow = c(1,3))
+  
+traceplot(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
+stan_dens(fit.fos.direct,c("a","hl","alpha","beta","vy","sigma2_y"))
+#3 X 8
+```
+
+
+Make plots for Figure
+```{r}
+library(ggsci)
+library(ggplot2)
+library(plotly)
+
+```
+
+Fig. 1
+```{r}
+cervid.fos.plot<-ggplot(ruminant.trdata$dat,aes(y=log_ant_vol,x=log_psl))+
+  geom_abline(intercept=mean(posterior.fit.fos.direct$alpha),slope = mean(posterior.fit.fos.direct$beta),lty=1)+
+  #geom_abline(intercept=-15.123391,slope = 5.932,lty=2)+
+  #geom_abline(intercept=-11.8719729343,slope = 4.86,lty=2)+ #Cervini slope going through Dama dama - from Tsuboi et al.
+  #geom_abline(intercept=-11.48,slope = 4.70,lty=3)+ #Cervini slope going through Dama dama - from Blouch
+  #geom_point(aes(y= 3.28,x=3.089545121),size=2.0,alpha=0.8)+
+  geom_point(aes(y= 3.28,x=0.7373661),size=2.0,alpha=0.8)+
+  geom_point(aes(color=Tribe),size=2.0,alpha=0.8)+
+  theme_bw()+
+  #theme(legend.position="bottom")+
+  ylab("log Antler Volume (l)") + xlab("log Posterior Skull Length (mm)")+
+  scale_color_npg()
+ 
+
+cervid.fos.plot
+#ggplotly()
+#5.25 X 5
+#5 X 7
+```
+Plot including predictions for extant species
+Fig. 2b
+SI HW Prediction Means - 5X5 pdf
+```{r}
+old.par <- par(mar = c(0, 0, 0, 0))
+par(old.par)
+
+
+fos.index<-which(ruminant.trdata$dat$Status=="Extinct")
+print(paste("Fossil Species #",fos.index))
+extant.index<-which(ruminant.trdata$dat$Status=="Extant")
+
+antler.predictions<-apply(posterior.fit.fos.direct$Y_pred_fos_means,2,mean)
+antler.predictions.extant<-apply(posterior.fit.fos.direct$Y_pred_extant_means,2,mean)
+
+extant.data<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[-fos.index],log_AV = ruminant.trdata$dat$log_ant_vol[-fos.index],log_AV_predictions = antler.predictions.extant,log_psl = ruminant.trdata$dat$log_psl[-fos.index],Status="Extant")
+
+fos.predictions<-data.frame(Genus_Species = ruminant.trdata$phy$tip.label[fos.index],log_AV = NA, log_AV_predictions = antler.predictions,log_psl=ruminant.trdata$dat$log_psl[fos.index],Status="Extinct")
+         
+merged.data<-rbind(extant.data,fos.predictions)                   
+
+antler.complete.plot<-ggplot(merged.data,aes(x=log_psl))+
+geom_point(aes(y=log_AV),size=2.0,alpha=0.4)+
+geom_point(aes(y=log_AV_predictions,color=Status),size=2.5,alpha=0.8)+
+geom_abline(intercept=mean(posterior.fit.fos.direct$alpha),slope = mean(posterior.fit.fos.direct$beta),lty=2)+
+theme_bw()+
+theme(legend.position="bottom")+ #5X5
+xlab("log Posterior Skull Length (mm)")+
+  ylab("log Antler Volume (l)")
+
+#+theme(legend. position = "none")
+antler.complete.plot+scale_color_aaas()
+#Export 5.25X5 PDF
+
+```
+
+
+
+Slouch Results for Comparison
+Adaptation model
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
+                              species = cervid.trdata$phy$tip.label,
+                              response = cervid.trdata$dat$log_ant_vol,
+                              random.cov = cervid.trdata$dat$log_psl,
+                              mv.response = cervid.trdata$dat$me.log_ant_vol,
+                              mv.random.cov = cervid.trdata$dat$me.log_psl,
+                              hl_values = seq(0.00001, 0.2, length.out = 50),
+                              vy_values = seq(0.00001, 0.5, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+Constraint Model
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
+                              species = cervid.trdata$phy$tip.label,
+                              response = cervid.trdata$dat$log_ant_vol,
+                              direct.cov = cervid.trdata$dat$log_psl,
+                              mv.response = cervid.trdata$dat$me.log_ant_vol,
+                              mv.direct.cov = cervid.trdata$dat$me.log_psl,
+                              hl_values = seq(0.00001, 6, length.out = 50),
+                              vy_values = seq(0.00001, 4, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+
+
+Slouch Results for Comparison
+Adaptation model no ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
+                              species = cervid.trdata$phy$tip.label,
+                              response = cervid.trdata$dat$log_ant_vol,
+                              random.cov = cervid.trdata$dat$log_psl,
+                              #mv.response = cervid.trdata$dat$me.log_ant_vol,
+                              #mv.random.cov = cervid.trdata$dat$me.log_psl,
+                              hl_values = seq(0.00001, 0.2, length.out = 50),
+                              vy_values = seq(0.00001, 0.5, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Constraint Model no ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution
+slouch.OU<-slouch.fit(phy = cervid.trdata$phy,
+                              species = cervid.trdata$phy$tip.label,
+                              response = cervid.trdata$dat$log_ant_vol,
+                              direct.cov = cervid.trdata$dat$log_psl,
+                              #mv.response = cervid.trdata$dat$me.log_ant_vol,
+                              #mv.direct.cov = cervid.trdata$dat$me.log_psl,
+                              hl_values = seq(0.00001, 6, length.out = 50),
+                              vy_values = seq(0.00001, 4, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+
+
+Explore Priors - individually
+Slope and intercept
+```{r}
+library(ggsci)
+
+intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.5)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_adaptive_data$ols_slope[1],1.0)
+
+slope.prior.plot<-ggplot(data=BoM.trait.means.extant.trdata$dat,aes(y=log_Body.mass.species.mean,x=mc.log_SI.Head.W_mean))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Body mass (g)") + xlab("log SIHW (mm)")+
+  scale_color_npg()
+
+slope.prior.plot
+
+```
+
+```{r}
+intercept_test<-rnorm(100,stan_adaptive_data$ols_intercept,0.2)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_adaptive_data$ols_slope[2],1.0)
+
+slope.prior.plot<-ggplot(data=BoM.trait.means.extant.trdata$dat,aes(y=log_Body.mass.species.mean,x=mc.log_Plafond.width_mean))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Body mass (g)") + xlab("log Plafond width (mm)")+
+  scale_color_npg()
+
+slope.prior.plot
+
+```
+
+
+
+```{r}
+pdf("slope.prior.plot.pdf", width=5, height=5)
+slope.prior.plot
+dev.off()  
+
+```
+
+
+
+```{r}
+###########################################
+#Normal - based on alpha
+#par.alpha <- list(meanlog=1.25, sdlog=0.75)
+#par.alpha <- list(meanlog=1.0, sdlog=1.0) #Former runs 08/10/2021
+par.alpha <- list(meanlog=0.75, sdlog=0.75) #Former runs 08/10/2021
+
+samp <- rlnorm(10000, mean=par.alpha$meanlog, sd=par.alpha$sdlog)
+samp<-samp[samp>=0]
+
+hist(samp, breaks=10000, main="Prior density of alpha",xlim=c(0,3))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+log(2)/min(samp)
+log(2)/max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75,0.90,0.95, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(log(2)/samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist((log(2)/samp), breaks=10000, main="Prior density of half-life",xlim=c(0,3))
+abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+########################################
+```
+
+
+
+```{r}
+library(ggsci)
+hl.prior.plot<-ggplot(data.frame(half.life = log(2)/samp),aes(x=half.life))+
+  geom_histogram(binwidth=0.01)+
+  geom_vline(xintercept=c(0.07142857,1),colour="#BB0000",linetype="dashed")+
+  theme_bw()+
+  ggtitle("Prior for Half-life")+
+  ylab("Frequency") + xlab("Half-life")+xlim(c(0,3))+
+  scale_color_npg()
+ 
+hl.prior.plot
+
+pdf("hl.prior.plot.pdf", width=5, height=5)
+hl.prior.plot
+dev.off()
+```
+
+
+
+
+Sigma2_y Prior
+```{r}
+library(extraDistr)
+###########################################
+#Normal - based on alpha
+par.sigma2y <- list(sigma=0.1)
+
+samp <- rhcauchy(10000, sigma=par.sigma2y$sigma)
+
+hist(samp, breaks=10000, main="Prior density of Sigma2y",xlim=c(0,3))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+log(2)/min(samp)
+log(2)/max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75, 0.90, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist(samp/(2*2), breaks=10000, main="Prior density of Vy",xlim=c(0,3))
+#abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+########################################
+
+```
+
+
+```{r}
+library(extraDistr)
+###########################################
+#Normal - based on alpha
+par.sigma2y <- list(sigma=1.0)
+
+samp <- rhcauchy(10000, sigma=par.sigma2y$sigma)
+
+hist(samp, breaks=10000, main="Prior density of Sigma2y",xlim=c(0,3))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+log(2)/min(samp)
+log(2)/max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75, 0.90, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist(samp/(2*2), breaks=10000, main="Prior density of Vy",xlim=c(0,3))
+#abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+########################################
+
+```

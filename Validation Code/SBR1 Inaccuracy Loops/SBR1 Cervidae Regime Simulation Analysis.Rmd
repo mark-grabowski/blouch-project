@@ -1,0 +1,86 @@
+---
+title: "Blouch SBR1 - Cervidae Regime Simulation Analysis"
+output: html_notebook
+---
+
+Using simulated data fromm SBR1 Cervidae Regime Simulation Code
+
+Inaccuracy loops for simulated repeated optima
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R")
+
+names.traits<-c("mc.log_psl","NA","regimes")
+#name.response.trait<-c("log_ant_vol")
+#names.adaptive.traits<-c("mc.log_psl")
+#names.direct.traits<-c("mc.log_psl")
+#name.response.me.trait<-c("me.log_ant_vol")
+#names.adaptive.me.traits<-c("me.log_psl")
+#names.direct.me.traits<-c("me.log_psl")
+#names.fixed.fact<-c("regimes")
+
+error.comparison.2reg<-repeated_optima_sim(cervid.3reg.trdata,n=10,names.traits,head(optima,-1))
+error.comparison.2reg
+```
+
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R")
+
+names.traits<-c("mc.log_psl","NA","regimes")
+#name.response.trait<-c("log_ant_vol")
+#names.adaptive.traits<-c("mc.log_psl")
+#names.direct.traits<-c("mc.log_psl")
+#name.response.me.trait<-c("me.log_ant_vol")
+#names.adaptive.me.traits<-c("me.log_psl")
+#names.direct.me.traits<-c("me.log_psl")
+#names.fixed.fact<-c("regimes")
+
+error.comparison.3reg<-repeated_optima_sim(cervid.3reg.trdata,n=10,names.traits,head(optima,-1))
+error.comparison.3reg
+```
+
+
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Validation Code/SBR1 Inaccuracy Loops/repeated_optima_sim.R")
+
+names.traits<-c("mc.log_psl","NA","regimes")
+#name.response.trait<-c("log_ant_vol")
+#names.adaptive.traits<-c("mc.log_psl")
+#names.direct.traits<-c("mc.log_psl")
+#name.response.me.trait<-c("me.log_ant_vol")
+#names.adaptive.me.traits<-c("me.log_psl")
+#names.direct.me.traits<-c("me.log_psl")
+#names.fixed.fact<-c("regimes")
+
+error.comparison.4reg<-repeated_optima_sim(cervid.4reg.trdata,n=10,names.traits,head(optima,-1))
+error.comparison.4reg
+```
+
+
+
+Plot Regimes
+```{r}
+errors.combined<-data.frame(t(cbind(error.comparison.2reg[[3]],error.comparison.3reg[[3]],error.comparison.4reg[[3]])))
+errors.combined<-cbind(errors.combined,reps=1:30,regimes=c(rep(2,10),rep(3,10),rep(4,10)))
+regimes<-c(2,3,4)
+mean.errors.combined<-data.frame(errors.combined%>%group_by(regimes)%>%mutate(mlm.mean=mean(mlm.inaccuracy),npm.mean=mean(npm.inaccuracy)))
+
+mean.errors.combined%>%group_by(regimes)%>%
+#errors.combined%>%
+  ggplot(aes(x=reps,group=regimes))+
+  geom_point(aes(y=mlm.inaccuracy),size=2.0,alpha=0.8)+
+  geom_point(aes(y=npm.inaccuracy),shape=21,size=2.0,alpha=0.8)+
+  geom_line(aes(x=reps,y=mlm.mean),linetype="solid")+
+  geom_line(aes(x=reps,y=npm.mean),linetype="dashed")+
+  geom_vline(xintercept=c(10.5,20.5),alpha=0.75,linetype="dotted")+
+  ylab("Imprecision") + xlab("Regimes")+
+  theme_bw()+
+  scale_color_npg()+
+  #theme(legend.text)
+  scale_x_continuous(breaks=c(5,15,25),labels=regimes)
+  #geom_label(label=c(""))
+
+
+  
+
+
+```

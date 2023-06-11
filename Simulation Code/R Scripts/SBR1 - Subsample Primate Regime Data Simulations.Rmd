@@ -1,0 +1,400 @@
+---
+title: "Blouch SBR1 - Subsample Primate Tree Fixed Regime Data Simulation"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+Code to simulate fixed regimes on Primate Tree
+
+Setup Workspace and load packages
+```{r}
+rm(list=ls())
+library(devtools)
+#devtools::install_github("Mark-Grabowski/blouch")
+
+#library(blouch)
+#load_all()
+# Load necessary packages
+library(ape)
+library(slouch)
+library(rstan)
+library(treeplyr)
+library(ggplot2)
+library(ggsci)
+library(bridgesampling)
+library(mvSLOUCH)
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores())
+#options(mc.cores = 8)
+rstan_options(auto_write = TRUE)
+
+dotR <- file.path(Sys.getenv("HOME"), ".R")
+if (!file.exists(dotR)) dir.create(dotR)
+M <- file.path(dotR, "Makevars")
+if (!file.exists(M)) file.create(M)
+arch <- ifelse(R.version$arch == "aarch64", "arm64", "x86_64")
+cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256"),
+    file = M, sep = "\n", append = FALSE)
+
+```
+
+Data Prep
+```{r}
+library(phytools)
+set.seed(1)
+tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+saved.tips<-50
+sampled.tree.10K <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:saved.tips]) 
+
+l.tree<-max(branching.times(sampled.tree.10K))
+sampled.tree.10K$edge.length<-sampled.tree.10K$edge.length/l.tree ## rescale tree to height 1
+
+
+
+```
+
+
+Simulate X and Y variable for Single Covariates
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/Simulate OU Data.R")
+
+slope<-0.25
+hl<-0.1
+Sxx<-1
+vY0 <- 2
+vX0 <- 4
+theta<-4
+vy<-0.1
+
+```
+
+#Direct effect model - w/o ME
+```{r}
+stan_sim_data<-simulate.OU.direct(sampled.tree.10K,hl,vy,slope,vX0,vY0,Sxx=10,theta,num.X = 1)
+
+```
+
+#Adaptive model - w/o ME
+```{r}
+stan_sim_data<-simulate.OU.adaptive(sampled.tree.10K,hl,vy,slope,vX0,vY0,Sxx=10,theta,num.X = 1)
+
+```
+
+
+```{r}
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov) #Direct effect model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+```
+
+
+```{r}
+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$random_cov) #Direct effect model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+```
+
+
+
+```{r}
+tip.label<-sampled.tree.10K$tip.label
+Dmat<-cophenetic(sampled.tree.10K)
+Dmat<-Dmat[tip.label,tip.label]/max(Dmat)
+N<-length(tip.label)
+```
+
+
+  int N; 
+  int Z; 
+  vector[N] Y;
+  matrix[N,Z] X;
+  matrix[N,N] Dmat;
+
+
+
+
+
+
+
+
+Set regimes - manually - 2 regimes
+Locate nodes
+```{r}
+plot(sampled.tree.10K,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+
+#Using node 71
+```
+
+Set regimes
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+shifts<-c(88) #Location of nodes with regime shifts
+trdata<-data.frame(sampled.tree.10K$tip.label)
+trdata<-make.treedata(sampled.tree.10K,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+```
+
+Check if manual setting code worked
+```{r}
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+
+```
+
+
+
+Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/Simulate OU Data.R")
+
+slope<-0.25
+#hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
+hl<-0.01
+
+vY0 <- 2
+vX0 <- 4
+theta<-4
+
+#vY0<-0
+#vX0<-0
+vy<-0.1
+
+
+```
+
+```{r}
+#Direct effect model, 1 trait
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE,sim.errors=FALSE) #Direct effect model
+
+#Direct effect model, 1 trait + ME
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,num.ME.direct=1,num.ME.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE,sim.errors =TRUE) #Direct effect model
+
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=TRUE,mc=FALSE,sim.errors=FALSE) #Adaptive Nodel no ME
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25),reg=FALSE,mc=FALSE) #Adaptive model
+
+```
+
+No regimes
+```{r}
+stan_sim_data<-blouch_simXYOU.mvSlouch.setup(trdata,num.direct=1,num.random=0,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,theta,mc=TRUE,sim.errors=FALSE) #Direct Effect Nodel no ME
+
+
+stan_sim_data<-blouch_simXYOU.mvSlouch.setup(trdata,num.direct=0,num.random=1,num.ME.direct=0,num.ME.random=0,slope,hl,vy,vY0,vX0,theta,mc=FALSE,sim.errors=FALSE) #Adaptive Nodel no ME
+
+```
+
+
+Plot simulated relationships
+```{r}
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov) #Direct effect model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+
+
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$random_cov) #Adaptive Model
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+
+#dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+```
+
+
+
+
+
+Set regimes - manually - 3 regimes
+Locate nodes
+```{r}
+plot(cervid.trdata$phy)
+tiplabels(cex=0.5)
+nodelabels(cex=0.5)
+
+plot(sampled.tree.10K,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+
+#Using node 71
+```
+
+Set regimes
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+
+shifts<-c(77,88) #Location of nodes with regime shifts
+trdata<-data.frame(sampled.tree.10K$tip.label)
+trdata<-make.treedata(sampled.tree.10K,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+
+```
+
+Check if manual setting code worked
+```{r}
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+
+```
+
+
+Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/blouch_simXYOUReg.mvSlouch.setup.R")
+
+slope<-0.25
+#hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
+hl<-0.1
+
+vY0 <- 2
+vX0 <- 4
+#vY0<-0
+#vX0<-0
+vy<-0.001
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=TRUE)
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=FALSE)
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=TRUE)
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(cervid.3reg.trdata,num.direct=0,num.random=1,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5),reg=FALSE)
+
+
+#Adaptive model
+```
+
+
+Plot simulated relationships
+```{r}
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+
+#dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+```
+
+Set regimes - manually - 4 regimes
+Locate nodes
+```{r}
+plot(cervid.trdata$phy)
+tiplabels(cex=0.5)
+nodelabels(cex=0.5)
+
+plot(sampled.tree.10K,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+
+#Using node 71
+```
+
+Set regimes
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+
+shifts<-c(77,88,73) #Location of nodes with regime shifts
+trdata<-data.frame(sampled.tree.10K$tip.label)
+trdata<-make.treedata(sampled.tree.10K,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+
+```
+
+Check if manual setting code worked
+```{r}
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+
+```
+
+Simulate X and Y variable for Single Covariates - fixed Regimes/direct effect model
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/blouch_simXYOUReg.mvSlouch.setup.R")
+
+slope<-0.25
+#hl<-c(0.01,0.05,0.1,0.25,0.5,0.75,1.0,2.0) #For Main Plots
+hl<-0.1
+
+#vY0 <- 2
+#vX0 <- 4
+vY0<-0
+vX0<-0
+vy<-0.001
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(cervid.4reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5,4.75),direct=0) #Direct effect model
+
+stan_sim_data<-blouch_simXYOUReg.mvSlouch.setup(cervid.4reg.trdata,num.direct=1,num.random=0,slope,hl,vy,vY0,vX0,reg.values=c(4.0,4.25,4.5,4.75)) #Adaptive model
+```
+
+
+Plot simulated relationships
+```{r}
+df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+names(df)<-c("Y","X")
+ggplot(data=df,aes(x=X,y=Y))+
+  geom_point()
+lm(Y~X,df)
+
+#dotTree(cervid.2reg.trdata$phy,test,length=10,ftype="i",fsize=0.5)
+
+```
+
+

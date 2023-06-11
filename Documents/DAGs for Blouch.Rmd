@@ -1,0 +1,33 @@
+---
+title: "DAGs for Blouch ms SBR1"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r = silent}
+rm(list=ls())
+library(ggdag)
+library(ggplot2)
+theme_set(theme_dag())
+
+
+```
+
+```{r}
+dagify(
+  Y ~ X1,
+  Y ~ X2,
+  Y ~ uY,
+  X1 ~ uX1,
+  X2 ~ uX2,
+  uY ~ h,
+  uX1 ~ h,
+  uX2 ~ h
+  )%>%
+  ggdag()
+
+```
+
+

@@ -1,0 +1,1024 @@
+---
+title: "Blouch SBR1 - Artiodactyl Testing using Fixed Regimes"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+rm(list=ls())
+library(devtools)
+#devtools::install_github("Mark-Grabowski/blouch")
+
+#library(blouch)
+#load_all()
+# Load necessary packages
+library(ape)
+library(slouch)
+library(rstan)
+library(treeplyr)
+library(ggplot2)
+library(ggsci)
+library(bridgesampling)
+
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores())
+#options(mc.cores = 8)
+rstan_options(auto_write = TRUE)
+
+dotR <- file.path(Sys.getenv("HOME"), ".R")
+if (!file.exists(dotR)) dir.create(dotR)
+M <- file.path(dotR, "Makevars")
+if (!file.exists(M)) file.create(M)
+arch <- ifelse(R.version$arch == "aarch64", "arm64", "x86_64")
+cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256"),
+    file = M, sep = "\n", append = FALSE)
+
+```
+
+For the purposes of illustrating the software, we will use a dataset of ruminant brain and body sizes bundled with the Slouch package (Kopperud et al. 2020) and a corresponding phylogenetic tree (Toljagić et al. 2017). First, we will organize the brain and body data.
+```{r load data}
+## Load the phylogenetic tree with annotation data
+data(artiodactyla)
+phy <- artiodactyla
+
+## Load the neocortex dataset
+data(neocortex)
+
+## Plot the tree
+plot(ladderize(phy), cex = 0.6)
+```
+
+Stealing some code from the Slouch tutorial, regimes are shown painted on the phylogeny as below
+```{r}
+## Inspect the internal node regimes
+## These have order n+1, n+2, n+3 ...
+internal_regimes <- factor(phy$node.label)
+
+## Concatenate tip and internal regimes. These will have order 1,2,3 ...
+regimes <- c(neocortex$diet, internal_regimes)
+
+## Pick out the regimes of the edges, in the order of phy$edge
+edge_regimes <- factor(regimes[phy$edge[,2]])
+
+plot(phy, 
+     edge.color = c("Black", "Orange", "blue")[edge_regimes], 
+     edge.width = 3, cex = 0.6)
+```
+
+
+Next we will use the treeplyr function make.treedata to combine the data and tree based on the "species" column, which has the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.Then we will filter the data so only individuals with both brain and body size, as well as the variance in brain and body size are included. Variance in these traits is considered measurement error, estimation error in species averages. Finally we mean scale the X data (here body mass) so that the average across species is 0.
+
+```{r}
+ruminant.trdata <- make.treedata(phy, neocortex,name_column="species")
+
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_mass_g_log_mean)) & !(is.na(body_mass_g_log_mean)) &!(is.na(neocortex_area_mm2_log_mean)))
+ruminant.trdata<-filter(ruminant.trdata,!(is.na(brain_se_squared)) & !(is.na(body_se_squared)) & !(is.na(neocortex_se_squared)))
+
+ruminant.trdata<-mutate(ruminant.trdata,me.neocortex = neocortex_se_squared/n_neocortex)
+ruminant.trdata<-mutate(ruminant.trdata,me.brain = brain_se_squared/n_brain)
+ruminant.trdata<-mutate(ruminant.trdata,me.body = body_se_squared/n_body)
+#ruminant.trdata #Full dataset
+
+#Mean Scale Predictors
+ruminant.trdata$dat$bodycentered<-ruminant.trdata$dat$body_mass_g_log_mean-mean(ruminant.trdata$dat$body_mass_g_log_mean)
+ruminant.trdata$dat$braincentered<-ruminant.trdata$dat$brain_mass_g_log_mean-mean(ruminant.trdata$dat$brain_mass_g_log_mean)
+
+```
+
+## Rescale Tree
+Next, we rescale Tree to Height = 1
+```{r}
+l.tree<-max(branching.times(ruminant.trdata$phy))
+ruminant.trdata$phy$edge.length<-ruminant.trdata$phy$edge.length/l.tree ## rescale tree to height 1
+max(branching.times(ruminant.trdata$phy))
+
+```
+
+##############
+
+Given Tree length = 1
+```{r}
+library(extraDistr)
+#########################
+#alpha
+#########################
+#normal on alpha, translate back to half-life
+#par.alpha <- list(meanlog=-0.5373234, sdlog=1.25)
+par.hl<-list(meanlog=-2.0, sdlog=1) #Ruminant tree - 27 Ma - 1Ma = 0.03703704
+#Draw a bunch of samples from this distribution: 
+samp <- rlnorm(10000, meanlog=par.hl$meanlog, sdlog=par.hl$sdlog)
+#samp<-samp[samp>=0]
+hist(samp, breaks=1000, main="Prior density of hl",xlim=c(0,5))
+abline(v=c(0.07142857,1), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 1/14 = 0.07
+max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75, 0.90, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+```
+
+
+```{r}
+
+hl.prior.plot<-ggplot(data.frame(half.life = log(2)/samp),aes(x=half.life))+
+  geom_histogram(binwidth=0.01)+
+  geom_vline(xintercept=c(0.07142857,1),colour="#BB0000",linetype="dashed")+
+  theme_bw()+
+  ggtitle("Prior for Half-life")+
+  ylab("Frequency") + xlab("Half-life")+xlim(c(0,3))+
+  scale_color_npg()
+ 
+hl.prior.plot
+
+pdf("hl.prior.plot.pdf", width=3, height=3)
+hl.prior.plot
+dev.off()
+```
+
+
+
+vy
+```{r}
+library(extraDistr)
+###########################################
+#Normal - based on alpha
+par.vy <- list(vy=0.01)
+
+samp <- rhcauchy(100, sigma=par.vy$vy)
+#samp <- rexp(100, rate=1)
+
+hist(samp, breaks=100, main="Prior density of vy",xlim=c(0,0.2))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75, 0.90, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist(samp, breaks=10000, main="Prior density of Vy",xlim=c(0,3))
+#abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+########################################
+
+```
+
+
+
+###################
+Single Covariates - Fixed regimes
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOUReg.setup.mv_v1_3.R")
+
+#Direct and Random model - 1 trait each
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+name.response.me.trait<-c("me.neocortex")
+names.random.traits<-c("braincentered")
+names.direct.traits<-c("bodycentered")
+names.direct.me.traits<-c("me.body")
+names.random.me.traits<-c("me.brain")
+names.fixed.fact<-c("diet")
+
+#One random covariate w ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits=NULL,names.random.traits,name.response.me.trait,names.direct.me.traits=NULL,names.random.me.traits)
+
+#One random covariate w/o ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits=NULL,names.random.traits)
+
+#One direct covariate w ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits=NULL,name.response.me.trait,names.direct.me.traits,names.random.me.traits=NULL)
+
+#One direct covariate w/o ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits=NULL)
+
+
+```
+
+Two Covariates - Fixed Regimes
+```{r}
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+names.random.traits<-c("braincentered","bodycentered")
+names.direct.traits<-c("braincentered","bodycentered")
+name.response.me.trait<-c("me.neocortex")
+names.direct.me.traits<-c("me.brain","me.body")
+names.random.me.traits<-c("me.brain","me.body")
+names.fixed.fact<-c("diet")
+
+
+
+#Two random covariates w/ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits=NULL,names.random.traits,name.response.me.trait,names.direct.me.traits=NULL,names.random.me.traits)
+
+#Two random covariates w/o ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits=NULL,names.random.traits)
+
+#Two direct covariates w/ ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits=NULL,name.response.me.trait,names.direct.me.traits,names.random.me.traits=NULL)
+
+#Two direct covariates w/o ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits=NULL)
+
+
+```
+
+One Direct and One Random Covariate - Fixed Regimes
+```{r}
+#########################
+
+#Direct and Random model - 1 trait each
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+name.response.me.trait<-c("me.neocortex")
+names.random.traits<-c("braincentered")
+names.direct.traits<-c("bodycentered")
+names.direct.me.traits<-c("me.body")
+names.random.me.traits<-c("me.brain")
+names.fixed.fact<-c("diet")
+
+
+
+#Data must be logged before entry into blouchOU.setup
+
+#One direct one random covariate w ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits,name.response.me.trait,names.direct.me.traits,names.random.me.traits)
+
+#One direct one random covariate wo ME
+stan_data<-blouchOUReg.setup.mv(ruminant.trdata,names.fixed.fact,name.response.trait,names.direct.traits,names.random.traits)
+
+
+
+```
+
+
+##################################
+Stan Fit - Original Blouch
+```{r}
+
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchOUReg_v1_5.stan")
+
+stan_model <- stan_model("blouchOUReg_v1_5.stan")
+
+fit.org<- rstan::sampling(object = stan_model,data = stan_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95))
+
+print(fit.org,pars = c("a","hl","beta","beta_e","vy","r_squared","sigma2_y"))
+  
+#For downstream analysis and plots
+#ext.fit.direct <- rstan::extract(fit.direct)
+
+```
+
+Stan Fit - Multilevel Blouch
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchOUReg_test.stan")
+
+stan_model <- stan_model("blouchOUReg_test.stan")
+
+fit.ml<- rstan::sampling(object = stan_model,data = stan_data,chains = 2,iter = 2000,control=list(adapt_delta=0.95))
+
+print(fit.ml,pars = c("a","hl","beta","beta_tf","beta_e","vy","r_squared","sigma2_y"))
+  
+#For downstream analysis and plots
+#ext.fit.direct <- rstan::extract(fit.direct)
+
+```
+
+#####################
+Slouch Checking
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/slouch-master")
+devtools::load_all()
+```
+
+Adaptation model - One random traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.random.cov = ruminant.trdata$dat$me.brain,
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 1, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+Adaptation model - One random traits wo ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 1, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+One direct traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.direct.cov = ruminant.trdata$dat$me.body,
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 1, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+One direct traits wo ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 3, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+#########################
+Regimes: Slouch Results for Comparison
+
+Two random traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.random.cov = data.frame(ruminant.trdata$dat$me.brain,ruminant.trdata$dat$me.body),
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 1, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+Two random traits wo ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 1, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+Two direct traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.direct.cov = data.frame(ruminant.trdata$dat$me.brain,ruminant.trdata$dat$me.body),
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+Two direct traits w/o ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 3, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+
+Two traits, one random, one direct w/ ME
+```{r}
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.direct.cov = ruminant.trdata$dat$me.body,
+                              mv.random.cov = ruminant.trdata$dat$me.brain,        
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+
+```
+
+Two traits, one random, one direct wo/ ME
+```{r}
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              fixed.fact = ruminant.trdata$dat$diet,
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+
+```
+
+
+
+
+
+###################################
+Single Covariates - No Fixed Regimes
+```{r}
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_2.R") #To use with blouchOU_v1_6.stan
+
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_3.R") #To use with blouchOU_c1_8.stan
+
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro (1)/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_3.R")
+
+#Direct and Random model - 1 trait each
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+name.response.me.trait<-c("me.neocortex")
+names.random.traits<-c("braincentered")
+names.random.me.traits<-c("me.brain")
+names.direct.traits<-c("bodycentered")
+names.direct.me.traits<-c("me.body")
+
+#name.response.trait<-c("braincentered")
+#name.response.me.trait<-c("me.brain")
+
+#names.random.traits<-c("bodycentered")
+#names.random.me.traits<-c("me.body")
+
+#Direct Model
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+name.response.me.trait<-c("me.neocortex")
+names.direct.traits<-c("braincentered")
+names.direct.me.traits<-c("me.brain")
+
+
+
+#Data must be logged before entry into blouchOU.setup
+###############################
+#One random covariate, w ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits=NULL,names.random.traits,name.response.me.trait,names.direct.me.traits=NULL,names.random.me.traits)
+
+#One random covariate, no ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits=NULL,names.random.traits)
+
+#####################
+#One direct covariate w ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits,names.random.traits=NULL,name.response.me.trait,names.direct.me.traits,names.random.me.traits=NULL)
+
+#One direct covariate wo ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits,names.random.traits=NULL)
+
+```
+
+
+Two Random and Two Direct Covariates - No Fixed Regimes
+```{r}
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/R Setup Code/R1/blouchOU.setup.mv_v1_2.R")
+
+#Two covariates
+###############
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+names.random.traits<-c("braincentered","bodycentered")
+names.direct.traits<-c("braincentered","bodycentered")
+name.response.me.trait<-c("me.neocortex")
+names.direct.me.traits<-c("me.brain","me.body")
+names.random.me.traits<-c("me.brain","me.body")
+
+################
+#Two random covariates only w ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits=NULL,names.random.traits,name.response.me.trait,names.direct.me.traits=NULL,names.random.me.traits)
+
+#Two Random covariates only no ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits=NULL,names.random.traits)
+   
+
+#Two direct covariates only w/ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits,names.random.traits=NULL,name.response.me.trait,names.direct.me.traits,names.random.me.traits=NULL)
+
+#Two direct covariates only w/o ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits,names.random.traits=NULL)
+                          
+```
+
+One Direct and One Random Covariate - No Fixed Regimes
+```{r}
+#########################
+
+#Direct and Random model - 1 trait each
+name.response.trait<-c("neocortex_area_mm2_log_mean")
+name.response.me.trait<-c("me.neocortex")
+names.random.traits<-c("braincentered")
+names.random.me.traits<-c("me.brain")
+names.direct.traits<-c("bodycentered")
+names.direct.me.traits<-c("me.body")
+
+#Random and Direct covariates w ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits,names.random.traits,name.response.me.trait,names.direct.me.traits,names.random.me.traits)
+
+#Random and Direct covariates wo/ ME
+stan_data<-blouchOU.setup.mv(ruminant.trdata,name.response.trait,names.direct.traits,names.random.traits)
+
+
+```
+
+Run Model
+```{r}
+stan_data<-stan_data[[1]]
+
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro (1)/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/")
+
+
+#OU Model
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchOU_v1_8.stan")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro (1)/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchOU_v1_8.stan")
+
+stan_model <- stan_model("blouchOU_v1_8.stan")
+
+
+#BM Model
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/Code/Stan Code/R1/blouchBM_v1.2.stan")
+
+#BM Model
+#stan_model <- stan_model("blouchBM_v1.2.stan")
+
+fit<- rstan::sampling(object = stan_model,data = stan_data,chains = 1,iter = 500,control=list(adapt_delta=0.975))
+
+#Adaptive model
+print(fit,pars = c("a","hl","Ya","b0","beta","beta_e","vy","sigma2_y","r_squared"))
+
+#Direct model
+print(fit,pars = c("a","hl","beta","beta_e","vy","sigma2_y","r_squared"))
+
+#BM model
+print(fit,pars = c("beta","beta_evol","sigma2_y","r_squared"))
+
+
+#For downstream analysis and plots
+#ext.direct <- rstan::extract(fit)
+
+
+```
+
+
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1/slouch-master")
+devtools::load_all()
+```
+
+
+Random Model - One trait w/ ME
+```{r}
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              mv.random.cov = ruminant.trdata$dat$me.brain,
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+
+BM Model - One trait w/ ME
+```{r}
+slouch.BM<-brown.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              mv.random.cov = ruminant.trdata$dat$me.brain,
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.BM)
+```
+
+
+BM Model - Brain ~ Body trait w/ ME
+```{r}
+slouch.BM<-brown.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$braincentered,
+                              mv.response = ruminant.trdata$dat$me.brain,
+                              random.cov = ruminant.trdata$dat$bodycentered,
+                              mv.random.cov = ruminant.trdata$dat$me.body,
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.BM)
+```
+
+
+Random Model - One trait no ME
+```{r}
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+Direct Model - one trait w ME
+```{r}
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.direct.cov = ruminant.trdata$dat$me.body,
+                              hl_values = seq(0.00001, 2, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              #hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Direct Model - one trait wo ME
+```{r}
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              hl_values = seq(0.00001, 2, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              #hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+```
+
+Random model - two random traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.random.cov = data.frame(ruminant.trdata$dat$me.brain,ruminant.trdata$dat$me.body),
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+Random model - two random traits wo ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+
+Direct model - two direct traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.direct.cov = data.frame(ruminant.trdata$dat$me.brain,ruminant.trdata$dat$me.body),
+                              hl_values = seq(0.00001, 2, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              #hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+
+Direct model - two direct traits wo ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = data.frame(ruminant.trdata$dat$braincentered,ruminant.trdata$dat$bodycentered),
+                              hl_values = seq(0.00001, 2, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              #hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+Random and direct model - two traits w ME
+```{r}
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Approaches/Slouch/slouch-master")
+#devtools::load_all()
+#library(slouch)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              mv.response = ruminant.trdata$dat$me.neocortex,
+                              mv.direct.cov = ruminant.trdata$dat$me.body,
+                              mv.random.cov = ruminant.trdata$dat$me.brain,
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              random.cov = ruminant.trdata$dat$braincentered,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+Direct Model - One trait
+```{r}
+
+#OU Model of Evolution - two traits of the same type
+slouch.OU<-slouch.fit(phy = ruminant.trdata$phy,
+                              species = ruminant.trdata$phy$tip.label,
+                              response = ruminant.trdata$dat$neocortex_area_mm2_log_mean,
+                              direct.cov = ruminant.trdata$dat$bodycentered,
+                              mv.direct.cov = ruminant.trdata$dat$me.body,
+
+                              hl_values = seq(0.00001, 0.25, length.out = 50),
+                              vy_values = seq(0.00001, 0.2, length.out = 50),
+                              hillclimb = TRUE,convergence = 150,
+                              lower = c(0.00001, 0.00001)
+
+                       )
+summary(slouch.OU)
+
+```
+
+
+
+## Explore Priors
+### Slope and intercept
+```{r Explore Priors 2}
+intercept_test<-rnorm(100,stan_data$ols_intercept,0.4)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_data$ols_slope[1],0.4)
+
+slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=braincentered))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Brain Mass (g)")+
+  scale_color_npg()
+
+slope.prior.plot
+```
+
+```{r Explore Priors 2}
+intercept_test<-rnorm(100,stan_data$ols_intercept,0.4)
+#slope_test<-rnorm(100,ols.slope,0.5)
+slope_test<-rnorm(100,stan_data$ols_slope[2],0.4)
+
+slope.prior.plot<-ggplot(data=ruminant.trdata$dat,aes(y=neocortex_area_mm2_log_mean,x=bodycentered))+
+  geom_point()+
+  geom_abline(intercept=intercept_test,slope=slope_test,alpha=0.25)+
+  theme_bw()+
+  ggtitle("Priors for Intercept and Slope")+
+  ylab("log Neocortex Area (mm2)") + xlab("log Body Mass (g)")+
+  scale_color_npg()
+
+slope.prior.plot
+```
+
+### Priors block
+//Priors
+  a ~ lognormal(1.0,1.0); 
+  //sigma2_y ~ exponential(0.1);
+  alpha ~ normal(ols_intercept,0.5); //Intercept
+  beta ~ normal(ols_slope, 0.4); //Slope
+  
+
+### Half-life
+Since our tree is scaled to unit length = 1, and the original phylogeny is ~27 Ma, we would like our half-life prior to be allow for very quick adaptation (e.g < 1 Ma, which equals < 0.04 in tree units), and very slow adaptation (e.g. > 27 Ma, which equals 1 in tree units). Thus, we will the 10% quantile of the distrubution at 0.04 and 90% at 1.
+
+We can explore how changing our parameters on the priors affect half-life using the code below. The values 1.0 and 1.0 for these two parameters are sufficient for this example analysis, but given your own data all parameters should be explored and the best values determined.
+
+```{r}
+###########################################
+#Log-normal prior for half-life - based on alpha
+#par.hl <- list(meanlog=-0.5, sdlog=1.5) 
+
+#samp <- rlnorm(10000, meanlog=par.hl$meanlog, sdlog=par.hl$sdlog)
+samp <- rnorm(10000, mean=0.5,sd=0.6)
+samp<-samp[samp>=0]
+
+hist(samp, breaks=10000, main="Prior density of half-life",xlim=c(0,3))
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75,0.90,0.95, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist(samp, breaks=10000, main="Prior density of half-life",xlim=c(0,3))
+abline(v=(c(0.04,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (27 Ma) - 
+########################################
+```
+
+This looks pretty good. Again to enter these priors, we would open the Blouch Stan code and change the Priors code within the model block. Below we have set the priors on a, log mean and log sd to the values as above.
+
+### Vy
+If we wanted to explore how sigma2_y prior compares to our expectations we could use the code below, but for the example we will use a uniform prior as discussed above.
+
+```{r}
+library(extraDistr)
+###########################################
+#Normal - based on alpha
+par.vy <- list(sigma=0.1)
+
+samp <- rhcauchy(10000, par.vy$sigma)
+
+#abline(v=(c(log(2)/0.07142857,log(2)/1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+min(samp)
+max(samp)
+
+quantiles <- c(0, 0.01, 0.025,0.10, 0.25, 0.5, 0.75, 0.90, 0.975, 0.99, 1)
+#hls <- rlnorm(10000, meanlog=log(2)/par.alpha$meanlog, sdlog=log(2)/par.alpha$sdlog)
+#hls<-hls[hls>=0]
+qs <- quantile(samp, quantiles) ## Use 'alfs' and math to calculate the quantiles of phylogenetic half-life
+round(qs, 2)
+
+hist(samp, breaks=100000, main="Prior density of Vy",xlim=c(0,1))
+#abline(v=(c(0.07142857,1)), col="red", lwd=2, lty=2) #Lines for 1 Ma and length of tree (14 Ma) - 
+########################################
+
+```
