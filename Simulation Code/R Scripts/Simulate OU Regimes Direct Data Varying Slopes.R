@@ -259,6 +259,9 @@ gg_color_hue <- function(n) {
 
 reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
 
+reg_tips<-trdata$dat$regimes
+reg_tips<-as.numeric(as.factor(reg_tips))
+
 print(reg.colors)
 plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
 
@@ -279,7 +282,7 @@ anc_maps<-"regimes"
 lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
 
 #########################
-hl<-0.1 #0.1, 0.25, 0.75 - testing options
+hl<-0.75 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
 vy<-0.01 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
@@ -353,8 +356,6 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_X_error,Z_X_error=Z_X_err
 
 
 #2 Regimes with direct effect model with regime info for tips
-reg_tips<-trdata$dat$regimes
-reg_tips<-as.numeric(as.factor(reg_tips))
 
 dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_direct),
           Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),

@@ -1908,8 +1908,6 @@ dev.off()
 ```
 
 
-
-
 #############################################################################################################################
 Milestone 8: Multilevel Regime Model with non-cenetered priors
 
@@ -2076,6 +2074,17 @@ dev.off()
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2542,6 +2551,296 @@ fig<-ggarrange(hl.plot, vy.plot, "",slope.plot.1, ncol=2,nrow=2, labels = c("A)"
 ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Documents/Validation Figures//blouch_validation_figS50.pdf", plot = fig, width=7, height=7 )
 
 pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Documents/Validation Figures//blouch_validation_figS50C.pdf",   # The directory you want to save the file in
+    width = 3.6, # The width of the plot in inches
+    height = 3.4) # The height of the plot in inches
+covariance.plot
+dev.off()
+```
+
+
+#############################################################################################################################
+Milestone 10: Combination Regime Model with direct effect model and varying slopes
+Two regimes - blouchOU_reg_direct_ME_Vs.stan
+Hl Plot prior vs. posterior - assume posterior has been extracted using extract(model) and stored in post
+```{r}
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.75))
+#hl.sims<-data.frame(hl.sims[hl.sims<3])
+names(hl.sims)<-"prior.hl.sims"
+
+hl.post<-data.frame(post$hl)
+names(hl.post)<-"post.hl.sims"
+
+hl.plot<-ggplot()+
+  geom_density(aes(prior.hl.sims,fill="prior.hl.sims"),alpha=0.2,data=hl.sims)+
+  geom_density(aes(post.hl.sims,fill="post.hl.sims"),alpha=0.2,data=hl.post)+
+  theme_bw()+
+            theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+
+  #labs(title="Prior vs. Posterior Distribution ",x="Half-life", y = "Density")+
+  labs(title="",x="Half-life", y = "Density")+
+
+    #scale_fill_manual(labels=c("Posterior","Prior"))+
+  geom_vline(xintercept=c(hl),linetype=2)+
+  scale_fill_npg(name="",labels=c("Posterior","Prior"))
+
+hl.plot
+```
+
+
+
+```{r}
+vy.sims<-rexp(n=1000,rate=20)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+
+vy.post<-data.frame(post$vy)
+names(vy.post)<-"post.vy.sims"
+
+
+vy.plot<-ggplot()+
+  geom_density(aes(prior.vy.sims,fill="prior.vy.sims"),alpha=0.2,data=vy.sims)+
+  geom_density(aes(post.vy.sims,fill="post.vy.sims"),alpha=0.2,data=vy.post)+
+  theme_bw()+
+            theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+
+  #labs(title="Prior vs. Posterior Distribution ",x="vy", y = "Density")+
+  labs(title="",x="vy", y = "Density")+
+  geom_vline(xintercept=c(vy),linetype=2)+
+
+  #scale_fill_manual(labels=c("Posterior","Prior"))+
+  scale_fill_npg(name="",labels=c("Posterior","Prior"))
+
+vy.plot
+```
+
+
+
+Direct effect model
+Prior on how shared branch lengths correspond to covariance
+```{r}
+a.sims<-log(2)/hl.sims;
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims));
+#x<-seq(from=0,to=1,by=0.001)
+#V.sim<-calc_direct_V(phy,a.sims,sigma2_y.sims)
+
+
+plot( NULL , xlim=c(0,1) , ylim=c(0,0.4) , xlab="Time since MRCA" , ylab="Covariance" ,cex.axis=0.75, mgp=c(1.25,0.25,0),tcl=-0.25)
+for (i in 1:30){
+    curve(sigma2_y.sims[i,] /(2 * a.sims[i,]) * ((1 - exp(-2 * a.sims[i,] * (1-(x/2)))) * exp(-a.sims[i,] * x)) , add=TRUE , lwd=4 , col=col.alpha(1,0.15))
+}
+
+for (i in 1:30){
+    curve(post$sigma2_y[i] /(2 * post$a[i]) * ((1 - exp(-2 * post$a[i] * (1-(x/2)))) * exp(-post$a[i] * x)) , add=TRUE , lwd=4 , col=col.alpha(2,0.5))
+}
+
+par(mar=c(3,3,0.25,0.25))
+covariance.plot <- recordPlot()
+dev.off()
+
+#Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij)); //From Hansen (1997)
+
+covariance.plot
+```
+
+
+
+Two regimes - Slope plots for direct model with measurement error
+```{r}
+library(ggsci)
+library(rethinking)
+X<-X_with_error
+Y<-Y_with_error
+
+optima.sims<-rnorm(100,mean(Y),1)
+beta.sims<-rnorm(n=100,0,0.25)
+
+optima.post<-post$optima_beta
+beta.post<-data.frame(post$beta)
+names(beta.post)<-c("post.beta.1","post.beta.2")
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post[,2]}
+
+x.seq <- seq(from=min(X), to=max(X) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+
+#mu.mean.11 <-lapply( mu.11 , mean )
+#mu.mean.12 <-lapply( mu.12 , mean )
+
+mu.mean.11<-colMeans(mu.11)
+mu.mean.12<-colMeans(mu.12)
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
+
+
+#mu.CI.11 <- lapply( mu.11 , PI , prob=0.89 )
+#mu.CI.12 <- lapply( mu.12 , PI , prob=0.89 )
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.1<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X,color=Regimes))+
+  geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.1)+ #Prior
+  
+  geom_abline(intercept=optima[1],slope=beta[1],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=beta[2],alpha=0.5,linetype=2)+
+
+  geom_line(data=df11,aes(x=x.seq,y=mu.mean.11),linetype=1)+
+  geom_ribbon(data=mu.CI.11,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  geom_line(data=df12,aes(x=x.seq,y=mu.mean.12),linetype=1)+
+  geom_ribbon(data=mu.CI.12,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  
+    theme_bw()+
+        theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Direct effect trait")+
+  scale_color_npg()
+
+slope.plot.1
+
+
+```
+
+
+
+
+Four regimes - Slope plots for direct model with measurement error
+```{r}
+library(ggsci)
+library(rethinking)
+X<-X_with_error
+Y<-Y_with_error
+
+optima.sims<-rnorm(100,mean(Y),1)
+beta.sims<-rnorm(n=100,0,0.25)
+
+optima.post<-post$optima.beta
+
+beta.post.1<-data.frame(post$beta[,1])
+names(beta.post.1)<-"post.beta.1"
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post.1}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post.1}
+
+mu.link.21<-function(x.seq){optima.post[,3]+x.seq*beta.post.1}
+mu.link.22<-function(x.seq){optima.post[,4]+x.seq*beta.post.1}
+
+x.seq <- seq(from=min(X), to=max(X) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+mu.21 <- sapply(x.seq , mu.link.21 )
+mu.22 <- sapply(x.seq , mu.link.22 )
+
+
+mu.mean.11 <-lapply( mu.11 , mean )
+mu.mean.12 <-lapply( mu.12 , mean )
+mu.mean.21 <-lapply( mu.21 , mean )
+mu.mean.22 <-lapply( mu.22 , mean )
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+mu.mean.21<-data.frame(as.numeric(mu.mean.21))
+mu.mean.22<-data.frame(as.numeric(mu.mean.22))
+names(mu.mean.21)<-"mu.mean.21"
+names(mu.mean.22)<-"mu.mean.22"
+
+
+
+mu.CI.11 <- lapply( mu.11 , PI , prob=0.89 )
+mu.CI.12 <- lapply( mu.12 , PI , prob=0.89 )
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+
+mu.CI.21 <- lapply( mu.21 , PI , prob=0.89 )
+mu.CI.22 <- lapply( mu.22 , PI , prob=0.89 )
+mu.CI.21<-data.frame(t(data.frame(mu.CI.21)),x.seq)
+mu.CI.22<-data.frame(t(data.frame(mu.CI.22)),x.seq)
+
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.21)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.22)<-c("min.5.5","max.94.5","x.seq")
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+df21<-data.frame(x.seq,mu.mean.21)
+df22<-data.frame(x.seq,mu.mean.22)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.1<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X,color=Regimes))+
+  geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.1)+ #Prior
+  
+  geom_abline(intercept=optima[1],slope=optima[5],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=optima[5],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[3],slope=optima[5],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[4],slope=optima[5],alpha=0.5,linetype=2)+
+  
+  geom_line(data=df11,aes(x=x.seq,y=mu.mean.11),linetype=1)+
+  geom_ribbon(data=mu.CI.11,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  geom_line(data=df12,aes(x=x.seq,y=mu.mean.12),linetype=1)+
+  geom_ribbon(data=mu.CI.12,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  
+  geom_line(data=df21,aes(x=x.seq,y=mu.mean.21),linetype=1)+
+  geom_ribbon(data=mu.CI.21,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  geom_line(data=df22,aes(x=x.seq,y=mu.mean.22),linetype=1)+
+  geom_ribbon(data=mu.CI.22,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+
+  
+    theme_bw()+
+        theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Direct effect trait")+
+  scale_color_npg()
+
+slope.plot.1
+
+
+```
+
+
+
+Change figure number depending on model/parameter combination
+```{r}
+fig<-ggarrange(hl.plot, vy.plot, "",slope.plot.1, ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+
+ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/Validation Figures/blouch_validation_figS53.pdf", plot = fig, width=7, height=7 )
+
+pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/Validation Figures/blouch_validation_figS53C.pdf",   # The directory you want to save the file in
     width = 3.6, # The width of the plot in inches
     height = 3.4) # The height of the plot in inches
 covariance.plot

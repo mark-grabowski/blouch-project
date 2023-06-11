@@ -241,19 +241,18 @@ plot(precis(fit.mli.regimes,depth=2,pars = c("hl","vy","optima","optima_bar","si
 post<-extract(fit.mli.regimes)
 ####################################
 #Milestone 10
-#Multilevel model - multilevel optima with direct effects predictor
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg_mli_direct_ME_Vs.stan")
+#Combination of regime model with direct effect model with mesurement error and varying slopes
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_direct_ME_Vs.stan")
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 #stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
 
-stan_model <- stan_model("blouchOU_reg_mli_direct_ME_Vs.stan")
-#First run
-fit.mli.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
-print(fit.mli.regimes,pars = c("hl","vy","optima_beta","beta"))
-#plot(precis(fit.mli.regimes,depth=2,pars = c("hl","vy","optima","optima_bar","sigma")))
-
-post<-extract(fit.mli.regimes)
+stan_model <- stan_model("blouchOU_reg_direct_ME_Vs.stan")
+fit.reg.direct.Vs<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
+print(fit.reg.direct.Vs,pars = c("hl","vy","optima_beta","beta"))
+plot(precis(fit.reg.direct.Vs,depth=2,pars = c("hl","vy","optima_beta","beta")))
+post<-extract(fit.reg.direct.Vs)
+####################################
 
 
 
