@@ -447,8 +447,11 @@ X<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, wi
 #X<-rnorm(N,0,1)
 names(X)<-phy$tip.label
 phenogram(phy,X,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+reg_tips<-trdata$dat$regimes
+reg_tips<-as.numeric(as.factor(reg_tips))
 
 dmX<-weight.matrix(trdata$phy, a, lineages) #Slouch approach
+
 optima<-c(2,1.5,1,0.5)
 beta<-c(0.25,0.15,0.35,0.1) #Two Optima/Two Slopes
 mu<-matrix(NA,N,1)
@@ -501,13 +504,156 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_X_error,Z_X_error=Z_X_err
 
 
 #2 Regimes with direct effect model with regime info for tips
-reg_tips<-trdata$dat$regimes
-reg_tips<-as.numeric(as.factor(reg_tips))
-
 dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_X_error,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_X_error),
           Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
           max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
           t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 
+########################################################################################################
+#Setup - four regimes with direct only and multiple slopes per optima with single alpha parameter but correlation between slopes and intercepts
+
+
+set.seed(10)
+
+tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+N<-50 #Number of species
+#set.seed(1) #Set seed to get same random species each time
+
+phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
+phy<-multi2di(phy)
+
+l.tree<-max(branching.times(phy)) ## rescale tree to height 1
+phy$edge.length<-phy$edge.length/l.tree 
+
+#Set regimes - manually - 2 regimes
+#Locate nodes
+plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+tiplabels()
+
+#Paint Regimes on Tree
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+shifts<-c(94,54,72) #Location of nodes with regime shifts
+trdata<-data.frame(phy$tip.label)
+trdata<-make.treedata(phy,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+
+#Check if manual setting code worked
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+#Phylogeny info
+n<-length(trdata$phy$tip.label)
+mrca1 <- ape::mrca(trdata$phy)
+times <- ape::node.depth.edgelength(trdata$phy)
+ta <- matrix(times[mrca1], nrow=n, dimnames = list(trdata$phy$tip.label, trdata$phy$tip.label))
+T.term <- times[1:n]
+tia <- times[1:n] - ta
+tja <- t(tia)
+tij <- tja + tia
+
+regimes_internal <-trdata$phy$node.label
+regimes_tip <- trdata$dat$regimes
+regimes <- concat.factor(regimes_tip, regimes_internal)
+anc_maps<-"regimes"
+lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
+
+#########################
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
+a<-log(2)/hl
+vy<-0.01 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+
+vX0<-0
+vY0 <- 0
+Sxx<-10 #Look at effects
+
+ts<-ts_fxn(phy)
+ta<-ts[[1]]
+tij<-ts[[2]]
+T_term<-ts[[3]]
+tja<-ts[[4]]
+
+
+X<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
+#X<-rnorm(N,0,1)
+names(X)<-phy$tip.label
+phenogram(phy,X,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+reg_tips<-trdata$dat$regimes
+reg_tips<-as.numeric(as.factor(reg_tips))
+
+dmX<-weight.matrix(trdata$phy, a, lineages) #Slouch approach
+
+optima<-c(2,1.5,1,0.5)
+beta<-c(0.25,0.15,0.35,0.1) #Two Optima/Two Slopes
+rho<-(-0.5) #Correlation between intercept and slope
+
+sigma_a<-1
+sigma_b<-0.25
+sigmas<-c(sigma_a,sigma_b)
+Rho<-matrix(c(1,rho,rho,1),nrow=2)
+Sigma<-diag(sigmas)%*%Rho%*%diag(sigmas)
+
+mus<-matrix(NA,N,2)
+for(i in 1:N){
+  Mu<-c(dmX[i,]%*%optima,beta[reg_tips[i]]%*%X[i])
+  mus[i,]<-mvrnorm(1,Mu,Sigma)
+}
+mu<-mus[,1]+mus[,2]
+V<-calc_direct_V(phy,sigma2_y,a)
+Y<-mvrnorm(n=1,mu,V)
+
+nodes<-NULL
+store<-NULL
+reg_num_lineage<-NULL
+for(i in 1:length(lineages)){
+  store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
+  reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
+  nodes<-c(nodes,length(lineages[[i]]$nodes))
+}
+max_node_num<-max(store)  
+times<-matrix(0,length(lineages),max_node_num)
+t_end<-matrix(0,length(lineages),max_node_num)
+t_beginning<-matrix(0,length(lineages),max_node_num)
+reg_match<-data.frame(matrix(0,length(lineages),max_node_num))
+
+for(i in 1:length(lineages)){
+  times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
+  t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
+  t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
+  reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
+}
+
+
+##################################################################################################################
+#Simulate errors - original Hansen setup
+Z_X_error<-1 #Number of X traits with error
+X_error<-matrix(0.01,nrow=N,ncol=1)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-X+rnorm(N,0,0.01)
+
+
+#2 Regimes with direct effect model with regime info for tips
+
+dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_X_error,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_X_error),
+          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
+          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 
 
