@@ -1,5 +1,6 @@
 //Blouch OU model reprogrammed
 //Combination of regime model with direct effect model with mesurement error and varying slopes
+//Multiple direct effect variables
 //Using Hansen (1997), Hansen et al. (2008) 
 
 functions {
@@ -85,25 +86,15 @@ data {
 
 parameters {
   real<lower=0> hl;
-  real<lower=0> vy;
+  real <lower=0> vy;
+  vector[n_reg] beta;
   vector[N] Y;
   matrix[N,Z_direct] X;
-  cholesky_factor_corr[2] L_Rho;
-  vector<lower=0>[2] sigma;
-  matrix[2,n_reg] Z;
-  real optima_bar;
-  real beta_bar;
+  vector[n_reg] optima_beta;
 
 }
 transformed parameters{
-  vector[n_reg] optima;
-  vector[n_reg] beta;
-  matrix[n_reg,2] v;
-  v = (diag_pre_multiply(sigma, L_Rho) * Z)';
-  beta = beta_bar + v[, 2];
-  optima = optima_bar + v[, 1];
 }
-
 model {
   matrix[N,N] V;
   vector[N] mu;
@@ -115,22 +106,18 @@ model {
   matrix[N,n_reg] optima_matrix;
   hl ~ lognormal(log(0.25),0.75);
   vy ~ exponential(20);
-  L_Rho ~ lkj_corr_cholesky(4);
-  sigma ~ exponential(1);
-  optima_bar ~ normal(mean(Y),1);
-  beta_bar ~ normal(0,0.25);
-  for(i in 1:n_reg){
-    Z[,i]~normal(0,1);
-  }
+  optima_beta ~ normal(mean(Y),1);
+  beta ~ normal(0,0.25);
   for(i in 1:(Z_direct)){
     X[,i] ~ normal(0,1);  
     X_obs[,i] ~ normal(X[,i], X_error[,i]);
   }
   optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes); //X data
+  //dmX = append_col(optima_matrix,X); //X data
   V = calc_direct_V(a, sigma2_y,ta, tij);
   L_v = cholesky_decompose(V);
   for(i in 1:N){
-    mu[i] = optima_matrix[i,]*optima+beta[reg_tips[i]]*X[i,1];
+    mu[i] = optima_matrix[i,]*optima_beta+beta[reg_tips[i]]*X[i,1];
     }
   Y ~ multi_normal_cholesky(mu , L_v);
   Y_obs ~ normal(Y,Y_error);
@@ -139,7 +126,5 @@ model {
 generated quantities {
   real sigma2_y = vy*(2*(log(2)/hl));
   real a = log(2)/hl;
-  matrix[2,2] Rho;
-  Rho = multiply_lower_tri_self_transpose(L_Rho);
-
+  //vector[N] rho = (1 - (1 - exp(-a * T_term))./(a * T_term)); 
 }

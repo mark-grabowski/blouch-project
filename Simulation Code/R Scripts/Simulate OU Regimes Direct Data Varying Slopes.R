@@ -1,6 +1,6 @@
 #Experimental code
-#Code to simulate data for regime painting on phylogeny
-#Usin
+#Code to simulate data for regime painting on phylogeny with multiple varying slopes
+#Also has correlated varying effects in some cases
 #To be used with Blouch SBR1 - Validation Code.R
 rm(list=ls())
 
@@ -483,6 +483,7 @@ for(i in 1:length(lineages)){
   reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
 }
 
+Z_direct<-1
 
 dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z_direct),
           max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
@@ -509,10 +510,35 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_X_error,Z_X_error=Z_X_err
           max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
           t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 
+#Plot of data
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.1<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X,color=Regimes))+
+  
+  geom_abline(intercept=optima[1],slope=beta[1],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=beta[2],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[3],slope=beta[3],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[4],slope=beta[4],alpha=0.5,linetype=2)+
+  
+  
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Direct effect trait")+
+  scale_color_npg()
+
+slope.plot.1
+
 ########################################################################################################
-#Setup - four regimes with direct only and multiple slopes per optima with single alpha parameter but correlation between slopes and intercepts
-
-
+#Setup - four regimes with direct only and multiple slopes per optima with single alpha parameter
+#Correlation between slopes and intercepts 
+#DOES NOT WORK
 set.seed(10)
 
 tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
@@ -601,7 +627,7 @@ dmX<-weight.matrix(trdata$phy, a, lineages) #Slouch approach
 
 optima<-c(2,1.5,1,0.5)
 beta<-c(0.25,0.15,0.35,0.1) #Two Optima/Two Slopes
-rho<-(-0.5) #Correlation between intercept and slope
+rho<-(0.25) #Correlation between intercept and slope - does this make sense when Y is the result of V?
 
 sigma_a<-1
 sigma_b<-0.25
@@ -656,4 +682,171 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_X_error,Z_X_error=Z_X_err
           max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
           t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 
+#Plot of data
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.1<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X,color=Regimes))+
+  
+  geom_abline(intercept=optima[1],slope=beta[1],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=beta[2],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[3],slope=beta[3],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[4],slope=beta[4],alpha=0.5,linetype=2)+
+  
+  
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Direct effect trait")+
+  scale_color_npg()
+
+slope.plot.1
+
+
+########################################################################################################
+#Two regimes with two direct effect predictors and multiple slopes per optima but single alpha parameter
+set.seed(10)
+
+tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+N<-50 #Number of species
+#set.seed(1) #Set seed to get same random species each time
+
+phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
+phy<-multi2di(phy)
+
+l.tree<-max(branching.times(phy)) ## rescale tree to height 1
+phy$edge.length<-phy$edge.length/l.tree 
+
+#Set regimes - manually - 2 regimes
+#Locate nodes
+plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+tiplabels()
+
+#Paint Regimes on Tree
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+shifts<-c(84) #Location of nodes with regime shifts
+trdata<-data.frame(phy$tip.label)
+trdata<-make.treedata(phy,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+
+#Check if manual setting code worked
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+reg_tips<-trdata$dat$regimes
+reg_tips<-as.numeric(as.factor(reg_tips))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+#Phylogeny info
+n<-length(trdata$phy$tip.label)
+mrca1 <- ape::mrca(trdata$phy)
+times <- ape::node.depth.edgelength(trdata$phy)
+ta <- matrix(times[mrca1], nrow=n, dimnames = list(trdata$phy$tip.label, trdata$phy$tip.label))
+T.term <- times[1:n]
+tia <- times[1:n] - ta
+tja <- t(tia)
+tij <- tja + tia
+
+regimes_internal <-trdata$phy$node.label
+regimes_tip <- trdata$dat$regimes
+regimes <- concat.factor(regimes_tip, regimes_internal)
+anc_maps<-"regimes"
+lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
+
+#########################
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
+a<-log(2)/hl
+vy<-0.01 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+
+vX0<-0
+vY0 <- 0
+Sxx<-10 #Look at effects
+
+ts<-ts_fxn(phy)
+ta<-ts[[1]]
+tij<-ts[[2]]
+T_term<-ts[[3]]
+tja<-ts[[4]]
+
+#X<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
+Z_direct<-2
+vcv<-matrix(c(1,0,0,1),2,2) #No correlation between traits
+Xs<-sim.corrs(phy,vcv) #Simulated correlated BM Xs
+#Xs<-data.frame(Xs)
+phenogram(phy,Xs[,1],spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+phenogram(phy,Xs[,2],spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+
+dmX<-weight.matrix(trdata$phy, a, lineages) #Slouch approach
+optima<-c(2,1)
+beta<-data.frame(matrix(c(0.25,0.15,0.35,0.1),ncol=2,nrow=2)) #Two traits on columns, two regimes on vertical
+
+mu<-matrix(NA,N,1)
+for(i in 1:N){
+  mu[i]<-dmX[i,]%*%optima+Xs[i,]%*%t(beta[reg_tips[i],]);
+}
+
+V<-calc_direct_V(phy,sigma2_y,a)
+Y<-mvrnorm(n=1,mu,V)
+
+nodes<-NULL
+store<-NULL
+reg_num_lineage<-NULL
+for(i in 1:length(lineages)){
+  store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
+  reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
+  nodes<-c(nodes,length(lineages[[i]]$nodes))
+}
+max_node_num<-max(store)  
+times<-matrix(0,length(lineages),max_node_num)
+t_end<-matrix(0,length(lineages),max_node_num)
+t_beginning<-matrix(0,length(lineages),max_node_num)
+reg_match<-data.frame(matrix(0,length(lineages),max_node_num))
+
+for(i in 1:length(lineages)){
+  times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
+  t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
+  t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
+  reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
+}
+
+
+dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Y_obs=Y,X_obs=matrix(Xs,nrow=N,ncol=Z_direct),
+          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
+
+##################################################################################################################
+#Simulate errors - original Hansen setup
+Z_X_error<-2 #Number of X traits with error
+X_error<-matrix(0.01,nrow=N,ncol=Z_X_error)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-Xs+rnorm(N,0,0.01)
+
+#2 Regimes with direct effect model with regime info for tips
+
+dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_direct),
+          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
+          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 

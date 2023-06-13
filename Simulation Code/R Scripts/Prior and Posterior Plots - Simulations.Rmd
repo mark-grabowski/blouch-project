@@ -2560,7 +2560,7 @@ dev.off()
 
 #############################################################################################################################
 Milestone 10: Combination Regime Model with direct effect model and varying slopes
-Two regimes - blouchOU_reg_direct_ME_Vs.stan
+Two regimes - blouchOU_reg_direct_ME_VarSlopes.stan
 Hl Plot prior vs. posterior - assume posterior has been extracted using extract(model) and stored in post
 ```{r}
 hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.75))
@@ -2946,6 +2946,92 @@ dev.off()
 covariance.plot
 ```
 
+
+
+Two regimes - Slope plots for direct model with measurement error
+```{r}
+library(ggsci)
+library(rethinking)
+X<-X_with_error
+Y<-Y_with_error
+
+optima.sims<-rnorm(100,mean(Y),1)
+beta.sims<-rnorm(n=100,0,0.25)
+
+optima.sims<-rnorm(100,mean(Y),1)
+beta.sims<-rnorm(n=100,0,0.25)
+
+optima.post<-post$optima
+beta.post<-data.frame(post$beta)
+names(beta.post)<-c("post.beta.1","post.beta.2")
+
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post[,2]}
+
+
+x.seq <- seq(from=min(X), to=max(X) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+
+
+mu.mean.11<-colMeans(mu.11)
+mu.mean.12<-colMeans(mu.12)
+
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+
+
+
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
+
+
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+
+
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.1<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X,color=Regimes))+
+  geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.1)+ #Prior
+  
+  geom_abline(intercept=optima[1],slope=beta[1],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=beta[2],alpha=0.5,linetype=2)+
+
+  geom_line(data=df11,aes(x=x.seq,y=mu.mean.11),linetype=1)+
+  geom_ribbon(data=mu.CI.11,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  geom_line(data=df12,aes(x=x.seq,y=mu.mean.12),linetype=1)+
+  geom_ribbon(data=mu.CI.12,aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.25)+
+  
+
+  
+    theme_bw()+
+        theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Direct effect trait")+
+  scale_color_npg()
+
+slope.plot.1
+
+
+```
 
 
 
