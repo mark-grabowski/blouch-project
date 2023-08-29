@@ -101,7 +101,7 @@ model {
 generated quantities {
   matrix[N,N] V;
   matrix[N,N] inv_V;
-  matrix[N,Z_adaptive] dmX;
+  matrix[N,Z_direct+Z_adaptive] dmX;
   vector[N] mu;
   real g_i;
   real sigma_ii;

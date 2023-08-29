@@ -181,6 +181,7 @@ weight.matrix <- function(phy, a, lineages){ #Wrapper to apply weights_regimes t
 concat.factor <- function(...){
   as.factor(do.call(c, lapply(list(...), as.character)))
 }
+
 ############################################################################################################
 #Direct Effect Model setup
 ############################################################################################################
@@ -223,7 +224,7 @@ blouch.adapt.prep<-function(trdata,Y,Y_error,X,X_error){
   if(is.na(Y_error)!=TRUE){mv.response<-dat[Y_error]}
   else{mv.response<-as.vector(rep(0,n))}
   if(is.na(X_error)!=TRUE){mv.pred<-matrix(datXerror,nrow=N,ncol=Z)}
-  else{mv.pred<-matrix(0,nrow=n,ncol=1)}
+  else{mv.pred<-matrix(0,nrow=n,ncol=Z)}
   
   test<-sigma.X.estimate(phy,ta, predictor = datX, mv.predictor = mv.pred)
   
@@ -241,7 +242,7 @@ blouch.adapt.prep<-function(trdata,Y,Y_error,X,X_error){
 #Direct effect Adaptive Model setup
 ############################################################################################################
 
-blouch.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,Z_direct){
+blouch.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_direct,Z_adapt){
   phy<-trdata$phy
   dat<-data.frame(trdata$dat)
   N<-length(trdata$phy$tip.label)
@@ -252,24 +253,23 @@ blouch.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,Z_direct){
   tja<-ts[[4]]
   
   datX<-as.matrix(dat[X])
-  datX.direct<-datX[X[Z_direct]]
-  datX.adapt<-datX[X[Z_adapt]]
+  #return(Z_adapt)
+  datX.direct<-datX[,1:Z_direct]
+  datX.adapt<-datX[,(Z_direct+1):(Z_adapt+Z_direct)]
+  
   datXerror<-as.matrix(dat[X_error])
-  datXerror.direct<-datXerror[X[Z_direct]]
-  datXerror.adapt<-datXerror[X[Z_adapt]]
-
+  
+  datXerror.direct<-datXerror[,1:Z_direct]
+  datXerror.adapt<-datXerror[,(Z_direct+1):(Z_adapt+Z_direct)]
+  #return(datXerror.direct)
   if(is.na(Y_error)!=TRUE){mv.response<-dat[Y_error]}
-  else{mv.response<-as.vector(rep(0,n))}
+  else{mv.response<-as.vector(rep(0,N))}
   
-  if(length(datX.direct)==1){Z_direct<-1}
-  else{Z_direct<-dim(datX.direct)[2]}
-  if(is.na(datXerror.direct)!=TRUE){mv.pred.direct<-matrix(datXerror.direct,nrow=N,ncol=Z)}
-  else{mv.pred.direct<-matrix(0,nrow=n,ncol=1)}
+  if(any(is.na(datXerror.direct)!=TRUE)){mv.pred.direct<-matrix(datXerror.direct,nrow=N,ncol=Z_direct)}
+  else{mv.pred.direct<-matrix(0,nrow=N,ncol=Z_direct)}
   
-  if(length(datX.adapt)==1){Z_adapt<-1}
-  else{Z_adapt<-dim(datX.adapt)[2]}
-  if(is.na(datXerror.adapt)!=TRUE){mv.pred.adapt<-matrix(datXerror.adapt,nrow=N,ncol=Z)}
-  else{mv.pred.adapt<-matrix(0,nrow=n,ncol=1)}
+  if(any(is.na(datXerror.adapt)!=TRUE)){mv.pred.adapt<-matrix(datXerror.adapt,nrow=N,ncol=Z_adapt)}
+  else{mv.pred.adapt<-matrix(0,nrow=N,ncol=Z_adapt)}
   
   test<-sigma.X.estimate(phy,ta, predictor = datX.adapt, mv.predictor = mv.pred.adapt)
   
@@ -281,7 +281,8 @@ blouch.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,Z_direct){
 
 dat<-list(N=N,Z_direct=Z_direct,Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,
           Y_obs=as.vector(t(dat[Y])),X_obs=matrix(datX,nrow=N,ncol=Z),
-          Y_error=Y_error,X_error=cbind(mv.pred.direct,mv.pred.adapt),ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
+          Y_error=as.vector(t(dat[Y_error])),X_error=matrix(datXerror,nrow=N,ncol=Z),
+          ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
 return(dat)
 }
 ############################################################################################################
@@ -350,10 +351,12 @@ blouch.reg.prep<-function(trdata,Y,Y_error,reg.column,anc_maps="regimes"){
 ############################################################################################################  
 ############################################################################################################  
 
-blouch.reg.direct.prep<-function(trdata,Y,Y_error,X,X_error,reg.column,anc_maps="regimes"){
+blouch.reg.direct.prep<-function(trdata,Y,Y_error,X,X_error,Z_direct,reg.column){
   #Data should be send in treeplyr format
   #Only allows for regime shifts at nodes at present, not SIMMAP
   #Get Phylogeny info
+  
+  anc_maps="regimes"
   phy<-trdata$phy
   dat<-data.frame(trdata$dat)
   #return(dat)
@@ -398,15 +401,11 @@ blouch.reg.direct.prep<-function(trdata,Y,Y_error,X,X_error,reg.column,anc_maps=
     reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
   }
   ############################################################################################################  
-  #Simulate errors - original Hansen setup
-  Z_direct<-length(X)
-  Z_X_error<-length(X_error) #Number of X traits with error
-
   reg_tips<-dat[reg.column][,1]
   reg_tips<-as.numeric(as.factor(reg_tips))
   Dmat<-cophenetic(trdata$phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
   
-  dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_error,
+  dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_direct,
             Y_obs=as.vector(t(dat[Y])),X_obs=data.matrix(dat[X]),#,nrow=N,ncol=Z_direct),
             Y_error=as.vector(t(dat[Y_error])),X_error=data.matrix(dat[X_error]),#matrix(dat[X_error],nrow=N,ncol=Z_direct),
             max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
@@ -415,10 +414,11 @@ blouch.reg.direct.prep<-function(trdata,Y,Y_error,X,X_error,reg.column,anc_maps=
   return(dat)
 }
 
-blouch.reg.adapt.prep<-function(trdata,Y,Y_error,X,X_error,reg.column,anc_maps="regimes"){
+blouch.reg.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,reg.column){
   #Data should be send in treeplyr format
   #Only allows for regime shifts at nodes at present, not SIMMAP
   #Get Phylogeny info
+  anc_maps="regimes"
   phy<-trdata$phy
   dat<-data.frame(trdata$dat)
   #return(dat)
@@ -461,15 +461,20 @@ blouch.reg.adapt.prep<-function(trdata,Y,Y_error,X,X_error,reg.column,anc_maps="
     reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
   }
   ############################################################################################################  
-  #Simulate errors - original Hansen setup
-  Z_adaptive<-length(X)
-  Z_X_error<-length(X_error) #Number of X traits with error
+
+  datX<-as.matrix(dat[X])
+  datXerror<-as.matrix(dat[X_error])
+  mv.pred.adapt<-matrix(datXerror,nrow=N,ncol=Z_adapt)
+  test<-sigma.X.estimate(phy,ta, predictor = datX, mv.predictor = mv.pred.adapt)
+  
+  brownian_mean<-test[1]
+  sigma_squared_x<-test[2]
   
   reg_tips<-dat[reg.column][,1]
   reg_tips<-as.numeric(as.factor(reg_tips))
   Dmat<-cophenetic(trdata$phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
   
-  dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,
+  dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_adaptive,
             Y_obs=as.vector(t(dat[Y])),X_obs=data.matrix(dat[X]),
             Y_error=as.vector(t(dat[Y_error])),X_error=data.matrix(dat[X_error]),
             sigma2_x=sigma2_x,max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,
@@ -479,10 +484,11 @@ blouch.reg.adapt.prep<-function(trdata,Y,Y_error,X,X_error,reg.column,anc_maps="
   return(dat)
 }
 
-blouch.reg.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,Z_direct,reg.column,anc_maps="regimes"){
+blouch.reg.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,Z_direct,reg.column){
   #Data should be send in treeplyr format
   #Only allows for regime shifts at nodes at present, not SIMMAP
   #Get Phylogeny info
+  anc_maps="regimes"
   phy<-trdata$phy
   dat<-data.frame(trdata$dat)
   #return(dat)
@@ -525,14 +531,39 @@ blouch.reg.direct.adapt.prep<-function(trdata,Y,Y_error,X,X_error,Z_adapt,Z_dire
     reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
   }
   ############################################################################################################  
-  #Simulate errors - original Hansen setup
-  #Z_adaptive<-length(X_adaptive)
-  #Z_direct<-length(X_direct)
   Z_X_error<-length(X_error) #Number of X traits with error
   
   reg_tips<-dat[reg.column][,1]
   reg_tips<-as.numeric(as.factor(reg_tips))
   Dmat<-cophenetic(trdata$phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
+  ############################################################################################################  
+  
+  datX<-as.matrix(dat[X])
+  #return(Z_adapt)
+  datX.direct<-datX[,1:Z_direct]
+  datX.adapt<-datX[,(Z_direct+1):(Z_adapt+Z_direct)]
+  
+  datXerror<-as.matrix(dat[X_error])
+  
+  datXerror.direct<-datXerror[,1:Z_direct]
+  datXerror.adapt<-datXerror[,(Z_direct+1):(Z_adapt+Z_direct)]
+  #return(datXerror.direct)
+  if(is.na(Y_error)!=TRUE){mv.response<-dat[Y_error]}
+  else{mv.response<-as.vector(rep(0,N))}
+  
+  if(any(is.na(datXerror.direct)!=TRUE)){mv.pred.direct<-matrix(datXerror.direct,nrow=N,ncol=Z_direct)}
+  else{mv.pred.direct<-matrix(0,nrow=N,ncol=Z_direct)}
+  
+  if(any(is.na(datXerror.adapt)!=TRUE)){mv.pred.adapt<-matrix(datXerror.adapt,nrow=N,ncol=Z_adapt)}
+  else{mv.pred.adapt<-matrix(0,nrow=N,ncol=Z_adapt)}
+  
+  test<-sigma.X.estimate(phy,ta, predictor = datX.adapt, mv.predictor = mv.pred.adapt)
+  
+  brownian_mean<-test[1]
+  sigma_squared_x<-test[2]
+  
+  Z<-Z_direct+Z_adapt
+  Z_X_error<-Z_direct+Z_adapt
   
   dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,
             Y_obs=as.vector(t(dat[Y])),X_obs=data.matrix(dat[X]),Y_error=as.vector(t(dat[Y_error])),

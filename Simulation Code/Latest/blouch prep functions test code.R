@@ -405,9 +405,9 @@ fit.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000
 ############################################################################################################
 #Direct effect + Adaptive Model
 ############################################################################################################
-hl<-0.75 #0.1, 0.25, 0.75 - testing options
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
-vy<-0.1 #0.25,0.5 - testing options
+vy<-0.01 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
 
 vX0<-0
@@ -467,19 +467,21 @@ X_with_error<-apply(Xs,2,function(X){X+rnorm(N,0,0.01)})
 
 ############################################################################################################
 #Make trdata file
-trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
+#trdata<-make.treedata(phy,trait.data)
+trait.data<-data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error))
+trdata<-make.treedata(phy,trait.data)
+
 ############################################################################################################
-#Test Blouch prep code - Regimes + Adaptive Model
+#Test Blouch prep code - Direct effect + Adaptive Model
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
-dat<-blouch.direct.adapt.prep(trdata,"Y_with_error","Y_error",c("Xd","Xa"),c("Xd_error","Xa_error"),"regimes",1,1)
+dat<-blouch.direct.adapt.prep(trdata,"Y_with_error","Y_error",c("Xd","Xa"),c("Xd_error","Xa_error"),1,1)
 
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_direct_adapt.stan")
 stan_model <- stan_model("blouchOU_direct_adapt.stan")
-fit.direct.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+fit.direct.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =1000,cores=2)
 print(fit.direct.adapt,pars = c("hl","vy","optima","beta"))
 #plot(precis(fit.adapt,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
-
 #post<-extract(fit.adapt)
 
 ############################################################################################################
@@ -545,7 +547,7 @@ Y_with_error<-Y+rnorm(N,0,0.01)
 
 ############################################################################################################
 #Make trdata file
-#trait.data<-data.frame(cbind(Y_with_error,Y_error))
+trait.data<-data.frame(cbind(Y_with_error,Y_error))
 trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error)))
 #trdata<-make.treedata(phy,trait.data)
 ############################################################################################################
@@ -556,7 +558,7 @@ dat<-blouch.reg.prep(trdata,"Y_with_error","Y_error","regimes")
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg.stan")
 stan_model <- stan_model("blouchOU_reg.stan")
-fit.reg<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+fit.reg<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
 print(fit.reg,pars = c("hl","vy","optima"))
 #plot(precis(fit.adapt,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
 
@@ -650,14 +652,14 @@ X_with_error<-X+rnorm(N,0,0.01)
 trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
 
 ############################################################################################################
-#Test Blouch prep code - Regimes model
+#Test Blouch prep code - Regimes + Durect Efffect model
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
-dat<-blouch.reg.direct.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error","regimes")
+dat<-blouch.reg.direct.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",1,"regimes")
 
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct.stan")
 stan_model <- stan_model("blouchOU_reg_direct.stan")
-fit.reg.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+fit.reg.direct<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
 #print(fit.adapt,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
 #plot(precis(fit.adapt,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
 
@@ -708,7 +710,7 @@ lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps,
 #########################
 hl<-0.1 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
-vy<-0.011 #0.25,0.5 - testing options
+vy<-0.01 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
 
 vX0<-0
@@ -749,12 +751,12 @@ trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,
 ############################################################################################################
 #Test Blouch prep code - Regimes + Adaptive Model
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
-dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error","regimes")
+dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",1,"regimes")
 
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt.stan")
 stan_model <- stan_model("blouchOU_reg_adapt.stan")
-fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
 #print(fit.adapt,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
 #plot(precis(fit.adapt,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
 
@@ -805,7 +807,7 @@ lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps,
 #########################
 hl<-0.1 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
-vy<-0.1 #0.25,0.5 - testing options
+vy<-0.01 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
 
 vX0<-0
@@ -854,12 +856,12 @@ trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,
 ############################################################################################################
 #Test Blouch prep code - Regimes + Adaptive Model
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
-dat<-blouch.reg.direct.adapt.prep(trdata,"Y_with_error","Y_error",c("Xd","Xa"),c("Xd_error","Xa_error"),"regimes",1,1)
+dat<-blouch.reg.direct.adapt.prep(trdata,"Y_with_error","Y_error",c("Xd","Xa"),c("Xd_error","Xa_error"),1,1,"regimes")
 
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_adapt.stan")
 stan_model <- stan_model("blouchOU_reg_direct_adapt.stan")
-fit.reg.direct.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+fit.reg.direct.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
 print(fit.reg.direct.adapt,pars = c("hl","vy","optima","beta"))
 #plot(precis(fit.adapt,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
 
