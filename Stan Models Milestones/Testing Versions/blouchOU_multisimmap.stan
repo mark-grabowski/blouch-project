@@ -1,7 +1,8 @@
 //Blouch OU model reprogrammed
 //Using Hansen (1997) 
-//Regime model - for multi-regime painting and SIMMAPS
-//Multilevel model partial pooling across trees
+//Regime model - for multiSIMMAPs
+//Multilevel model partial pooling optima across trees
+//cmdstanr version
 functions {
   int num_matches(vector x, real y) { //Thanks to Stan Admin Jonah -https://discourse.mc-stan.org/t/how-to-find-the-location-of-a-value-in-a-vector/19768/2
   int n = 0;
@@ -53,6 +54,7 @@ functions {
   
   matrix calc_optima_matrix(int N, int n_reg, real a, matrix t_beginning, matrix t_end, matrix times, matrix reg_match, int[] nodes){
     matrix[N,n_reg] optima_matrix = rep_matrix(0,N,n_reg);
+    //print(dims(t_beginning));
     for(i in 1:N){ //For each tip/lineage, figure out weighting of regimes
       optima_matrix[i,] = weights_regimes(n_reg, a, t_beginning[i,]', t_end[i,]', times[i,1], reg_match[i,]', nodes[i]);
       //print(i);
@@ -70,29 +72,26 @@ data {
   vector[N] Y_obs; //Y observed
   matrix[N,N] ta; //Time from tip to ancestor
   matrix[N,N] tij;
-  matrix[N, max_node_num] t_beginning[T]; //Matrix of times for beginning of segments
-  matrix[N, max_node_num] t_end[T]; //Matrix of times for end of segments
-  matrix[N, max_node_num] times[T]; //Matrix of root to node times
-  matrix[N, max_node_num] reg_match[T]; //Matrix of 1,2,3 denoting each regime for each node in a lineage. 0 if no node
+  matrix [N, max_node_num] t_beginning [T]; //Array of times for beginning of segments
+  matrix [N, max_node_num] t_end [T]; //Matrix of times for end of segments
+  matrix [N, max_node_num] times [T]; //Matrix of root to node times
+  matrix [N, max_node_num] reg_match [T]; //Matrix of 1,2,3 denoting each regime for each node in a lineage. 0 if no node
   int nodes[N,T]; //Matrix of number of nodes/segments per lineage
 }
 
 parameters {
-  matrix[T,2] v; //variance covariance matrix between hl and sigms2y
-  //matrix[T,n_reg] o; //V/CV matrix for pooling across regimes
-  corr_matrix[2] Rho;
-  vector<lower=0>[2] hbar_sbar;
-  vector<lower=0>[2] sigma;
-  matrix[T,n_reg] optima; //Regime Coefficients
-  vector[n_reg] optima_bar; //
-  vector<lower=0>[n_reg] optima_sigma; //R
+  vector<lower=0>[T] hl;
+  vector<lower=0>[T] vy;
+  real<lower=0> hl_bar;
+  real<lower=0> hl_sigma;
+  real<lower=0> vy_bar;
+  real<lower=0> vy_sigma;
+  vector[n_reg] optima;
+  vector[n_reg] optima_bar;
+  vector<lower=0>[n_reg] optima_sigma;
 }
 
 transformed parameters{
-    vector[T] hl;
-    vector[T] vy;
-    hl = v[, 1];
-    vy = v[, 2];
 }
 
 model {
@@ -100,24 +99,31 @@ model {
   vector[N] mu;
   matrix[N,N] L_v;
   matrix[N,n_reg] dmX;
-  real a = log(2)/hl;
-  real sigma2_y = vy*(2*(log(2)/hl));
-  hbar_sbar ~ normal(0,1);
-  optima_bar ~ normal(0,1);
+  vector[T] a;
+  vector[T] sigma2_y;
+  optima_bar~normal(mean(Y_obs),1);
   optima_sigma ~ exponential(1);
-  Rho ~ lkj_corr( 4 );
-  sigma ~ exponential( 1 );
+  hl_bar ~ lognormal(log(0.25),0.75);
+  hl_sigma ~ exponential(5);
+  vy_bar ~ exponential(20);
+  vy_sigma ~ exponential(5);
   for(i in 1:T){
-    v[i,:] ~ multi_normal(hbar_sbar , quad_form_diag(Rho , sigma)); //Two features - hl and vy using partial pooling across features and across trees
-    a = log(2)/hl[i];
-    V = calc_V(a, sigma2_y[i],ta, tij);
+    hl[i] ~ normal(hl_bar,hl_sigma);
+    vy[i] ~ normal(vy_bar,vy_sigma);
+    sigma2_y[i] = vy[i]*(2*(log(2)/hl[i]));
+    a[i] = log(2)/hl[i];
+    V = calc_V(a[i], sigma2_y[i],ta, tij);
     L_v = cholesky_decompose(V);
-    dmX = calc_optima_matrix(N, n_reg, a, t_beginning[i], t_end[i], times[i], reg_match[i], nodes[,i]);
-    optima[i,]~normal(optima_bar,optima_sigma);
-    mu = dmX*optima[i,]';
+    dmX = calc_optima_matrix(N, n_reg, a[i], t_beginning[i], t_end[i], times[i], reg_match[i], nodes[,i]); //name[i] = accessing tree, not first row of matrix
+    optima ~ normal(optima_bar,optima_sigma);
+    mu = dmX*optima;
   }
   Y_obs ~ multi_normal_cholesky(mu , L_v);
 }
 generated quantities {
-  real vy = hlbar_sigma2ybar[2]/(2*(log(2)/hlbar_sigma2ybar[1]));
+    vector[T] sigma2_y;
+    vector[T] a;
+  for(i in 1:T){
+    sigma2_y[i] = vy[i]*(2*(log(2)/hl[i]));
+    a[i] = log(2)/hl[i];}
 }

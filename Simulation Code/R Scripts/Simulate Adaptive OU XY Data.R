@@ -2,6 +2,7 @@
 #Generative Code
 #Script to simulate X an Y OU Data
 #04/26/2023
+#For Milestone 2 Code
 
 rm(list=ls())
 calc_dmX<-function(a,T_term,X){
@@ -118,6 +119,7 @@ summary(lm(Y~X,df))
 ########################################################################################################
 #Adaptive model w/o ME- blouchOU_adaptive.stan
 dat<-list(N=N,Z=Z,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z),ta=ta,tij=tij,tja=tja,T_term=T_term,sigma2_x=sigma2_x)
+
 ########################################################################################################
 #Simulate errors
 Z_X_error<-1 #Number of X traits with error

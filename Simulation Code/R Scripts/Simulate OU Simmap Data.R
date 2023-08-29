@@ -176,152 +176,8 @@ library(MASS)
 
 
 
-################################################################################################
-#Make SIMMAP using tip regimes
-#50 tips
-#Basic Setup
-#Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij)); //From Hansen (1997) Original Stan
-#library(parallel)
-#num.cores=parallel::detectCores()-2 #For mclapply function
-#sim.num<-2 #25
-#loops.num<-1 #2
-#set.seed(1)
-
-tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
-#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
-N<-50 #Number of species
-#set.seed(1) #Set seed to get same random species each time
-
-phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
-phy<-multi2di(phy)
-
-l.tree<-max(branching.times(phy)) ## rescale tree to height 1
-phy$edge.length<-phy$edge.length/l.tree 
-
-#Set regimes - manually - 2 regimes
-#Locate nodes
-plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
-nodelabels(frame="none",adj=c(1.1,-0.4))
-tiplabels()
-#Using node 54
-
-#Paint Regimes on Tree
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
-#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
-
-shifts<-c(54) #Location of nodes with regime shifts
-trdata<-data.frame(phy$tip.label)
-trdata<-make.treedata(phy,trdata)
-trdata<-set.converge.regimes(trdata,shifts)
-
-#Check if manual setting code worked
-shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
-edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
-print(edge.regimes)
-#Get ggplot colors used for plot to make on tree
-gg_color_hue <- function(n) {
-  hues = seq(15, 375, length=n+1)
-  hcl(h=hues, l=65, c=100)[1:n]
-}
-
-reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
-
-print(reg.colors)
-plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
-
-#Make simmap tree
-#Setup dataset for info on model fits
-cl<-parallel::detectCores()-2 #Cl for fitMk function
-x<-trdata$dat$regimes
-names(x)<-trdata$phy$tip.label
-fit.ER<-fitMk(trdata$phy,x,model="ARD")
-
-fit<-fit.ER
-fittedQ<-matrix(NA,length(fit$states),length(fit$states))
-fittedQ[]<-c(0,fit$rates)[fit$index.matrix+1]
-diag(fittedQ)<-0
-diag(fittedQ)<--rowSums(fittedQ)
-colnames(fittedQ)<-rownames(fittedQ)<-fit$states
-tree<-trdata$phy
-simmap_trees<-make.simmap(tree,x,Q=fittedQ,nsim=2)
-simmap_trees[[1]]$mapped.edge
-
-simmap_tree1<-simmap_trees[[1]]
-
-#Simulate data using simmap
-n<-length(simmap_tree1$tip.label)
-mrca1 <- ape::mrca(simmap_tree1)
-times <- ape::node.depth.edgelength(simmap_tree1)
-ta <- matrix(times[mrca1], nrow=n, dimnames = list(simmap_tree1$tip.label, simmap_tree1$tip.label))
-T.term <- times[1:n]
-tia <- times[1:n] - ta
-tja <- t(tia)
-tij <- tja + tia
-
-#regimes_internal <-trdata$phy$node.label
-#regimes_tip <- trdata$dat$regimes
-#regimes <- concat.factor(regimes_tip, regimes_internal)
-regimes<-as.factor(simmap_tree1$node.label)
-anc_maps<-"simmap"
-lineages <- lapply(1:n, function(e) lineage.constructor(simmap_tree1, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
-
-#chr [1:3] "OU1" "OU1" "OU1"
-#Simulate Y based on V and incorporating regimes
-#Setup parameters
-
-hl<-0.1 #0.1, 0.25, 0.75 - testing options
-a<-log(2)/hl
-a<-log(2)/hl
-vy<-0.1 #0.25,0.5 - testing options
-sigma2_y<-vy*(2*(log(2)/hl));
-optima<-c(0.35,0.25) #Intercepts for two regimes
-
-dmX<-weight.matrix(simmap_tree1, a, lineages) #Slouch approach
-mu<-dmX%*%optima #Simulate mu for Y
-V<-calc_direct_V(phy, sigma2_y, a)
-Y<-mvrnorm(n=1,mu,V)
-
-nodes<-NULL
-store<-NULL
-times_store<-NULL
-reg_num_lineage<-NULL
-for(i in 1:length(lineages)){
-  store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
-  reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
-  nodes<-c(nodes,length(lineages[[i]]$nodes))
-  times_store<-c(times_store,length(lineages[[i]]$times))
-  
-}
-max_node_num<-max(store)  
-max_time_seg<-max(times_store)  
-
-times<-matrix(0,length(lineages),max_time_seg)
-t_end<-matrix(0,length(lineages),max_time_seg)
-t_beginning<-matrix(0,length(lineages),max_time_seg)
-reg_match<-data.frame(matrix(0,length(lineages),max_time_seg))
-
-for(i in 1:length(lineages)){
-  #  print(i)
-  times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
-  t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
-  t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
-  reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
-}
-
-
-dat<-list(N=N,n_reg=length(unique(regimes)),max_node_num=max_time_seg,Y_obs=Y,ta=ta,tij=tij,t_beginning=t_beginning,t_end=t_end,times=times,reg_match=reg_match,nodes=times_store)
-plot(simmap_tree1)
-
-################################################################################################
-#Multi-simmap trees
-#Make SIMMAP using tip regimes
-#50 tips
-#Basic Setup
-#Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij)); //From Hansen (1997) Original Stan
-#library(parallel)
-#num.cores=parallel::detectCores()-2 #For mclapply function
-#sim.num<-2 #25
-#loops.num<-1 #2
+############################################################################################################################
+#Multi-simmap trees - 4 regimes
 set.seed(10)
 
 tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
@@ -346,7 +202,206 @@ tiplabels()
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 #source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
-shifts<-c(54) #Location of nodes with regime shifts
+shifts<-c(94,84,53) #Location of nodes with regime shifts
+
+#shifts<-c(94,85,70,65,63) #Location of nodes with regime shifts
+trdata<-data.frame(phy$tip.label)
+trdata<-make.treedata(phy,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+#Check if manual setting code worked
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+#Make simmap tree
+#Setup dataset for info on model fits
+cl<-parallel::detectCores()-2 #Cl for fitMk function
+x<-trdata$dat$regimes
+names(x)<-trdata$phy$tip.label
+fit.ER<-fitMk(trdata$phy,x,model="SYM")
+
+fit<-fit.ER
+fittedQ<-matrix(NA,length(fit$states),length(fit$states))
+fittedQ[]<-c(0,fit$rates)[fit$index.matrix+1]
+diag(fittedQ)<-0
+diag(fittedQ)<--rowSums(fittedQ)
+colnames(fittedQ)<-rownames(fittedQ)<-fit$states
+tree<-trdata$phy
+simmap_trees<-make.simmap(tree,x,Q=fittedQ,nsim=2)
+plot(simmap_trees) #Show trees
+simmap_trees[[1]]$mapped.edge
+
+simmap_tree1<-simmap_trees[[1]]
+
+#Simulate data using simmap
+n<-length(simmap_tree1$tip.label)
+mrca1 <- ape::mrca(simmap_tree1)
+times <- ape::node.depth.edgelength(simmap_tree1)
+ta <- matrix(times[mrca1], nrow=n, dimnames = list(simmap_tree1$tip.label, simmap_tree1$tip.label))
+T.term <- times[1:n]
+tia <- times[1:n] - ta
+tja <- t(tia)
+tij <- tja + tia
+
+#regimes_internal <-trdata$phy$node.label
+regimes_tip <- trdata$dat$regimes
+#regimes <- concat.factor(regimes_tip, regimes_internal)
+anc_maps<-"simmap"
+
+#chr [1:3] "OU1" "OU1" "OU1"
+#Simulate Y based on V and incorporating regimes
+#Setup parameters
+
+hl<-0.1
+a<-log(2)/hl
+vy<-0.01 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+#alpha<-4 #Intecept
+optima<-c(3,2.5,2,1) #Intercepts for two regimes
+num.trees<-length(simmap_trees)
+times_list<-list()
+t_end_list<-list()
+t_beg_list<-list()
+reg_match_list<-list()
+times_store_list<-list()
+
+
+nodes<-NULL
+store<-NULL
+times_store<-NULL
+reg_num_lineage<-NULL
+times_array <- array(0, dim=c(num.trees,2,3))
+
+for(k in 1:num.trees){
+  simmap_tree<-simmap_trees[[k]]
+  regimes<-as.factor(simmap_tree$node.label)
+  lineages <- lapply(1:n, function(e) lineage.constructor(simmap_tree, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
+  dmX<-weight.matrix(simmap_tree, a, lineages) #Slouch approach
+  mu<-dmX%*%optima #Simulate mu for Y
+  V<-calc_direct_V(phy, sigma2_y, a)
+  Y<-mvrnorm(n=1,mu,V)
+  
+  
+  for(i in 1:length(lineages)){
+    store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
+    reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
+    nodes<-c(nodes,length(lineages[[i]]$nodes))
+    times_store<-c(times_store,length(lineages[[i]]$times))
+  }
+  max_node_num<-max(store)  
+  max_time_seg<-max(times_store)  
+  
+  times<-matrix(0,length(lineages),max_time_seg)
+  t_end<-matrix(0,length(lineages),max_time_seg)
+  t_beginning<-matrix(0,length(lineages),max_time_seg)
+  reg_match<-data.frame(matrix(0,length(lineages),max_time_seg))
+  
+  for(i in 1:length(lineages)){
+    #  print(i)
+    times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
+    t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
+    t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
+    reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
+  }
+  times_list[[length(times_list) + 1]]<-times
+  t_end_list[[length(t_end_list) + 1]]<-t_end
+  t_beg_list[[length(t_beg_list) + 1]]<-t_beginning
+  reg_match_list[[length(reg_match_list) + 1]]<-reg_match
+  times_store_list[[length(times_store_list) + 1]]<-times_store
+}
+
+
+#Turn list into  arrays
+library(abind)
+times_matrix<-times_list[[1]]
+t_end_matrix<-t_end_list[[1]]
+t_beg_matrix<-t_beg_list[[1]]
+reg_match_matrix<-reg_match_list[[1]]
+times_store_matrix<-times_store_list[[1]]
+
+for(i in 2:k){
+  times_matrix<-abind(times_matrix,times_list[[i]],along=0)
+  t_end_matrix<-abind(t_end_matrix,t_end_list[[i]],along=0)
+  t_beg_matrix<-abind(t_beg_matrix,t_beg_list[[i]],along=0)
+  reg_match_matrix<-abind(reg_match_matrix,reg_match_list[[i]],along=0)
+  times_store_matrix<-cbind(times_store_matrix,times_store_list[[i]])
+}
+#times_matrix<-aperm(times_matrix, c(3,1,2))
+#t_end_matrix<-aperm(t_end_matrix, c(3,1,2))
+#t_beg_matrix<-aperm(t_beg_matrix, c(3,1,2))
+#reg_match_matrix<-aperm(reg_match_matrix, c(3,1,2))
+
+dat<-list(N=N,n_reg=length(unique(regimes)),T=num.trees,max_node_num=max_time_seg,Y_obs=Y,ta=ta,tij=tij,t_beginning=t_beg_matrix,t_end=t_end_matrix,times=times_matrix,reg_match=reg_match_matrix,nodes=times_store_matrix)
+
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=Y,regimes=regimes_tip)
+names(df)<-c("Y","Regimes")
+
+optima_bar<-rnorm(n=100,0,1)
+z<-rnorm(n=100,0,1)
+#sigma<-abs(rnorm(n=100,0,1))
+sigma<-rexp(n=100,rate=5)
+
+optima.sims<-optima_bar + z*sigma;
+optima.sims<-data.frame(optima.sims,Prior="Prior")
+optima.plot<-
+  ggplot(data=df, Mapping = aes(x = Y, y = Regimes))+
+  
+  geom_jitter(data=optima.sims,aes(y=optima.sims,x=Prior),alpha=0.25,width=0.15)+
+  geom_jitter(data=df,aes(y=Y,x=Regimes),width=0.15)+
+  
+  theme_bw()+
+  #            theme(
+  #    panel.grid.major = element_blank(),
+  #    panel.grid.minor = element_blank())+
+  
+  ylab("Optima") + xlab("")+
+  scale_color_npg()
+
+optima.plot
+devAskNewPage(ask = FALSE)
+
+################################################################################################################
+#Multi-simmap trees - 6 regimes
+set.seed(10)
+
+tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+N<-50 #Number of species
+#set.seed(1) #Set seed to get same random species each time
+
+phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
+phy<-multi2di(phy)
+
+l.tree<-max(branching.times(phy)) ## rescale tree to height 1
+phy$edge.length<-phy$edge.length/l.tree 
+
+#Set regimes - manually - 2 regimes
+#Locate nodes
+plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+tiplabels()
+#Using node 54
+
+#Paint Regimes on Tree
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+#shifts<-c(84) #Location of nodes with regime shifts
+
+shifts<-c(94,85,70,65,63) #Location of nodes with regime shifts
 trdata<-data.frame(phy$tip.label)
 trdata<-make.treedata(phy,trdata)
 trdata<-set.converge.regimes(trdata,shifts)
@@ -396,7 +451,7 @@ tja <- t(tia)
 tij <- tja + tia
 
 #regimes_internal <-trdata$phy$node.label
-#regimes_tip <- trdata$dat$regimes
+regimes_tip <- trdata$dat$regimes
 #regimes <- concat.factor(regimes_tip, regimes_internal)
 anc_maps<-"simmap"
 
@@ -406,9 +461,10 @@ anc_maps<-"simmap"
 
 hl<-0.1
 a<-log(2)/hl
-sigma2_y<-0.1
+vy<-0.1 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
 #alpha<-4 #Intecept
-optima<-c(0.35,0.25) #Intercepts for two regimes
+optima<-c(2,1,1.5,0,-1,-2) #Intercepts for two regimes
 num.trees<-length(simmap_trees)
 times_list<-list()
 t_end_list<-list()
@@ -460,8 +516,7 @@ for(k in 1:num.trees){
 }
 
 
-
-#Turn list into 
+#Turn list into  arrays
 library(abind)
 times_matrix<-times_list[[1]]
 t_end_matrix<-t_end_list[[1]]
@@ -470,16 +525,43 @@ reg_match_matrix<-reg_match_list[[1]]
 times_store_matrix<-times_store_list[[1]]
 
 for(i in 2:k){
-  times_matrix<-abind(times_matrix,times_list[[i]],along=3)
-  t_end_matrix<-abind(t_end_matrix,t_end_list[[i]],along=3)
-  t_beg_matrix<-abind(t_beg_matrix,t_beg_list[[i]],along=3)
-  reg_match_matrix<-abind(reg_match_matrix,reg_match_list[[i]],along=3)
+  times_matrix<-abind(times_matrix,times_list[[i]],along=0)
+  t_end_matrix<-abind(t_end_matrix,t_end_list[[i]],along=0)
+  t_beg_matrix<-abind(t_beg_matrix,t_beg_list[[i]],along=0)
+  reg_match_matrix<-abind(reg_match_matrix,reg_match_list[[i]],along=0)
   times_store_matrix<-cbind(times_store_matrix,times_store_list[[i]])
 }
-times_matrix<-aperm(times_matrix, c(3,1,2))
-t_end_matrix<-aperm(t_end_matrix, c(3,1,2))
-t_beg_matrix<-aperm(t_beg_matrix, c(3,1,2))
-reg_match_matrix<-aperm(reg_match_matrix, c(3,1,2))
+#times_matrix<-aperm(times_matrix, c(3,1,2))
+#t_end_matrix<-aperm(t_end_matrix, c(3,1,2))
+#t_beg_matrix<-aperm(t_beg_matrix, c(3,1,2))
+#reg_match_matrix<-aperm(reg_match_matrix, c(3,1,2))
 
 dat<-list(N=N,n_reg=length(unique(regimes)),T=num.trees,max_node_num=max_time_seg,Y_obs=Y,ta=ta,tij=tij,t_beginning=t_beg_matrix,t_end=t_end_matrix,times=times_matrix,reg_match=reg_match_matrix,nodes=times_store_matrix)
 
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=Y,regimes=regimes_tip)
+names(df)<-c("Y","Regimes")
+
+optima_bar<-rnorm(n=100,0,1)
+z<-rnorm(n=100,0,1)
+#sigma<-abs(rnorm(n=100,0,1))
+sigma<-rexp(n=100,rate=5)
+
+optima.sims<-optima_bar + z*sigma;
+optima.sims<-data.frame(optima.sims,Prior="Prior")
+optima.plot<-
+  ggplot(data=df, Mapping = aes(x = Y, y = Regimes))+
+  
+  geom_jitter(data=optima.sims,aes(y=optima.sims,x=Prior),alpha=0.25,width=0.15)+
+  geom_jitter(data=df,aes(y=Y,x=Regimes),width=0.15)+
+  
+  theme_bw()+
+  #            theme(
+  #    panel.grid.major = element_blank(),
+  #    panel.grid.minor = element_blank())+
+  
+  ylab("Optima") + xlab("")+
+  scale_color_npg()
+
+optima.plot

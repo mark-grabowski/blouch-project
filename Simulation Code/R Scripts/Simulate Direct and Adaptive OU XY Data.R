@@ -1,5 +1,6 @@
 #Simulate both direct effect and adaptive model as predictors
 #Generative Code
+#Corresponds to Milestone 3
 
 rm(list=ls())
 #Script to simulate X an Y OU Data

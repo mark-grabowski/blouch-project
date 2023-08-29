@@ -2,6 +2,10 @@
 #Run after Simulate OU XY Data.R
 #Using recoded versions of Blouch
 
+
+#library(cmdstanr)
+#check_cmdstan_toolchain(fix = TRUE, quiet = TRUE)
+
 library(rstan)
 library(rethinking)
 #For execution on a local, multicore CPU with excess RAM we recommend calling
@@ -227,19 +231,50 @@ post<-extract(fit.mli.nc.regimes)
 ########################################################################################################
 #Milestone 9
 #Multilevel model - multilevel optima with direct effects predictor
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg_mli_direct_ME.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_mli_direct_ME.stan")
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 #stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
 
 stan_model <- stan_model("blouchOU_reg_mli_direct_ME.stan")
 #First run
-fit.mli.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
-print(fit.mli.regimes,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
-plot(precis(fit.mli.regimes,depth=2,pars = c("hl","vy","optima","optima_bar","sigma")))
+fit.mli.regi.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+print(fit.mli.regi.direct,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+plot(precis(fit.mli.regi.direct,depth=2,pars = c("hl","vy","optima","optima_bar","sigma")))
 
-post<-extract(fit.mli.regimes)
-####################################
+post<-extract(fit.mli.regi.direct)
+
+########################################################################################################
+#Milestone 10
+#Multilevel model - multilevel optima with adaptive predictor and measurement error
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_mli_adaptive_ME.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
+
+stan_model <- stan_model("blouchOU_reg_mli_adaptive_ME.stan")
+#First run
+fit.mli.adapt.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+print(fit.mli.adapt.regimes,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+plot(precis(fit.mli.adapt.regimes,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
+
+post<-extract(fit.mli.adapt.regimes)
+########################################################################################################
+#Milestone 11
+#Multilevel model - multilevel optima with direct effect and adaptive predictor and measurement error
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_mli_directadaptive.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
+
+stan_model <- stan_model("blouchOU_reg_mli_directadaptive.stan")
+#First run
+fit.mli.directadapt.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+print(fit.mli.directadapt.regimes,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+plot(precis(fit.mli.directadapt.regimes,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
+
+post<-extract(fit.mli.directadapt.regimes)
+########################################################################################################
 #Milestone 12
 #Combination of regime model with direct effect model with measurement error and varying slopes
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
@@ -252,7 +287,8 @@ fit.reg.direct.Vs<- rstan::sampling(object = stan_model,data = dat,chains = 2,co
 print(fit.reg.direct.Vs,pars = c("hl","vy","optima_beta","beta"))
 plot(precis(fit.reg.direct.Vs,depth=2,pars = c("hl","vy","optima_beta","beta")))
 post<-extract(fit.reg.direct.Vs)
-####################################
+########################################################################################################
+
 #Milestone 12
 #Combination of regime model with multiple traits direct effect model with measurement error and varying slopes
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
@@ -266,7 +302,7 @@ print(fit.reg.multidirect.VarSlopes,pars = c("hl","vy","optima_beta","beta"))
 plot(precis(fit.reg.multidirect.VarSlopes,depth=3,pars = c("hl","vy","optima_beta","beta")))
 post<-extract(fit.reg.multidirect.VarSlopes)
 
-####################################
+########################################################################################################
 #Milestone 13
 #Combination of regime model with direct effect model with measurement error and correlated varying effects
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
@@ -276,12 +312,12 @@ stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch 
 
 stan_model <- stan_model("blouchOU_reg_direct_ME_VarEff.stan")
 fit.reg.direct.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
-print(fit.reg.direct.VarEff,pars = c("hl","vy","optima","beta","Rho","sigma"))
-plot(precis(fit.reg.direct.VarEff,depth=3,pars = c("hl","vy","optima","beta","Rho","sigma")))
+print(fit.reg.multidirect.VarEff,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
+plot(precis(fit.reg.multidirect.VarEff,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))
 post<-extract(fit.reg.direct.VarEff)
-####################################
+########################################################################################################
 #Milestone 13
-#Combination of regime model with multiple traits direct effect model with measurement error and correlated varying effects
+#Combination of regime model with multiple traits direct effect model with measurement error and  varying effects
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multidirect_ME_VarEff.stan")
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
@@ -289,11 +325,11 @@ stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch 
 
 stan_model <- stan_model("blouchOU_reg_multidirect_ME_VarEff.stan")
 fit.reg.multidirect.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
-print(fit.reg.multidirect.VarEff,pars = c("hl","vy","optima","beta","Rho","sigma","optima_bar","beta_bar"))
-plot(precis(fit.reg.multidirect.VarEff,depth=3,pars = c("hl","vy","optima","beta","Rho","sigma","optima_bar","beta_bar")))
+print(fit.reg.multidirect.VarEff,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
+plot(precis(fit.reg.multidirect.VarEff,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))
 post<-extract(fit.reg.multidirect.VarEff)
-####################################
-#Milestone 13
+########################################################################################################
+#Milestone 14
 #Combination of regime model with direct effect model with mesurement error and correlated varying effects - non-centered
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_direct_ME_VarEff_nc.stan")
@@ -305,22 +341,150 @@ fit.reg.direct.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 
 print(fit.reg.direct.VarEff,pars = c("hl","vy","optima","beta","sigma","optima_bar","beta_bar"))
 plot(precis(fit.reg.direct.VarEff,depth=3,pars = c("hl","vy","optima","beta","Rho","sigma","optima_bar","beta_bar")))
 post<-extract(fit.reg.direct.VarEff)
-####################################
-#Milestone 13
-#Combination of regime model with multitrait direct effect model with mesurement error and correlated varying effects - non-centered
+########################################################################################################
+#Milestone 14
+#Combination of regime model with multitrait direct effect model with measurement error and correlated varying effects - non-centered
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multidirect_ME_VarEff_nc.stan")
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 #stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
 
 stan_model <- stan_model("blouchOU_reg_multidirect_ME_VarEff_nc.stan")
-fit.reg.direct.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
-print(fit.reg.direct.VarEff,pars = c("hl","vy","optima","beta","sigma","optima_bar","beta_bar"))
-plot(precis(fit.reg.direct.VarEff,depth=3,pars = c("hl","vy","optima","beta","Rho","sigma","optima_bar","beta_bar")))
-post<-extract(fit.reg.direct.VarEff)
-####################################
-#Milestone 14
-#Combination of regime model with adaptive model with mesurement error and correlated varying effects - non-centered
+fit.reg.multidirect.VarEff.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
+print(fit.reg.multidirect.VarEff.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
+plot(precis(fit.reg.multidirect.VarEff.nc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))
+post<-extract(fit.reg.multidirect.VarEff.nc)
+########################################################################################################
+#Milestone 15
+#Combination of regime model with adaptive model with measurement error and varying slopes
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+stan_model <- stan_model("blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+fit.reg.adapt.VarSlopes<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
+print(fit.reg.adapt.VarSlopes,pars = c("hl","vy","optima","beta","beta_e"))
+plot(precis(fit.reg.adapt.VarSlopes,depth=3,pars = c("hl","vy","optima","beta","beta_e")))
+post<-extract(fit.reg.adapt.VarSlopes)
+
+#Cmdstanr - setup
+path<-"/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan"
+file <- file.path(path)
+mod <- cmdstan_model(file)
+
+fit <- mod$sample(
+  data = dat, 
+  #seed = 10, 
+  chains = 2, 
+  parallel_chains = 2,
+  refresh = 500 # print update every 500 iters
+)
+fit$summary(variables = c("hl","vy","optima","beta","beta_e"))
+
+########################################################################################################
+#Milestone 16-S66-S68
+#Regime model with adaptive model with measurement error and varying effects
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarEff.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+stan_model <- stan_model("blouchOU_reg_multiadaptive_ME_VarEff.stan")
+fit.reg.adapt.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =1000)
+print(fit.reg.adapt.VarEff,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))
+plot(precis(fit.reg.adapt.VarEff,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e")))
+post<-extract(fit.reg.adapt.VarEff)
+########################################################################################################
+#Milestone 17
+#Regime model with multiadaptive model with measurement error and varying effects - non-centered version
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarEff_nc.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+stan_model <- stan_model("blouchOU_reg_multiadaptive_ME_VarEff_nc.stan")
+fit.reg.adapt.VarEff.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =1000)
+print(fit.reg.adapt.VarEff.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))
+plot(precis(fit.reg.adapt.VarEff.nc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e")))
+post<-extract(fit.reg.adapt.VarEff.nc)
+########################################################################################################
+#Milestone 18
+#Regime model with multi-direct and multi-adaptive model with measurement error and varying effects - non-centered version
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multidirectadaptive_ME_VarEff.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+stan_model <- stan_model("blouchOU_reg_multidirectadaptive_ME_VarEff.stan")
+fit.reg.multidirectadapt.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =1000)
+print(fit.reg.multidirectadapt.VarEff,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))
+plot(precis(fit.reg.multidirectadapt.VarEff,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e")))
+post<-extract(fit.reg.multidirectadapt.VarEff)
+
+########################################################################################################
+#Milestone 19
+#Regime model with multi-direct and multi-adaptive model with measurement error and varying effects - non-centered version
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multidirectadaptive_ME_VarEff_nc.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multiadaptive_ME_VarSlopes.stan")
+stan_model <- stan_model("blouchOU_reg_multidirectadaptive_ME_VarEff_nc.stan")
+fit.reg.multidirectadapt.VarEff.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =1000)
+print(fit.reg.multidirectadapt.VarEff.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))
+plot(precis(fit.reg.multidirectadapt.VarEff.nc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e")))
+post<-extract(fit.reg.multidirectadapt.VarEff.nc)
+########################################################################################################
+
+
+
+
+
+
+
+
+
+
+########################################################################################################
+#Milestone XX - partially pooled multi-simmap code
+setwd("~/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("~/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_multisimmap.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
+
+stan_model <- stan_model("blouchOU_multisimmap.stan")
+#First run
+fit.ms.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 1,cores=1,iter =1000)
+print(fit.ms.regimes,pars = c("hl_bar","hl_sigma","vy_bar","vy_sigma","optima_bar","optima_sigma"))
+
+post<-extract(fit.ms.regimes)
+########################################################################################################
+#Milestone XX - partially pooled multi-simmap code, non-centered version
+setwd("~/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+stanc("~/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_multisimmap_nc.stan")
+#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
+
+stan_model <- stan_model("blouchOU_multisimmap_nc.stan")
+#First run
+fit.ms.nc.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=4,iter =2000)
+print(fit.ms.nc.regimes,pars = c("hl","vy","optima_bar","sigma"))
+
+post<-extract(fit.ms.nc.regimes)
+########################################################################################################
+
+
+
+
+
+
+#Regimme/SIMMAP model with multi-simmap tree
+path<-"~/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_multisimmap.stan"
+file <- file.path(path)
+mod <- cmdstan_model(file)
+
+
+
+
+
+
+
 
 
 
@@ -378,23 +542,6 @@ fit.npi.SIMMAP<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter 
 
 print(fit.npi.SIMMAP,pars = c("hl","vy","optima","sigma2_y"))
 post<-extract(fit.npi.SIMMAP)
-########################################################################################################
-#Milestone 9
-#Regimme/SIMMAP model with multi-simmap tree
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_multi.stan")
-#setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
-#stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
-
-stan_model <- stan_model("blouchOU_multi.stan")
-#First run
-fit.npi.regimes<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =500)
-print(fit.npi.regimes,pars = c("hl","hlbar_sigma2ybar","sigma2_y"))
-
-post<-extract(fit.npi.regimes)
-
-
-
 
 
 

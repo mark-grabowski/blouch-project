@@ -1,5 +1,6 @@
 #Code to simulate data for regime painting on phylogeny
 #To be used with Blouch SBR1 - Validation Code.R
+#Corresponds to Milestone 4
 rm(list=ls())
 
 calc_direct_V<-function(phy, sigma2_y, a){ #Calculate V matrix for direct effect and regime-only models
@@ -212,8 +213,8 @@ nodelabels(frame="none",adj=c(1.1,-0.4))
 tiplabels()
 
 #Paint Regimes on Tree
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
-#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+
 
 shifts<-c(84) #Location of nodes with regime shifts
 trdata<-data.frame(phy$tip.label)
@@ -296,24 +297,22 @@ for(i in 1:length(lineages)){
 
 Dmat<-cophenetic(trdata$phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
 
-dat<-list(N=N,n_reg=length(unique(regimes)),max_node_num=max_node_num,Y_obs=Y,ta=ta,tij=tij,t_beginning=t_beginning,t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
+#dat<-list(N=N,n_reg=length(unique(regimes)),max_node_num=max_node_num,Y_obs=Y,ta=ta,tij=tij,t_beginning=t_beginning,t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
 
 #SR version
 dat<-list(N=N,n_reg=length(unique(regimes)),max_node_num=max_node_num,Y_obs=Y,ta=ta,tij=tij,t_beginning=t_beginning,t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,Dmat=Dmat)
 
+########################################################################################################
+#Simulate errors with multiple traits - original Hansen setup
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+#X_with_error<-X+rnorm(N,0,0.1)
+
+#Direct effect model w/ Statistical Rethinking ME Correction
+dat<-list(N=N,n_reg=length(unique(regimes)),max_node_num=max_node_num,Y_obs=Y_with_error,Y_error=Y_error,ta=ta,tij=tij,t_beginning=t_beginning,t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,Dmat=Dmat)
 
 
 
-#Slouch testing
-slouch.results<-slouch.fit(phy = trdata$phy,
-                            species = trdata$phy$tip.label,
-                            response = dat$Y_obs,
-                            fixed.fact = trdata$dat$regimes)
-summary(slouch.results)
-lineage<-lineages[[2]]
-weights_segments(a,lineage)
-weights_regimes(a,lineage)
-sum(lineage[c(8,9)])
 
 ################################################################################################
 #Four regimes

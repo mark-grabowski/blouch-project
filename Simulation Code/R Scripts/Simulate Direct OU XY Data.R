@@ -1,6 +1,6 @@
 #Direct effect model simulations
 #Generative Code
-#Script to simulate X an Y OU Data
+#Script to simulate X an Y OU Data - for Milstone 1 Code
 #04/26/2023
 
 rm(list=ls())
@@ -58,9 +58,9 @@ Dmat<-cophenetic(phy) #Time separating tips, same as tij matrix in Slouch/Blouch
 #Direct Effect Model
 #Setup parameters
 Z<-1 #Number of traits
-hl<-0.5 #0.1, 0.25, 0.75 - testing options
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
-vy<-0.1 #0.25,0.5 - testing options
+vy<-0.01 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
 
 vX0<-0

@@ -235,7 +235,7 @@ nodelabels(frame="none",adj=c(1.1,-0.4))
 tiplabels()
 
 #Paint Regimes on Tree
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 #source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
 shifts<-c(84) #Location of nodes with regime shifts
@@ -276,7 +276,7 @@ anc_maps<-"regimes"
 lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
 
 #########################
-hl<-0.25 #0.1, 0.25, 0.75 - testing options
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
 vy<-0.1 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
@@ -376,7 +376,7 @@ nodelabels(frame="none",adj=c(1.1,-0.4))
 tiplabels()
 
 #Paint Regimes on Tree
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 #source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
 shifts<-c(84) #Location of nodes with regime shifts
@@ -476,6 +476,7 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Y_obs=Y,X_obs=matr
           max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
           t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
 
+
 ##################################################################################################################
 #Simulate errors - original Hansen setup
 Z_X_error<-1 #Number of X traits with error
@@ -492,15 +493,36 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_erro
 
 
 #2 Regimes with direct effect model with regime info for tips
-reg_tips<-trdata$dat$regimes
-reg_tips<-as.numeric(as.factor(reg_tips))
+#reg_tips<-as.numeric(as.factor(reg_tips))
+##reg_tips<-trdata$dat$regimes
 
-dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_direct),
-          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_direct),
-          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
-          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
+#dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_direct),
+          #Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_direct),
+          #max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+          #t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 
 
+##################################################################################################################
+#Plot priors
+summary(lm(dat$Y_obs~dat$X_obs))
+alpha.sims<-rnorm(100,1.79247,0.25)
+beta.sims<-rnorm(n=100,0,0.25)
+
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs)
+
+slope.plot<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X))+
+  geom_abline(intercept=alpha.sims,slope=beta.sims,alpha=0.15)+
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Trait 1") + xlab("Trait 2")+
+  scale_color_npg()
+
+slope.plot
 ########################################################################################################
 #Basic Setup - four regimes with direct only
 #Vt = sigma2_y /( 2 * a) * ((1 - exp(-2 * a * ta)) .* exp(-a * tij)); //From Hansen (1997) Original Stan
@@ -681,8 +703,7 @@ nodelabels(frame="none",adj=c(1.1,-0.4))
 tiplabels()
 
 #Paint Regimes on Tree
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
-#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 
 shifts<-c(84) #Location of nodes with regime shifts
 trdata<-data.frame(phy$tip.label)
@@ -722,9 +743,9 @@ anc_maps<-"regimes"
 lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
 
 #########################
-hl<-0.75 #0.1, 0.25, 0.75 - testing options
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
-vy<-0.1 #0.25,0.5 - testing options
+vy<-0.011 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));
 
 vX0<-0
@@ -791,5 +812,24 @@ dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_X_
           sigma2_x=sigma2_x,max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
           t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
 
+########################################################################################################
+#Plot priors
+summary(lm(dat$Y_obs~dat$X_obs))
+alpha.sims<-rnorm(100,1.79247,0.25)
+beta.sims<-rnorm(n=100,0,0.25)
 
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs)
 
+slope.plot<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X))+
+  geom_abline(intercept=alpha.sims,slope=beta.sims,alpha=0.15)+
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Trait 1") + xlab("Trait 2")+
+  scale_color_npg()
+
+slope.plot
