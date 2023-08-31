@@ -247,8 +247,8 @@ rstan_options(auto_write = TRUE)
 ########################################################################################################
 #Load Data
 
-cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Sharable Data/cervidae_renamed.tre")
-cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Sharable Data/updated_mean_dat_no_OL_BGS_MG.csv")
+cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/Sharable Data/cervidae_renamed.tre")
+cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/Sharable Data/updated_mean_dat_no_OL_BGS_MG.csv")
 
 #Remove Muntiacus_atherodes, Elaphodus_cephalophus - rudamentary and female Rangifer. 
 cervid.dataset<-filter(cervid.dataset,Genus_Species != "Sinomegaloceros_yabei" & ! Genus_Species =="Alces_alces_gigas"  & ! Genus_Species == "Muntiacus_truongsonensis" & ! Genus_Species ==  "Mazama_temama"& ! Genus_Species ==  "Muntiacus_feae" & ! Genus_Species ==  "Muntiacus_atherodes" & ! Genus_Species ==  "Elaphodus_cephalophus")
@@ -323,7 +323,7 @@ trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_obs,Y_error,X_obs,X_error)))
 ############################################################################################################
 #Test Blouch prep code - Regimes + Adaptive Model
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
-dat<-blouch.reg.direct.prep(trdata,"Y_obs","Y_error","X_obs","X_error","BGS")
+dat<-blouch.reg.direct.prep(trdata,"Y_obs","Y_error","X_obs","X_error",1,"BGS")
 
 ############################################################################################################
 #Prior Exploration Plot
@@ -483,9 +483,9 @@ PI(df[,1]-df[,2],prob=0.95)
 sum((df[,1]-df[,2])<0)/4000
 sum((df[,1]-df[,2])>=0)/4000
 ########################################################################################################
-#Figure 2
+#Composite Figures
 #Priors vs. posterior plots
-hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.5))
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.75))
 #hl.sims<-data.frame(hl.sims[hl.sims<3])
 names(hl.sims)<-"prior.hl.sims"
 
@@ -650,9 +650,6 @@ slope.plot.1<-ggplot()+
 
 slope.plot.1
 #Label points
-
-
-
 
 #5X5.5 Plot
 ########################################################################################################
@@ -923,9 +920,9 @@ slope.plot.1
 #Save Plots
 fig<-ggarrange(hl.plot, vy.plot, "",slope.plot.1, ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
 
-ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/For ms/Figures/antler_BGS_ve.pdf", plot = fig, width=7, height=7 )
+ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/For ms/Figures/antler_BGS.pdf", plot = fig, width=7, height=7 )
 
-pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/For ms/Figures/antler_BGS_cov_ve.pdf",   # The directory you want to save the file in
+pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/For ms/Figures/antler_BGS_cov.pdf",   # The directory you want to save the file in
     width = 3.57, # The width of the plot in inches
     height = 3.4) # The height of the plot in inches
 
