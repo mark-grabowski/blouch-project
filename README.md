@@ -1,2 +1,4 @@
 # blouch
-This is the testing branch for the pre-release version of Blouch v1.1
+This is the testing branch for the Blouch Project from Grabowski (in revision)
+
+
