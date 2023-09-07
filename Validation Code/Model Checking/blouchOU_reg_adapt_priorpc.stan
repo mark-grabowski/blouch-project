@@ -118,13 +118,16 @@ generated quantities {
   matrix[N,Z_adaptive] pred_X;
   matrix[N,n_reg+Z_adaptive] dmX;
   matrix[N,n_reg] optima_matrix = rep_matrix(0,N,n_reg);
+  
   real hl = lognormal_rng(log(0.25),0.75);
   real vy = exponential_rng(20);
   real sigma2_y = vy*(2*(log(2)/hl));
   real a = log(2)/hl;
+  
   vector[n_reg] optima_sim;
   vector[Z_adaptive] beta_sim; 
   vector[n_reg+Z_adaptive] optima_beta;
+  
   vector[N] Y_sim;
   matrix[N,Z_adaptive] X_sim;
   vector[N] Y_sim_obs;

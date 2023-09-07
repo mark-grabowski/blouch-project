@@ -110,7 +110,7 @@ generated quantities {
   real a = log(2)/hl;
 
   for(i in 1:n_reg){
-    optima_sim[i] = normal_rng(1.79247,0.25);
+    optima_sim[i] = normal_rng(-1.79247,0.25);
   }
   for(i in 1:Z_direct){
      beta_sim[i]= normal_rng(0,0.25);

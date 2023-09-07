@@ -282,7 +282,7 @@ anc_maps<-"regimes"
 lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
 
 #########################
-hl<-0.1 #0.1, 0.25, 0.75 - testing options
+hl<-0.25 #0.1, 0.25, 0.75 - testing options
 a<-log(2)/hl
 vy<-0.01 #0.25,0.5 - testing options
 sigma2_y<-vy*(2*(log(2)/hl));

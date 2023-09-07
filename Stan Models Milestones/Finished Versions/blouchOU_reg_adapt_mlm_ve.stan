@@ -180,7 +180,7 @@ generated quantities {
   real a = log(2)/hl;
   real rho = (1 - (1 - exp(-a * T_term))./(a * T_term))[1]; 
   matrix[n_reg,Z_adaptive] beta_e = beta*rho; 
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.html#loo-cv-for-multivariate-normal-models
+  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.htmlloo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   V = calc_V(a,sigma2_y,ta,tij,tja,T_term,beta,sigma2_x,Z_adaptive,n_reg);
   inv_V = inverse(V);

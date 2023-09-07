@@ -111,12 +111,11 @@ parameters {
   real<lower=0> hl;
   real <lower=0> vy;
   real <lower=0> sigma;
-  vector[n_reg] optima; //Regime Coefficients
   real optima_bar; //Regime Coefficients
   vector[Z_direct+Z_adaptive] beta;
   vector[N] Y;
   matrix[N,Z_direct+Z_adaptive] X;
-  matrix[(1+Z_direct+Z_adaptive),n_reg] z;
+  vector[n_reg] z;
 
 }
 transformed parameters{

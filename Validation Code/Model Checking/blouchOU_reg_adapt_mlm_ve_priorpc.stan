@@ -125,8 +125,8 @@ generated quantities {
   
   real optima_bar = normal_rng(2.88,1.5);//Original 4 regimes
   vector[Z_adaptive] beta_bar;
-  matrix[N,Z_adaptive] X;
-  vector[N] Y;
+  matrix[N,Z_adaptive] X_sim;
+  vector[N] Y_sim;
   vector[N] Y_sim_obs;
   vector[n_reg] optima;
   matrix[n_reg,Z_adaptive] beta;
@@ -142,11 +142,11 @@ generated quantities {
   }
   for(i in 1:(Z_adaptive)){//Given measurement error in X variable, uncomment this nested statement
     for(j in 1:N){
-      X[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  
+      X_sim[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  
     }
   }
   optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes);
-  pred_X = calc_dmX(a,T_term,X);//Given measurement error in X variable, uncomment this nested statement
+  pred_X = calc_dmX(a,T_term,X_sim);//Given measurement error in X variable, uncomment this nested statement
   //print(a,sigma2_y,ta,tij,tja,T_term,beta,sigma2_x,Z_adaptive,n_reg);
   for ( i in 1:n_reg ){
     v[i,:] = multi_normal_rng(ab_bar,quad_form_diag(Rho , sigma))';
@@ -162,9 +162,9 @@ generated quantities {
   for(i in 1:N){
     mu[i] = optima_matrix[i,]*optima+pred_X[i,]*beta[reg_tips[i],]';
   }
-  Y = multi_normal_cholesky_rng(mu , L_v);//Given measurement error in Y variable, uncomment this statement
+  Y_sim = multi_normal_cholesky_rng(mu , L_v);//Given measurement error in Y variable, uncomment this statement
   
   for(i in 1:N){
-    Y_sim_obs[i] = normal_rng(Y[i],Y_error[i]); //Given measurement error in Y variable, uncomment this statement
+    Y_sim_obs[i] = normal_rng(Y_sim[i],Y_error[i]); //Given measurement error in Y variable, uncomment this statement
   }
 }

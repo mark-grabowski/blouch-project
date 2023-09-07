@@ -95,8 +95,8 @@ model {
  
 }
 generated quantities {
-  vector[N] Y;
-  matrix[N,Z_direct] X;
+  vector[N] Y_sim;
+  matrix[N,Z_direct] X_sim;
   vector[N] Y_sim_obs;
 
   cholesky_factor_corr[(1+Z_direct)] L_Rho;
@@ -131,7 +131,7 @@ generated quantities {
   }
   for(i in 1:(Z_direct)){//Given measurement error in X variable, uncomment this nested statement
     for(j in 1:N){
-      X[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  
+      X_sim[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  
     }
   }  
   v = (diag_pre_multiply(sigma, L_Rho) * Z)';
@@ -144,10 +144,10 @@ generated quantities {
   L_v = cholesky_decompose(V);
 
   for(i in 1:N){
-    mu[i] = optima_matrix[i,]*optima+X[i,]*beta[reg_tips[i],]';
+    mu[i] = optima_matrix[i,]*optima+X_sim[i,]*beta[reg_tips[i],]';
   }
   
-  Y = multi_normal_cholesky_rng(mu , L_v);//Given measurement error in Y variable, uncomment this statement
+  Y_sim = multi_normal_cholesky_rng(mu , L_v);//Given measurement error in Y variable, uncomment this statement
   
   for(i in 1:N){
     Y_sim_obs[i] = normal_rng(Y[i],Y_error[i]); //Given measurement error in Y variable, uncomment this statement

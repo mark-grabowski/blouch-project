@@ -5,8 +5,8 @@ set.converge.regimes<-function(trdata,regimes){
   #Make sure you send a merged trdata file from treeplyr
   #Modified on 
   
-  library(phytools)
-  library(ggplot2)
+  #library(phytools)
+  #library(ggplot2)
 
   getDescendants<-function(tree,node,curr=NULL){
     #plot(tree,font=0.25); nodelabels(bg="white")

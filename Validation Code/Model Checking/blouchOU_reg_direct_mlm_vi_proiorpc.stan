@@ -92,7 +92,7 @@ model {
 }
 generated quantities {
   vector[N] Y;
-  matrix[N,Z_direct] X;
+  matrix[N,Z_direct] X_sim;
   vector[N] Y_sim_obs;
   vector[n_reg] optima; //Regime Coefficients
   real optima_bar; //Regime Coefficients
@@ -120,11 +120,11 @@ generated quantities {
   optima_beta = append_row(optima,beta);
   for(i in 1:(Z_direct)){//Given measurement error in X variable, uncomment this nested statement
     for(j in 1:N){
-      X[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  
+      X_sim[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  
     }
   }  
   optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes); //X data
-  dmX = append_col(optima_matrix,X); ////Given measurement error in X variable, uncomment this statement
+  dmX = append_col(optima_matrix,X_sim); ////Given measurement error in X variable, uncomment this statement
   V = calc_direct_V(a, sigma2_y,ta, tij);
   L_v = cholesky_decompose(V);
   mu = dmX*optima_beta;

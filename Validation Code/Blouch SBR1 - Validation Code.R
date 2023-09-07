@@ -307,10 +307,11 @@ post<-extract(fit.reg.multidirect.VarSlopes)
 #Combination of regime model with direct effect model with measurement error and correlated varying effects
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_direct_ME_VarEff.stan")
+
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 #stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
-
 stan_model <- stan_model("blouchOU_reg_direct_ME_VarEff.stan")
+
 fit.reg.direct.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
 print(fit.reg.multidirect.VarEff,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
 plot(precis(fit.reg.multidirect.VarEff,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))
@@ -318,12 +319,16 @@ post<-extract(fit.reg.direct.VarEff)
 ########################################################################################################
 #Milestone 13
 #Combination of regime model with multiple traits direct effect model with measurement error and  varying effects
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multidirect_ME_VarEff.stan")
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Testing Versions/blouchOU_reg_multidirect_ME_VarEff.stan")
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 #stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
 
-stan_model <- stan_model("blouchOU_reg_multidirect_ME_VarEff.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_mlm_ve.stan")
+stan_model <- stan_model("blouchOU_reg_direct_mlm_ve.stan")
+
+#stan_model <- stan_model("blouchOU_reg_multidirect_ME_VarEff.stan")
 fit.reg.multidirect.VarEff<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
 print(fit.reg.multidirect.VarEff,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
 plot(precis(fit.reg.multidirect.VarEff,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))

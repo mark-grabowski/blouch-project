@@ -225,7 +225,8 @@ library(ggsci)
 library(ggpubr)
 library(MASS)
 library(rstan)
-library(rethinking)
+library(phytools)
+#library(rethinking)
 #For execution on a local, multicore CPU with excess RAM we recommend calling
 options(mc.cores = parallel::detectCores())
 #options(mc.cores = 8)
@@ -373,7 +374,7 @@ X_with_error<-X+rnorm(N,0,0.01)
 trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
 ############################################################################################################
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
-dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error","regimes")
+dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_adaptive=1,"regimes")
 
 ############################################################################################################
 #Original Code
@@ -419,8 +420,8 @@ lm.allometric<-summary(lm(dat$Y_obs~dat$X_obs))
 lm.allometric$coefficients
 
 #Prior vs. Posterior Plot
-library(ggsci)
-library(rethinking)
+#library(ggsci)
+#library(rethinking)
 
 alpha.sims<-rnorm(100,lm.allometric$coefficients[1],1.25)
 beta.sims<-rnorm(n=100,lm.allometric$coefficients[2],0.25)
@@ -454,6 +455,9 @@ slope.plot
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
 stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt_mlm_ve.stan")
 #stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/chatgpt_blouchOU_reg_adapt_mlm_ve.stan")
+
+#setwd("/Users/markgrabowski/Documents/Academic/Research/R Packages/OLD - blouch/inst/stan/")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/R Packages/OLD - blouch/inst/stan/blouchOU_reg_adapt_mlm_ve.stan")
 
 stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve.stan")
 fit.reg.adapt.mlm.ve<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =4000)
@@ -623,7 +627,7 @@ covariance.plot
 #Four regimes - Slope plots for adaptive model with measurement error
 #For main ms
 library(ggsci)
-library(rethinking)
+#library(rethinking)
 X<-X_with_error
 Y<-Y_with_error
 
