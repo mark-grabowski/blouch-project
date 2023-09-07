@@ -179,7 +179,6 @@ generated quantities {
   for(i in 1:Z_adaptive){
     beta_e[i] = beta[i]* rho[i]; 
     }  
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.html#loo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   
   optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes);

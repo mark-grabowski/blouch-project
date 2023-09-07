@@ -116,7 +116,6 @@ generated quantities {
   for(i in 1:Z_adaptive){
     beta_e[i] = beta[Z_direct+i]* rho[i]; 
     }
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.html#loo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   V = calc_adaptive_V(a,sigma2_y,ta,tij,tja,T_term,beta[(Z_direct+1):(Z_adaptive+Z_direct)],sigma2_x);
   dmX = calc_mixed_dmX(a,T_term,X,Z_direct,Z_adaptive); //Given measurement error in X variable, uncomment this statement

@@ -145,7 +145,6 @@ generated quantities {
   real sigma2_y = vy*(2*(log(2)/hl));
   real a = log(2)/hl;
   vector[N] rho = (1 - (1 - exp(-a * T_term))./(a * T_term)); 
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.html#loo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes);
   dmX = append_col(optima_matrix,X); //Given measurement error in X variable, uncomment this nested statement

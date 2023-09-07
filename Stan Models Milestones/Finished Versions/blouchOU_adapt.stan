@@ -110,7 +110,6 @@ generated quantities {
   for(i in 1:Z_adapt){
     beta_e[i] = beta[i]* rho[i]; 
     }  
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factoriZ_adapted.html#loo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   dmX = calc_dmX(a,T_term,X);//Given measurement error in X variable, uncomment this statement  
   V = calc_V(a,sigma2_y,ta,tij,tja,T_term,beta,sigma2_x);

@@ -168,7 +168,6 @@ generated quantities {
   real a = log(2)/hl;
   real rho = (1 - (1 - exp(-a * T_term))./(a * T_term))[1]; 
   matrix[n_reg,Z_adaptive] beta_e = beta*rho; 
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.htmlloo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes);
   pred_X = calc_dmX(a,T_term,X);//Given measurement error in X variable, uncomment this nested statement

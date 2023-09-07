@@ -118,7 +118,6 @@ generated quantities {
   real u_i;
   vector[N] log_lik;  real a = log(2)/hl;
   real sigma2_y = vy*(2*(log(2)/hl));
-  //Based on https://cran.r-project.org/web/packages/loo/vignettes/loo2-non-factorized.html#loo-cv-for-multivariate-normal-models
   //LOO-CV for multivariate normal models
   V = calc_V(a, sigma2_y,ta, tij);
   inv_V = inverse(V);
