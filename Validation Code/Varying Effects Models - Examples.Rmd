@@ -771,24 +771,19 @@ for(i in 1:length(lineages)){
   reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
 }
 
-
-dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Y_obs=Y,X_obs=matrix(X,nrow=N,ncol=Z_adaptive),
-          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
-          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
-
 ##################################################################################################################
-#Simulate errors - original Hansen setup
+#Simulate errors 
 Z_X_error<-1 #Number of X traits with error
 X_error<-matrix(0.01,nrow=N,ncol=1)
 Y_error<-rep(0.01,N)
 Y_with_error<-Y+rnorm(N,0,0.01)
 X_with_error<-X+rnorm(N,0,0.01)
 
-dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,max_node_num=max_node_num,
-          Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_adaptive),
-          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
-          sigma2_x=sigma2_x,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
-          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
+#dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,max_node_num=max_node_num,
+#          Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_adaptive),
+#          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
+#          sigma2_x=sigma2_x,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+#          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 
 ########################################################################################################
 
@@ -819,4 +814,295 @@ slope.plot.1
 
 ```
 
+We will use the helper function blouch.reg.adapt.prep() to setup the dat file for Stan. Here "Z_adapt" is the number of predictors, and "regimes" is the name of the regime column in trdata$dat.
+```{r}
+#Test Blouch prep code - Regimes + Adaptive Model
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
+dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_adapt=1,"regimes")
+
+```
+
+Now we run the Multilevel Multi-optima Adaptive Model with Varying Effects, look at the results, and extract the posterior
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt.stan")
+stan_model <- stan_model("blouchOU_reg_adapt.stan")
+fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
+print(fit.reg.adapt,pars = c("hl","vy","optima","beta"))
+plot(precis(fit.reg.adapt,depth=2,pars = c("hl","vy","optima","beta")))
+
+#post<-extract(fit.adapt)
+```
+
+Now we run the non-centered version of the Multilevel Multi-optima Adaptive Model with Varying Effects
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt.stan")
+stan_model <- stan_model("blouchOU_reg_adapt.stan")
+fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
+print(fit.reg.adapt,pars = c("hl","vy","optima","beta"))
+plot(precis(fit.reg.adapt,depth=2,pars = c("hl","vy","optima","beta")))
+
+#post<-extract(fit.adapt)
+```
+
+Finally we run the Multi-optima Adaptive Model with Varying Effects
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt.stan")
+stan_model <- stan_model("blouchOU_reg_adapt.stan")
+fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
+print(fit.reg.adapt,pars = c("hl","vy","optima","beta"))
+plot(precis(fit.reg.adapt,depth=2,pars = c("hl","vy","optima","beta")))
+
+#post<-extract(fit.adapt)
+```
+
+
+Four regimes with 1 direct and 1 adaptive trait and multiple slopes per optima
+```{r}
+########################################################################################################
+set.seed(10)
+
+tree.10K<-read.tree("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+#tree.10K<-read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/Original Submission/Blouch Testing/Phylogeny/10KPrimateTree.tre")
+N<-50 #Number of species
+#set.seed(1) #Set seed to get same random species each time
+
+phy <- keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
+phy<-multi2di(phy)
+
+l.tree<-max(branching.times(phy)) ## rescale tree to height 1
+phy$edge.length<-phy$edge.length/l.tree 
+
+#Set regimes - manually - 2 regimes
+#Locate nodes
+plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
+nodelabels(frame="none",adj=c(1.1,-0.4))
+tiplabels()
+
+#Paint Regimes on Tree
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+
+shifts<-c(84) #Location of nodes with regime shifts
+trdata<-data.frame(phy$tip.label)
+trdata<-make.treedata(phy,trdata)
+trdata<-set.converge.regimes(trdata,shifts)
+
+
+#Check if manual setting code worked
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+print(edge.regimes)
+#Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
+
+reg_tips<-trdata$dat$regimes
+reg_tips<-as.numeric(as.factor(reg_tips))
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.2)
+
+#Phylogeny info
+n<-length(trdata$phy$tip.label)
+mrca1 <- ape::mrca(trdata$phy)
+times <- ape::node.depth.edgelength(trdata$phy)
+ta <- matrix(times[mrca1], nrow=n, dimnames = list(trdata$phy$tip.label, trdata$phy$tip.label))
+T.term <- times[1:n]
+tia <- times[1:n] - ta
+tja <- t(tia)
+tij <- tja + tia
+
+regimes_internal <-trdata$phy$node.label
+regimes_tip <- trdata$dat$regimes
+regimes <- concat.factor(regimes_tip, regimes_internal)
+anc_maps<-"regimes"
+lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
+
+###############################################################################################################################################################################
+hl<-0.1 #0.1, 0.25, 0.75 - testing options
+a<-log(2)/hl
+vy<-0.01 #0.25,0.5 - testing options
+sigma2_y<-vy*(2*(log(2)/hl));
+
+vX0<-0
+vY0 <- 0
+Sxx<-10 #Look at effects
+
+ts<-ts_fxn(phy)
+ta<-ts[[1]]
+tij<-ts[[2]]
+T_term<-ts[[3]]
+tja<-ts[[4]]
+
+Xa<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
+Xd<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
+names(Xa)<-phy$tip.label
+names(Xd)<-phy$tip.label
+phenogram(phy,Xd,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+phenogram(phy,Xa,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+
+Xs<-cbind(Xd,Xa)
+sigma2_x<-matrix(1,1,1)
+
+Z_adaptive<-1
+Z_direct<-1
+
+optima_matrix<-weight.matrix(trdata$phy, a, lineages) #Slouch approach
+pred_X<-calc_mixed_dmX(a,T_term,Xs,Z_direct,Z_adaptive)
+optima<-c(2,1)
+#beta<-c(0.25,0.15,0.35,0.1) #Two Optima/Two Slopes
+beta<-data.frame(matrix(c(0.25,0.15,0.35,0.1),ncol=2,nrow=2)) #Two traits on columns, two regimes on vertical
+
+mu<-matrix(NA,N,1)
+for(i in 1:N){
+#  mu[i] = optima_matrix[i,]%*%optima+beta[reg_tips[i]]%*%pred_X[i]
+  mu[i] = optima_matrix[i,]%*%optima+pred_X[i,]%*%t(beta[reg_tips[i],])
+
+  }
+
+n_reg<-length(unique(regimes))
+V<-calc_adaptive_V(a, sigma2_y, ta,  tij,  tja,  T_term,  beta[,2],  sigma2_x, Z_adaptive, n_reg)
+Y<-mvrnorm(n=1,mu,V)
+
+nodes<-NULL
+store<-NULL
+reg_num_lineage<-NULL
+for(i in 1:length(lineages)){
+  store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
+  reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
+  nodes<-c(nodes,length(lineages[[i]]$nodes))
+}
+max_node_num<-max(store)  
+times<-matrix(0,length(lineages),max_node_num)
+t_end<-matrix(0,length(lineages),max_node_num)
+t_beginning<-matrix(0,length(lineages),max_node_num)
+reg_match<-data.frame(matrix(0,length(lineages),max_node_num))
+
+for(i in 1:length(lineages)){
+  times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
+  t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
+  t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
+  reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
+}
+
+
+#dat<-list(N=N,n_reg=length(unique(regimes)),Z_diret=Z_direct,Z_adaptive=Z_adaptive,Y_obs=Y,X_obs=matrix(Xs,nrow=N,ncol=Z_direct+Z_adaptive),
+#          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+#          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes)
+
+##################################################################################################################
+#Simulate errors - original Hansen setup
+Z_X_error<-Z_direct+Z_adaptive #Number of X traits with error
+X_error<-matrix(0.01,nrow=N,ncol=2)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01)
+X_with_error<-Xs+rnorm(N,0,0.01)
+
+#dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,max_node_num=max_node_num,
+#          Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_direct+Z_adaptive),
+#          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
+#          sigma2_x=sigma2_x,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+#          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
+
+########################################################################################################
+#Plot of data
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.1<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X.1,color=Regimes))+
+  
+  geom_abline(intercept=optima[1],slope=beta[1,1],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=beta[2,1],alpha=0.5,linetype=2)+
+  
+  
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Direct effect trait")+
+  scale_color_npg()
+
+slope.plot.1
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+slope.plot.2<-ggplot()+  
+  geom_point(data=df,aes(y=Y,x=X.2,color=Regimes))+
+  
+  geom_abline(intercept=optima[1],slope=beta[1,2],alpha=0.5,linetype=2)+
+  geom_abline(intercept=optima[2],slope=beta[2,2],alpha=0.5,linetype=2)+
+  
+  theme_bw()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ylab("Y") + xlab("Adaptive trait")+
+  scale_color_npg()
+
+slope.plot.2
+
+
+```
+
+```{r}
+############################################################################################################
+#Test Blouch prep code - Regimes + Direct Effect and Adaptive Model
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
+dat<-blouch.reg.direct.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_direct=1,Z_adapt=1,"regimes")
+
+#2 Regimes with direct effect model with regime info for tips
+#dat<-list(N=N,n_reg=length(unique(regimes)),Z_direct=Z_direct,Z_X_error=Z_X_error,Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_direct),
+#          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
+#          max_node_num=max_node_num,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+#          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
+```
+
+
+Now we run the Multilevel Multi-optima Direct Effect Adaptive Model with Varying Effects, look at the results, and extract the posterior
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_adapt_mlm_ve.stan")
+stan_model <- stan_model("blouchOU_reg_direct_adapt_mlm_ve.stan")
+fit.reg.direct.adapt.mlm.ve<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
+print(fit.reg.direct.adapt.mlm.ve,pars = c("hl","vy","optima","beta"))
+plot(precis(fit.reg.direct.adapt.mlm.ve,depth=2,pars = c("hl","vy","optima","beta")))
+
+#post<-extract(fit.adapt)
+```
+
+Now we run the non-centered version of the Multilevel Multi-optima Direct Effect Adaptive Model with Varying Effects
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_adapt_mlm_ve_nc.stan")
+stan_model <- stan_model("blouchOU_reg_direct_adapt_mlm_ve_nc.stan")
+fit.reg.direct.adapt.mlm.ve.nc<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
+print(fit.reg.adapt,pars = c("hl","vy","optima","beta"))
+plot(precis(fit.reg.adapt,depth=2,pars = c("hl","vy","optima","beta")))
+
+#post<-extract(fit.adapt)
+```
+
+Finally we run the Multi-optima Direct EFfect Adaptive Model with Varying Effects
+```{r}
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_adapt_ve.stan")
+stan_model <- stan_model("blouchOU_reg_direct_adapt_ve.stan")
+fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 1,iter =1000,cores=1)
+print(fit.reg.adapt,pars = c("hl","vy","optima","beta"))
+plot(precis(fit.reg.adapt,depth=2,pars = c("hl","vy","optima","beta")))
+
+#post<-extract(fit.adapt)
+```
 
