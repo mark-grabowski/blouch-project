@@ -265,8 +265,7 @@ tiplabels()
 
 ############################################################################################################
 #Paint Regimes on Tree
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
-#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
 
 shifts<-c(164,192,104) #Location of nodes with regime shifts #100 species
 #shifts<-c(83,72,65) #Location of nodes with regime shifts #50 species
@@ -280,12 +279,6 @@ shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
 edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
 print(edge.regimes)
 #Get ggplot colors used for plot to make on tree
-gg_color_hue <- function(n) {
-  hues = seq(15, 375, length=n+1)
-  hcl(h=hues, l=65, c=100)[1:n]
-}
-
-reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
 
 #reg.colors<-ggsci::pal_aaas("default",alpha=0.7)(4)
 reg.colors<-ggsci::pal_npg(palette=c("nrc"),alpha=1)(4)
@@ -301,13 +294,6 @@ reg_tips<-as.numeric(as.factor(reg_tips))
 ############################################################################################################
 #Phylogeny info
 n<-length(trdata$phy$tip.label)
-mrca1 <- ape::mrca(trdata$phy)
-times <- ape::node.depth.edgelength(trdata$phy)
-ta <- matrix(times[mrca1], nrow=n, dimnames = list(trdata$phy$tip.label, trdata$phy$tip.label))
-T.term <- times[1:n]
-tia <- times[1:n] - ta
-tja <- t(tia)
-tij <- tja + tia
 
 regimes_internal <-trdata$phy$node.label
 regimes_tip <- trdata$dat$regimes
@@ -373,7 +359,7 @@ X_with_error<-X+rnorm(N,0,0.01)
 #Make trdata file
 trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
 ############################################################################################################
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/R Setup Code/blouch.prep.R")
 dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_adaptive=1,"regimes")
 
 ############################################################################################################
@@ -452,8 +438,8 @@ slope.plot
 #beta_bar ~ normal(0.31,0.25); //Original 4 regimes
 #Rho ~ lkj_corr(4);
 
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt_mlm_ve.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt_mlm_ve.stan")
 #stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/chatgpt_blouchOU_reg_adapt_mlm_ve.stan")
 
 #setwd("/Users/markgrabowski/Documents/Academic/Research/R Packages/OLD - blouch/inst/stan/")
