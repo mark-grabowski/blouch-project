@@ -125,7 +125,7 @@ model {
   real sigma2_y = vy*(2*(log(2)/hl));
   matrix[N,n_reg] optima_matrix;
   vector[1+Z_adaptive] ab_bar;
-  hl ~ lognormal(log(0.25),0.75);
+  hl ~ lognormal(log(0.25),0.25);
   vy ~ exponential(20);
   //optima_bar ~ normal(0.9218754,0.5);//Original 4 regimes
   //beta_bar ~ normal(0.2250853,0.1); //Original 4 regimes

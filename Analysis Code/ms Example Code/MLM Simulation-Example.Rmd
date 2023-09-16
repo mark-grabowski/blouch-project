@@ -1,0 +1,745 @@
+---
+title: "Simulation Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulation Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This is the Simulation Example from Grabowski (in revision). In this example, we will simualte 
+data for a model where Y adapts to four different optima that are influenced by the predictor trait X, and each optima has a different scaling relationship with X. Below, data is simulated following the multi-optima adaptive generative model, and then *Blouch* uses the multilevel multi-optima adaptive model with varying effects (varying intercepts and varying slopes) and the non-multilevel version of the same model to estimate the known parameter values. 
+
+## Setup
+```{r setup}
+rm(list=ls())
+library(blouch)
+#devtools::load_all()
+```
+
+The *Blouch* package includes the primate phylogeny from the 10KTrees Project (Arnold et al. 2010), which is used for various simulations and comes from https://10ktrees.nunn-lab.org/. This is Version 3 of their primate phylogeny with 301 tips. Here we randomly reduce the tip number to 100 for a more manageable tree using functions from the ape R package (Paradis et al. 2004)
+
+```{r Make_tree}
+########################################################################################################
+#Four regimes with one adaptive trait and multiple slopes per optima but single alpha parameter
+set.seed(10) #Set sequence of random numbers for replicability
+N<-100 #Number of species
+
+phy <- ape::keep.tip(tree.10K,sample(tree.10K$tip.label)[1:N]) 
+phy<-ape::multi2di(phy) #Collapse or resolve multichotomies in phylogenetic trees.
+
+l.tree<-max(ape::branching.times(phy)) ## Rescale tree to height 1
+phy$edge.length<-phy$edge.length/l.tree 
+
+```
+
+Lets plot the tree with nodes labeled - these will be where we will be placing our regime shifts in the next step. We will use nodes 164, 192, and 104, which results in 4 regimes - the shifts+the root regime.
+
+```{r Explore_nodes}
+#Set regimes - manually - 4 regimes
+#Locate nodes
+plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
+ape::nodelabels(frame="none",adj=c(1.1,-0.4))
+ape::tiplabels()
+
+```
+
+############################################################################################################
+## Combine data and tree and paint regimes on tree.
+Next we will use the treeplyr package (Uyeda and Harmon, 2014) make.treedata function to combine the data and tree based on the taxa names. See https://github.com/uyedaj/treeplyr for more on this package. This step is basically to make a dummy trdata object containing the tree and a blank "dat" dataset object.
+
+Then we will place the regime shifts on the tree that were identified earlier using *Blouch's* set.converge.regimes() function. Finally we will plot the tree with the shifts colored to make sure we have done everything correctly.
+
+```{r Set_regimes}
+
+trdata<-data.frame(phy$tip.label)
+trdata<-treeplyr::make.treedata(phy,trdata)
+
+shifts<-c(164,104,197,144,168,136,106,185,128) #Location of nodes with regime shifts #100 species
+trdata<-set.converge.regimes(trdata,shifts)
+
+
+#Check if manual setting code worked
+shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
+edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
+
+reg.colors<-ggsci::pal_npg(palette=c("nrc"),alpha=1)(10)
+
+print(reg.colors)
+plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1,show.tip.label=FALSE)
+
+reg_tips<-trdata$dat$regimes
+reg_tips<-as.numeric(as.factor(reg_tips))
+
+```
+
+############################################################################################################
+## Get info on phylogeny
+Next we will build a regimes object that will include both internal node and tip regimes, and use *Blouch's* lineage.constructor function to trace lineages from the tips to the root and determine the regime at each node - this function is built into Blouch and it does this internally given an empirical dataset, but here we use the function as part of our data simulation.
+
+```{r Make_regime_data}
+n<-length(trdata$phy$tip.label)
+
+regimes_internal <-trdata$phy$node.label
+regimes_tip <- trdata$dat$regimes
+regimes <- concat.factor(regimes_tip, regimes_internal)
+anc_maps<-"regimes"
+lineages <- lapply(1:n, function(e) lineage.constructor(trdata$phy, e, anc_maps, regimes, ace)) #Trace lineage from tips (n) to root and determine regimes of each node or branch
+
+```
+
+## Set true/known parameter values
+Next we set our true/known parameter values. These are for the half-life (hl), and stationary variance (vy), which in our simulation we translate to /alpha (a) and /sigma^2_y. We set the ancestral value at the root (vX0) to 0, and the instantaneous variance of the BM process to (Sxx) to 10.
+
+```{r Simulate_data}
+#########################
+hl<-0.1 #Half life
+a<-log(2)/hl #Alpha
+vy<-0.01 #Stationary Variance
+sigma2_y<-vy*(2*(log(2)/hl)); #Ramdom fluctuations of Y
+
+vX0<-0 #Ancestral value at root
+Sxx<-10 #Variance of BM Process
+
+```
+
+## Simulate X data
+We first simulate the X trait data following a Brownian-Motion Process using the fastBM function from the phytools package (Revell 2011) and the parameter values set above. We then plot the values using the phenogram function from the same package to make sure things look as they should.
+
+```{r}
+X<-phytools::fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with BM scaling 10
+names(X)<-phy$tip.label
+phytools::phenogram(phy,X,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
+
+```
+
+## Simulate Y data
+Next we need to simulate the Y data - we are using four different optima (intercepts) with four different slopes. We use the weight.matrix function, which is included as an internal Blouch function to produce the optima_matrix object, which has the weighting for each lineage based on the amount of time spent in each regime (see Hansen 1997 for derivation). This is followed by using the calc_adaptive_dmX internal Blouch function which calculates the design matrix where the observed predictor X variables for each species are multiplied by the the phylogenetic correction factor, following Hansen et al. (2008), and these values are stored in the object pred_X.
+
+We set values for our optima/intercepts (optima) and slopes (beta), and then use a linear model to construct a deterministic relationship between our set parameter values and mu, a vector of mean values for each species in our analysis. 
+
+```{r}
+optima_matrix<-weight.matrix(trdata$phy, a, lineages) 
+pred_X<-calc_adaptive_dmX(phy,a,X)
+optima<-1
+beta<-0.5
+sigma_optima<-1
+sigma_beta<-0.25
+rho <- (-0.7) #Correlation between intercepts and slopes
+Mu<-c(optima,beta)
+sigmas<-c(sigma_optima,sigma_beta)
+Rho<-matrix(c(1,rho,rho,1),nrow=2)
+Sigma<-diag(sigmas)%*%Rho%*%diag(sigmas)
+
+#Simulate regimes
+N_regimes<-10
+vary_effects<-MASS::mvrnorm(N_regimes,Mu,Sigma) #For each regime - intercept and slope
+optima_regime<-vary_effects[,1]
+slope_regime<-vary_effects[,2]
+
+#optima<-c(1,2,3,4,5,6,7,8,9,10) #Simualted optima/intercepts
+#beta<-c(1,1,0.75,0.75,0.5,0.5,0.35,0.35,0.25,0.25) #Simulated slopes
+
+mu<-matrix(NA,N,1)
+for(i in 1:N){ #Generative function to produce average Y values for each combination of optima/intercepts and slopes following Blouch approach
+  mu[i] = optima_matrix[i,]%*%optima_regime+slope_regime[reg_tips[i]]%*%pred_X[i]
+
+}
+
+```
+
+## Calculating V
+From there we will construct a variance/covariance matrix (V) based on our previously set parameter values and the  Blouch function calc_adaptive_V, following Hansen et al. (2008). Finally we sill simulate Y values based on our mean vector mu and our covariance matrix V.
+
+```{r}
+n_reg<-length(unique(regimes)) #Count number of regimes
+sigma2_x<-matrix(1,1,1) #Brownian-motion variance for use in calculating V - same as above.
+Z_adaptive<-1 #Number of adaptive X traits
+V<-calc_adaptive_V(phy,a, sigma2_y,  beta,  sigma2_x, Z_adaptive) #Calculate V based on set values
+Y<-MASS::mvrnorm(n=1,mu,V) #Simulate Y variables centered on mu with covariariance matrix V 
+
+```
+
+Let's make a simple plot of data
+
+```{r}
+df<-data.frame(Y=Y,X=X)
+
+ggplot2::ggplot(data=df,ggplot2::aes(x=X,y=Y))+
+  ggplot2::geom_point()
+summary(lm(Y~X,df))
+
+
+```
+
+## Simulating measurement error
+Next we will simulate measurement error - we will use a standard deviation of measurement error of 0.01, which we will provide to Blouch as a vector (X_error and Y_error), and use the rnorm function to add error to our X and Y variables. In other words, we are telling Blouch that the estimated error on X and Y is 0.01, and providing it with X and Y variables that are offset by a random amount of error with this standard deviation.
+
+```{r Simulate_ME}
+##################################################################################################################
+#Simulate errors
+Z_X_error<-1 #Number of X traits with error
+X_error<-matrix(0.01,nrow=N,ncol=Z_X_error)
+X_error<-data.frame(X_error)
+Y_error<-rep(0.01,N)
+Y_with_error<-Y+rnorm(N,0,0.01) #Add ME to Y
+X_with_error<-X+rnorm(N,0,0.01) #Add ME to X
+
+```
+
+## Data setup for Blouch
+
+The first line below combines the existing trdata file from make.trdata which has regime info for the tips with the X and Y predictor values and their errors. We will use the helper function blouch.reg.adapt.prep() to setup the dat object for Stan. This function and the other helper functions require trdata files, and then the names of the columns that contain Y and (sometimes depending on the model) X data and error data. "Z_adaptive" is the number of predictors, with "regimes" the name of the column where the tip regime data is located. See help info for each function and other articles on github.com for functionality.
+
+```{r Data_setup}
+############################################################################################################
+#Make trdata file
+trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
+dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_adaptive=1,"regimes")
+
+```
+
+## Exploring Priors
+Lets check out our simulated data with reasonable values for the priors shown in light grey lines. These are the ".sims" values - the priors are based on the intercept and slope of an OLS regression. See Grabowski (in revision) for more on setting these priors
+
+```{r Exploring_priors}
+############################################################################################################
+#Prior Exploration Plot
+lm.allometric<-summary(lm(dat$Y_obs~dat$X_obs)) #Calculate regression of Y on X
+lm.allometric$coefficients
+
+optima.sims<-rnorm(100,lm.allometric$coefficients[1],1.5) #Set priors on alpha/
+beta.sims<-rnorm(n=100,lm.allometric$coefficients[2],0.25)
+
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs[,1])
+names(df)<-c("Y","X")
+
+slope.plot<-ggplot2::ggplot()+  
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=regimes_tip))+
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.1)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ggplot2::ylab("Y") + ggplot2::xlab("Adaptive Predictor")+
+  ggsci::scale_color_npg()
+
+slope.plot
+
+```
+
+## Running models
+First we will run the Multilevel Multi-optima Adaptive Model with Varying Effects. This will allow our intercepts (optima) and slopes to vary with the regimes. As a multilevel model, information can be shared across the regimes, resulting in possibly more accurate parameter estimates. Below are the priors used for this simulation. See Grabowski (in revision) for more on setting these priors. To change these values requires you to open the Stan function, in this case blouchOU_reg_adapt_mlm_ve, and manually edit them. Unfortunately there is no way around this at present, but trust me - it will be worth it.
+
+For example, here are the four most important priors for the models below - these values are explored in Grabowski (in revision). Remember, always do prior predictive simulations first - in other words, look at distributions of the values and see if they are actually biologically possible - see the exploring priors step above.
+
+```{r, eval=FALSE}
+########################################################################################################
+#Priors
+#hl ~ lognormal(log(0.25),0.25);
+#vy ~ exponential(20);
+#optima_bar ~ normal(2.88,1.5);
+#beta_bar ~ normal(0.31,0.25);
+```
+
+And here are the lines of Stan code for setting these priors. To change the values to make them appropriate for your own analyses, you just need to change the numbers below. All Stan programs are in the Blouch/inst/stan folder and named according to the model they run. See Table S1 of Grabowski (in revision) for more on the models. Remember, your priors should be based on what you know about the biological processes underlying your research question and prior predictive simulations (see McElreath 2020)
+
+
+```{r, eval=FALSE}
+#Stan Code
+target += lognormal_lpdf(hl|log(0.25),0.25);
+target += exponential_lpdf(vy|20);
+target += normal_lpdf(optima_bar|2.88,1.5);
+target += normal_lpdf(beta_bar|0.31,0.25);
+
+```
+
+
+Now let's run the multi-level adaptive model with varying effects (blouchOU_reg_adapt_mlm_ve below).
+
+```{r MLM_VE_Model, results='hide'}
+########################################################################################################
+#Complete Priors
+#hl ~ lognormal(log(0.25),0.25);
+#vy ~ exponential(20);
+#optima_bar ~ normal(2.88,1.5);
+#beta_bar ~ normal(0.31,0.25);
+#Rho ~ lkj_corr(4);
+
+fit.reg.adapt.mlm.ve<- rstan::sampling(blouch:::stanmodels$blouchOU_reg_adapt_mlm_ve,data = dat,chains = 2,cores=2,iter =4000)
+```
+
+Stan prints out a lot of info, so lets just look at the parameter estimates here and store the posterior distribution for later.
+
+```{r Plot_results_MLM_VE_Model}
+print(fit.reg.adapt.mlm.ve,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))
+#plot(rethinking::precis(fit.reg.adapt.mlm.ve,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))) #For use with rethinking package
+post.mlm.ve<-rstan::extract(fit.reg.adapt.mlm.ve) #Extract posterior distribution 
+```
+
+We can also compare a few of the parameter estimates with the values we set earlier.
+
+```{r}
+print(fit.reg.adapt.mlm.ve,pars = c("hl","vy","optima","beta"))
+
+```
+
+
+Now let's run the non-multilevel version of the same model. We will compare these two models in terms of their predictive performance below.
+
+```{r VE_Model, results='hide'}
+########################################################################################################
+#Milestone 15 - varying effects model
+#Combination of regime model with adaptive model with measurement error and varying slopes
+#Priors
+#hl ~ lognormal(log(0.25),0.25);
+#vy ~ exponential(20);
+#optima ~ normal(2.88,1.5);
+#for(i in 1:(Z_adaptive)){
+#  beta[,i] ~ normal(0.31,0.25);
+#}
+
+fit.reg.adapt.ve<- rstan::sampling(blouch:::stanmodels$blouchOU_reg_adapt_ve,data = dat,chains = 2,cores=2,iter =4000)
+```
+
+Again we can also compare a few of the parameter estimates with the values we set earlier.
+
+```{r Plot_results_VE_Model, results='hide'}
+print(fit.reg.adapt.ve,pars = c("hl","vy","optima","beta"))
+#plot(rethinking::precis(fit.reg.adapt.ve,depth=3,pars = c("hl","vy","optima","beta","beta_e")))#For use with rethinking package
+post.ve<-rstan::extract(fit.reg.adapt.ve)#Extract posterior distribution 
+
+```
+
+## Plotting posterior versus prior distributions
+Great. We can see from the marginal likelihood tables that *Blouch* is fairly accurate at recovering our known parameter values. But a more effective way to look at the full estimated posterior distribution and compare it to the prior is to plot the results.
+
+Lets use multi-optima adaptive model with varying effects - the other model's posterior looks quite similar. For all plots the dotted line is the true values of the parameter.
+
+First the half-life (hl):
+
+```{r Plot_hl}
+########################################################################################################
+#Hl Plot prior vs. posterior - assume posterior has been extracted using extract(model) and stored in post
+
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.25))
+names(hl.sims)<-"prior.hl.sims"
+
+hl.post<-data.frame(post.ve$hl) #Using this model's posterior
+names(hl.post)<-"post.hl.sims"
+
+hl.plot<-ggplot2::ggplot()+
+  ggplot2::geom_density(ggplot2::aes(prior.hl.sims,fill="prior.hl.sims"),alpha=0.2,data=hl.sims)+
+  ggplot2::geom_density(ggplot2::aes(post.hl.sims,fill="post.hl.sims"),alpha=0.2,data=hl.post)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  #labs(title="Prior vs. Posterior Distribution ",x="Half-life", y = "Density")+
+  ggplot2::labs(title="",x="Half-life", y = "Density")+
+  
+  #scale_fill_manual(labels=c("Posterior","Prior"))+
+  ggplot2::geom_vline(xintercept=c(hl),linetype=2)+
+  ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+
+hl.plot
+########################################################################################################
+```
+
+Now the stationary variance parameter (Vy):
+
+```{r Plot_vy}
+vy.sims<-rexp(n=1000,rate=20)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+
+vy.post<-data.frame(post.mlm.ve$vy)
+names(vy.post)<-"post.vy.sims"
+
+
+vy.plot<-ggplot2::ggplot()+
+  ggplot2::geom_density(ggplot2::aes(prior.vy.sims,fill="prior.vy.sims"),alpha=0.2,data=vy.sims)+
+  ggplot2::geom_density(ggplot2::aes(post.vy.sims,fill="post.vy.sims"),alpha=0.2,data=vy.post)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  #labs(title="Prior vs. Posterior Distribution ",x="vy", y = "Density")+
+  ggplot2::labs(title="",x="vy", y = "Density")+
+  ggplot2::geom_vline(xintercept=c(vy),linetype=2)+
+  
+  #scale_fill_manual(labels=c("Posterior","Prior"))+
+  ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+
+vy.plot
+
+```
+
+Now lets plot the covariance as a function of distance from the tips - this gives an idea of the decay of covariance in the OU process. We will use Blouch's helper function, calc_multiadaptive_cov_plot.R to make these plots:
+
+```{r Plot_cov}
+########################################################################################################
+#Adaptation model - multiple regimes
+a.sims<-log(2)/hl.sims;
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims));
+beta.sims<-replicate(length(beta),rnorm(n=1000,0,0.25))
+
+mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+
+plot( NULL , xlim=c(0,1) , ylim=c(0,0.3) , xlab="Time since MRCA" , ylab="Covariance" ,cex.axis=0.75, mgp=c(1.25,0.25,0),tcl=-0.25)
+for (i in 1:30){
+  curve(calc_multiadaptive_cov_plot(a.sims[i,],sigma2_y.sims[i,],beta.sims[i,],x,Z_adaptive,n_reg) , add=TRUE , lwd=4 ,col=mypal[2]) #Prior - blue
+}
+
+for (i in 1:30){
+  curve(calc_multiadaptive_cov_plot(post.mlm.ve$a[i],post.mlm.ve$sigma2_y[i],as.numeric(data.frame(post.mlm.ve$beta)[i,]),x,Z_adaptive,n_reg) , add=TRUE , lwd=4 , col=mypal[1]) #Posterior - red
+}
+
+par(mar=c(3,3,0.25,0.25)) 
+covariance.plot <- recordPlot()
+dev.off()
+covariance.plot
+########################################################################################################
+
+```
+
+Finally lets plot the results - the posterior compared to the prior for the estimated regressions:
+
+```{r Plot_regressions}
+X<-X_with_error
+Y<-Y_with_error
+
+optima.sims<-rnorm(100,2.88,1.5)
+beta.sims<-rnorm(100, 0.31,0.25)
+
+optima.post<-post.mlm.ve$optima
+beta.post<-data.frame(post.mlm.ve$beta)
+names(beta.post)<-c("post.beta.1","post.beta.2","post.beta.3","post.beta.4","post.beta.5","post.beta.6","post.beta.7","post.beta.8","post.beta.9","post.beta.10")
+
+
+mu.link.1<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.2<-function(x.seq){optima.post[,2]+x.seq*beta.post[,2]}
+
+mu.link.3<-function(x.seq){optima.post[,3]+x.seq*beta.post[,3]}
+mu.link.4<-function(x.seq){optima.post[,4]+x.seq*beta.post[,4]}
+
+mu.link.5<-function(x.seq){optima.post[,5]+x.seq*beta.post[,5]}
+mu.link.6<-function(x.seq){optima.post[,6]+x.seq*beta.post[,6]}
+
+mu.link.7<-function(x.seq){optima.post[,7]+x.seq*beta.post[,7]}
+mu.link.8<-function(x.seq){optima.post[,8]+x.seq*beta.post[,8]}
+
+mu.link.9<-function(x.seq){optima.post[,9]+x.seq*beta.post[,9]}
+mu.link.10<-function(x.seq){optima.post[,10]+x.seq*beta.post[,10]}
+
+
+x.seq <- seq(from=min(X), to=max(X) , length.out=100)
+mu.1 <- sapply(x.seq , mu.link.1 )
+mu.2 <- sapply(x.seq , mu.link.2 )
+mu.3 <- sapply(x.seq , mu.link.3 )
+mu.4 <- sapply(x.seq , mu.link.4 )
+mu.5 <- sapply(x.seq , mu.link.5 )
+mu.6 <- sapply(x.seq , mu.link.6 )
+mu.7 <- sapply(x.seq , mu.link.7 )
+mu.8 <- sapply(x.seq , mu.link.8 )
+mu.9 <- sapply(x.seq , mu.link.9 )
+mu.10 <- sapply(x.seq , mu.link.10 )
+
+
+mu.mean.1<-colMeans(mu.1)
+mu.mean.2<-colMeans(mu.2)
+mu.mean.3<-colMeans(mu.3)
+mu.mean.4<-colMeans(mu.4)
+mu.mean.5<-colMeans(mu.5)
+mu.mean.6<-colMeans(mu.6)
+mu.mean.7<-colMeans(mu.7)
+mu.mean.8<-colMeans(mu.8)
+mu.mean.9<-colMeans(mu.9)
+mu.mean.10<-colMeans(mu.10)
+
+mu.mean.1<-data.frame(as.numeric(mu.mean.1))
+mu.mean.2<-data.frame(as.numeric(mu.mean.2))
+mu.mean.3<-data.frame(as.numeric(mu.mean.3))
+mu.mean.4<-data.frame(as.numeric(mu.mean.4))
+mu.mean.5<-data.frame(as.numeric(mu.mean.5))
+mu.mean.6<-data.frame(as.numeric(mu.mean.6))
+mu.mean.7<-data.frame(as.numeric(mu.mean.7))
+mu.mean.8<-data.frame(as.numeric(mu.mean.8))
+mu.mean.9<-data.frame(as.numeric(mu.mean.9))
+mu.mean.10<-data.frame(as.numeric(mu.mean.10))
+
+
+names(mu.mean.1)<-"mu.mean.1"
+names(mu.mean.2)<-"mu.mean.2"
+names(mu.mean.3)<-"mu.mean.3"
+names(mu.mean.4)<-"mu.mean.4"
+names(mu.mean.5)<-"mu.mean.5"
+names(mu.mean.6)<-"mu.mean.6"
+names(mu.mean.7)<-"mu.mean.7"
+names(mu.mean.8)<-"mu.mean.8"
+names(mu.mean.9)<-"mu.mean.9"
+names(mu.mean.10)<-"mu.mean.10"
+
+
+mu.CI.1 <- apply( mu.1 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.2 <- apply( mu.2 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.3 <- apply( mu.3 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.4 <- apply( mu.4 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.5 <- apply( mu.5 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.6 <- apply( mu.6 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.7 <- apply( mu.7 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.8 <- apply( mu.8 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.9 <- apply( mu.9 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.10 <- apply( mu.10 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+
+mu.CI.1<-data.frame(t(data.frame(mu.CI.1)),x.seq)
+mu.CI.2<-data.frame(t(data.frame(mu.CI.2)),x.seq)
+mu.CI.3<-data.frame(t(data.frame(mu.CI.3)),x.seq)
+mu.CI.4<-data.frame(t(data.frame(mu.CI.4)),x.seq)
+mu.CI.5<-data.frame(t(data.frame(mu.CI.5)),x.seq)
+mu.CI.6<-data.frame(t(data.frame(mu.CI.6)),x.seq)
+mu.CI.7<-data.frame(t(data.frame(mu.CI.7)),x.seq)
+mu.CI.8<-data.frame(t(data.frame(mu.CI.8)),x.seq)
+mu.CI.9<-data.frame(t(data.frame(mu.CI.9)),x.seq)
+mu.CI.10<-data.frame(t(data.frame(mu.CI.10)),x.seq)
+
+names(mu.CI.1)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.2)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.3)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.4)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.5)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.6)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.7)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.8)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.9)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.10)<-c("min.5.5","max.94.5","x.seq")
+
+
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+df1<-data.frame(x.seq,mu.mean.1)
+df2<-data.frame(x.seq,mu.mean.2)
+df3<-data.frame(x.seq,mu.mean.3)
+df4<-data.frame(x.seq,mu.mean.4)
+df5<-data.frame(x.seq,mu.mean.5)
+df6<-data.frame(x.seq,mu.mean.6)
+df7<-data.frame(x.seq,mu.mean.7)
+df8<-data.frame(x.seq,mu.mean.8)
+df9<-data.frame(x.seq,mu.mean.9)
+df10<-data.frame(x.seq,mu.mean.10)
+
+mypal <- ggsci::pal_npg("nrc", alpha = 0.7)(10)
+
+slope.plot.1<-ggplot2::ggplot()+  
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=Regimes))+
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.1)+
+  
+  ggplot2::geom_abline(intercept=optima_regime[1],slope=slope_regime[1],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[2],slope=slope_regime[2],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[3],slope=slope_regime[3],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[4],slope=slope_regime[4],alpha=0.5,linetype=2)+
+
+  ggplot2::geom_abline(intercept=optima_regime[5],slope=slope_regime[5],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[6],slope=slope_regime[6],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[7],slope=slope_regime[7],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[8],slope=slope_regime[8],alpha=0.5,linetype=2)+
+
+  ggplot2::geom_abline(intercept=optima_regime[9],slope=slope_regime[9],alpha=0.5,linetype=2)+
+  ggplot2::geom_abline(intercept=optima_regime[10],slope=slope_regime[10],alpha=0.5,linetype=2)+
+
+  ggplot2::geom_line(data=df1,ggplot2::aes(x=x.seq,y=mu.mean.1),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.1,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+  ggplot2::geom_line(data=df2,ggplot2::aes(x=x.seq,y=mu.mean.2),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.2,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+  
+  ggplot2::geom_line(data=df3,ggplot2::aes(x=x.seq,y=mu.mean.3),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.3,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+  ggplot2::geom_line(data=df4,ggplot2::aes(x=x.seq,y=mu.mean.4),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.4,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+
+  ggplot2::geom_line(data=df5,ggplot2::aes(x=x.seq,y=mu.mean.5),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.5,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+
+  ggplot2::geom_line(data=df6,ggplot2::aes(x=x.seq,y=mu.mean.6),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.6,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+  ggplot2::geom_line(data=df7,ggplot2::aes(x=x.seq,y=mu.mean.7),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.7,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+  
+  ggplot2::geom_line(data=df8,ggplot2::aes(x=x.seq,y=mu.mean.8),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.8,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+  ggplot2::geom_line(data=df9,ggplot2::aes(x=x.seq,y=mu.mean.9),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.9,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+
+  ggplot2::geom_line(data=df10,ggplot2::aes(x=x.seq,y=mu.mean.10),linetype=1)+
+  ggplot2::geom_ribbon(data=mu.CI.10,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.2)+
+
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  # Right -> inside the plot area
+  ggplot2::theme(
+    legend.position = c(.8, .3),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left",
+    legend.margin = ggplot2::margin(6, 6, 6, 6)
+  )+
+  
+  #ggtitle("Prior vs. Posterior for Intercept and Slope")+
+  ggplot2::ylab("Y") + ggplot2::xlab("Adaptive trait")+
+  ggsci::scale_color_npg()
+
+slope.plot.1
+
+#####
+```
+
+## Model Comparison using PSIS
+Lets do some model comparison using PSIS from the R Package loo (Vehtari et al. 2023). loo estimates leave-one-out cross validation for Bayesian analyses. Here we are looking for Pareto k values below ~0.7, which suggest the results are accurate. We then compare the two models using the loo_compare function from the same package.
+
+```{r Model_comparison_PSIS}
+#Mlm varying effects model
+loo_mlm_ve <- loo::loo(fit.reg.adapt.mlm.ve, save_psis = TRUE)
+print(loo_mlm_ve)
+plot(loo_mlm_ve) #4X6
+plot(loo_mlm_ve,label_points=TRUE) #Label outliers
+
+
+#Varying effects model
+loo_ve <- loo::loo(fit.reg.adapt.ve, save_psis = TRUE)
+print(loo_ve)
+plot(loo_ve) #4X6
+plot(loo_ve,label_points=TRUE) #Label outliers
+
+loo::loo_compare(loo_mlm_ve, loo_ve)
+
+```
+
+These results suggest the two models are indistinguishable - the standard error of the difference between the expected log pointwise predictive density (elpd) for the two models is larger than the difference.
+
+
+## Model Comparison using Bayes Factors
+Now lets compare our two models using Bayes Factors. Here we use the bridgesampling R package. Looking below, we can read the results as the data is X times more likely under a model that assumes the first mode rather than second model.
+
+```{r Model_comparison_BF}
+########################################################################################################
+#Bayes Factors
+lml.fit.reg.adapt.mlm.ve<-bridgesampling::bridge_sampler(fit.reg.adapt.mlm.ve,silent=TRUE,maxiter=5000)
+lml.fit.reg.adapt.ve<-bridgesampling::bridge_sampler(fit.reg.adapt.ve,silent=TRUE,maxiter=5000)
+
+bridgesampling::bf(lml.fit.reg.adapt.ve,lml.fit.reg.adapt.mlm.ve)
+
+```
+
+Our results suggest ...
+
+### Trace and Density Plots for estimated parameters
+Let's look at traceplots of our two models, which give a visualization of degree of convergence.
+
+```{r Traceplots}
+########################################################################################################
+#Traceplots #4X10
+rstan::traceplot(fit.reg.adapt.mlm.ve,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
+rstan::traceplot(fit.reg.adapt.ve,pars = c(c("hl","vy","optima","beta","beta_e")))
+
+```
+
+## Predictive Checks
+
+Now lets run prior predictive checks and posterior predictive checks for our two models. Prior predictive checks generate predictions from the model using only the prior distribution (s) in order to assess whether the priors are appropriate – they are equivalent to running the model without data (Gabry et al. 2019).  Posterior predictive checks generate data according to the posterior predictive distribution and compare it to the observed data to assess the fit of the model (Gabry et al. 2019). Blouch includes Stan functions to run prior and posterior predictive checks for each of the included models and their use is demonstrated below in the simulation and empirical examples.
+
+### Prior predictive checks
+
+```{r Prior_pc}
+fit.reg.adapt.mlm.ve.priorpc<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_adapt_mlm_ve_priorpc,data = dat,chains = 1,cores=1,iter =2000, algorithm=c("Fixed_param"))
+post<-rstan::extract(fit.reg.adapt.mlm.ve.priorpc)
+mypal <- ggsci::pal_aaas("default", alpha = 1)(4)
+
+df<-data.frame(Y=post$Y_sim_obs[3,],X=dat$Y_obs,Regimes=regimes_tip) #Sample from the posterior - in this case the third sample
+
+priorpc.plot<-ggplot2::ggplot()+  
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=as.factor(Regimes)))+
+  ggplot2::geom_abline(intercept=0,slope=1,alpha=1)+ #Prior
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  ggplot2::ggtitle("Prior Predictive Check")+
+  ggplot2::ylab("Simulated Y") + ggplot2::xlab("True Y")+
+  ggplot2::scale_color_manual(name="Regimes",values=mypal,labels=c('OU1', 'OU2', 'OU3', 'OU4'))
+
+
+priorpc.plot
+
+
+```
+
+Prior predictive checks show a generally reasonable fit between the data and data generated from the priors, though a few larger true values suggest using larger scale on some priors may be warranted
+
+### Posterior predictive checks
+
+```{r Posterior_pc}
+########################################################################################################
+fit.reg.adapt.mlm.ve.postpc<-rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_adapt_mlm_ve_postpc,data = dat,chains = 1,cores=1,iter =2000)#, algorithm=c("Fixed_param"))
+post<-rstan::extract(fit.reg.adapt.mlm.ve.postpc)
+mypal <- ggsci::pal_aaas("default", alpha = 1)(4)
+
+df<-data.frame(Y=post$Y_sim_obs[3,],X=dat$Y_obs,Regimes=regimes_tip) #Sample from the posterior - in this case the third sample
+
+postpc.plot<-ggplot2::ggplot()+  
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=as.factor(Regimes)))+
+  ggplot2::geom_abline(intercept=0,slope=1,alpha=1)+ #Prior
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  ggplot2::ggtitle("Posterior Predictive Check")+
+  ggplot2::ylab("Simulated Y") + ggplot2::xlab("True Y")+
+  ggplot2::scale_color_manual(name="Regimes",values=mypal,labels=c('OU1', 'OU2', 'OU3', 'OU4'))
+
+
+postpc.plot
+
+
+########################################################################################################
+```
+
+Posterior predictive checks show that the model is well fit as it generates data that are a close approximation of the true dataset.
+
+If this was a real data analysis, a comparison of the 
+
+## References
+Arnold, C., L. J. Matthews, and C. L. Nunn. 2010. The 10kTrees Website: A New Online Resource for Primate Phylogeny. Evolutionary Anthropology 19:114-118.
+
+Gabry J., Simpson D., Vehtari A., Betancourt M., Gelman A. 2019. Visualization in Bayesian workflow. Journal of the Royal Statistical Society: Series A (Statistics in Society). 182:389–402.
+
+Hansen T.F. 1997. Stabilizing Selection and the Comparative Analysis of Adaptation. Evolution. 51:1341–1351.
+
+McElreath R. 2020. Statistical rethinking: A Bayesian course with examples in R and Stan. CRC press.
+
+Paradis E., Claude J., Strimmer K. 2004. APE: Analyses of Phylogenetics and Evolution in R language. Bioinformatics. 20:289–290.
+
+Revell L.J. 2011. phytools: an R package for phylogenetic comparative biology (and other things). Methods Ecol. Evol. 3:217–223.
+
+Uyeda J.C., Harmon L.J. 2014. A Novel Bayesian Method for Inferring and Interpreting the Dynamics of Adaptive Landscapes from Phylogenetic Comparative Data. Systematic Biology. 63:902–918.
+
+Vehtari A., Gabry J., Magnusson M., Yao Y., Bürkner P.-C., Paananen T., Gelman A. 2023. loo: Efficient   leave-one-out cross-validation and WAIC for Bayesian models.
+
+

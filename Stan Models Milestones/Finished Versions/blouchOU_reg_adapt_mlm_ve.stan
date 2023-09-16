@@ -126,7 +126,7 @@ model {
   matrix[N,n_reg] optima_matrix;
   vector[1+Z_adaptive] ab_bar;
     //hl ~ lognormal(log(0.25),0.25);
-  target += lognormal_lpdf(hl|log(0.25),0.75);
+  target += lognormal_lpdf(hl|log(0.25),0.25);
   //vy ~ exponential(5);
   target += exponential_lpdf(vy|20);
     //optima_bar ~ normal(2.88,1.5);

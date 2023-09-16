@@ -77,6 +77,7 @@ ts_fxn<-function(phy){ #Calculate t
 
 #############################################################################################  
 #Data formatting drawn from Slouch
+
 parent <- function(phy, x){ #Returns parent node of offspring node given node number
   m <- which(phy$edge[, 2] == x)
   return(phy$edge[m, 1])
@@ -213,7 +214,6 @@ weight.matrix <- function(phy, a, lineages){ #Wrapper to apply weights_regimes t
 concat.factor <- function(...){
   as.factor(do.call(c, lapply(list(...), as.character)))
 }
-########################################################################################################
 
 #Script to simulate data to test Blouch OU regimes model
 library(devtools)
@@ -225,7 +225,6 @@ library(ggsci)
 library(ggpubr)
 library(MASS)
 library(rstan)
-library(phytools)
 library(rethinking)
 #For execution on a local, multicore CPU with excess RAM we recommend calling
 options(mc.cores = parallel::detectCores())
@@ -263,9 +262,9 @@ plot(phy,no.margin=TRUE,edge.width=2,cex=0.7)
 nodelabels(frame="none",adj=c(1.1,-0.4))
 tiplabels()
 
-############################################################################################################
 #Paint Regimes on Tree
 source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Simulation Code/Functions/set.converge.regimes.R") #Macbook Pro
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Simulation Code/Functions/set.converge.regimes.R") #Mac Studio
 
 shifts<-c(164,192,104) #Location of nodes with regime shifts #100 species
 #shifts<-c(83,72,65) #Location of nodes with regime shifts #50 species
@@ -279,6 +278,12 @@ shifts.total<-c(trdata$dat$regimes,trdata$phy$node.label)
 edge.regimes <- factor(shifts.total[trdata$phy$edge[,2]])
 print(edge.regimes)
 #Get ggplot colors used for plot to make on tree
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length=n+1)
+  hcl(h=hues, l=65, c=100)[1:n]
+}
+
+reg.colors<-gg_color_hue(length(unique(trdata$dat$regimes)))
 
 #reg.colors<-ggsci::pal_aaas("default",alpha=0.7)(4)
 reg.colors<-ggsci::pal_npg(palette=c("nrc"),alpha=1)(4)
@@ -291,9 +296,16 @@ plot(trdata$phy,edge.color = reg.colors[edge.regimes], edge.width = 1,show.tip.l
 reg_tips<-trdata$dat$regimes
 reg_tips<-as.numeric(as.factor(reg_tips))
 
-############################################################################################################
+
 #Phylogeny info
 n<-length(trdata$phy$tip.label)
+mrca1 <- ape::mrca(trdata$phy)
+times <- ape::node.depth.edgelength(trdata$phy)
+ta <- matrix(times[mrca1], nrow=n, dimnames = list(trdata$phy$tip.label, trdata$phy$tip.label))
+T.term <- times[1:n]
+tia <- times[1:n] - ta
+tja <- t(tia)
+tij <- tja + tia
 
 regimes_internal <-trdata$phy$node.label
 regimes_tip <- trdata$dat$regimes
@@ -332,6 +344,7 @@ beta<-c(0.75,0.5,0.35,0.25) #Two Optima/Two Slopes
 
 #beta<-data.frame(matrix(c(0.25,0.15,0.35,0.1),ncol=2,nrow=2)) #Two traits on columns, two regimes on vertical
 
+
 mu<-matrix(NA,N,1)
 for(i in 1:N){
   mu[i] = optima_matrix[i,]%*%optima+beta[reg_tips[i]]%*%pred_X[i]
@@ -343,71 +356,50 @@ n_reg<-length(unique(regimes))
 V<-calc_adaptive_V(a, sigma2_y, ta,  tij,  tja,  T_term,  beta,  sigma2_x, Z_adaptive, n_reg)
 Y<-mvrnorm(n=1,mu,V)
 
+nodes<-NULL
+store<-NULL
+reg_num_lineage<-NULL
+for(i in 1:length(lineages)){
+  store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
+  reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
+  nodes<-c(nodes,length(lineages[[i]]$nodes))
+}
+max_node_num<-max(store)  
+times<-matrix(0,length(lineages),max_node_num)
+t_end<-matrix(0,length(lineages),max_node_num)
+t_beginning<-matrix(0,length(lineages),max_node_num)
+reg_match<-data.frame(matrix(0,length(lineages),max_node_num))
+
+for(i in 1:length(lineages)){
+  times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
+  t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
+  t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
+  reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
+}
+
+
 ##################################################################################################################
 #Simulate errors - original Hansen setup
 Z_X_error<-1 #Number of X traits with error
-X_error<-matrix(0.01,nrow=N,ncol=Z_X_error)
-X_error<-data.frame(X_error)
-#names(X_error)<-c("Xd_error","Xa_error")
+X_error<-matrix(0.01,nrow=N,ncol=1)
 Y_error<-rep(0.01,N)
 Y_with_error<-Y+rnorm(N,0,0.01)
 X_with_error<-X+rnorm(N,0,0.01)
 
-############################################################################################################
-#Code using blouch.prep function
-############################################################################################################
-#Make trdata file
-trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
-############################################################################################################
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/R Setup Code/blouch.prep.R")
-dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_adaptive=1,"regimes")
-
-############################################################################################################
-#Original Code
-############################################################################################################
-#nodes<-NULL
-#store<-NULL
-#reg_num_lineage<-NULL
-#for(i in 1:length(lineages)){
-#  store<-c(store,length(lineage.nodes(trdata$phy,i))) #Calculate max node height
-#  reg_num_lineage<-c(reg_num_lineage,length(unique(lineages[[i]]$lineage_regimes)))
-#  nodes<-c(nodes,length(lineages[[i]]$nodes))
-#}
-#max_node_num<-max(store)  
-#times<-matrix(0,length(lineages),max_node_num)
-#t_end<-matrix(0,length(lineages),max_node_num)
-#t_beginning<-matrix(0,length(lineages),max_node_num)
-#reg_match<-data.frame(matrix(0,length(lineages),max_node_num))
-
-#for(i in 1:length(lineages)){
-#  times[i,1:length(lineages[[i]]$times)]<-lineages[[i]]$times
-#  t_end[i,1:length(lineages[[i]]$t_end)]<-lineages[[i]]$t_end
-#  t_beginning[i,1:length(lineages[[i]]$t_beginning)]<-lineages[[i]]$t_beginning
-#  reg_match[i,1:length(lineages[[i]]$lineage_regimes)]<-rev(as.numeric(lineages[[i]]$lineage_regimes))
-#}
-
-##################################################################################################################
-#Simulate errors - original Hansen setup
-#Z_X_error<-1 #Number of X traits with error
-#X_error<-matrix(0.01,nrow=N,ncol=1)
-#Y_error<-rep(0.01,N)
-#Y_with_error<-Y+rnorm(N,0,0.01)
-#X_with_error<-X+rnorm(N,0,0.01)
-
 #2 Regimes with direct effect model with regime info for tips
-#dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,max_node_num=max_node_num,
-#          Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_adaptive),
-#          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
-#          sigma2_x=sigma2_x,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
-#          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
+dat<-list(N=N,n_reg=length(unique(regimes)),Z_adaptive=Z_adaptive,Z_X_error=Z_X_error,max_node_num=max_node_num,
+          Y_obs=Y_with_error,X_obs=matrix(X_with_error,nrow=N,ncol=Z_adaptive),
+          Y_error=Y_error,X_error=matrix(X_error,nrow=N,ncol=Z_X_error),
+          sigma2_x=sigma2_x,ta=ta,tij=tij,tja=tja,T_term=T_term,t_beginning=t_beginning,
+          t_end=t_end,times=times,reg_match=reg_match,nodes=nodes,reg_tips=reg_tips)
 ############################################################################################################
 #Prior Exploration Plot
 lm.allometric<-summary(lm(dat$Y_obs~dat$X_obs))
 lm.allometric$coefficients
 
 #Prior vs. Posterior Plot
-#library(ggsci)
-#library(rethinking)
+library(ggsci)
+library(rethinking)
 
 alpha.sims<-rnorm(100,lm.allometric$coefficients[1],1.25)
 beta.sims<-rnorm(n=100,lm.allometric$coefficients[2],0.25)
@@ -469,7 +461,7 @@ post<-extract(fit.reg.adapt.mlm.ve)
 #plot(precis(fit.reg.adapt.mlm.ve.nc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e")))
 #post<-extract(fit.reg.adapt.mlm.ve.nc)
 ########################################################################################################
-#Milestone 15 - varying effects model
+#Milestone 15 - varying slopes model
 #Combination of regime model with adaptive model with measurement error and varying slopes
 #Priors
 #hl ~ lognormal(log(0.25),0.75);
@@ -496,14 +488,14 @@ post<-extract(fit.reg.adapt.ve)
 #beta ~ normal(0.31,0.1);
 #sigma ~ normal(0,1);
 
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt_mlm_vi.stan")
-#stan_model <- stan_model("blouchOU_reg_adapt_mlm_vi.stan")
-#fit.reg.adapt.mlm.vi<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
-#print(fit.reg.adapt.mlm.vi,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
-#plot(precis(fit.reg.adapt.mlm.vi,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt_mlm_vi.stan")
+stan_model <- stan_model("blouchOU_reg_adapt_mlm_vi.stan")
+fit.reg.adapt.mlm.vi<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+print(fit.reg.adapt.mlm.vi,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+plot(precis(fit.reg.adapt.mlm.vi,depth=2,pars = c("hl","vy","optima","optima_bar","beta","sigma")))
 
-#post<-extract(fit.reg.adapt.mlm.vi)
+post<-extract(fit.reg.adapt.mlm.vi)
 
 ########################################################################################################
 #Milestone 6 - basic model
@@ -514,19 +506,19 @@ post<-extract(fit.reg.adapt.ve)
 #optima ~ normal(2.88,0.5);
 #beta ~ normal(0.31,0.1);
 
-#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt.stan")
-#stan_model <- stan_model("blouchOU_reg_adapt.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_adapt.stan")
+stan_model <- stan_model("blouchOU_reg_adapt.stan")
 
-#fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
+fit.reg.adapt<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
 
-#print(fit.reg.adapt,pars = c("hl","vy","optima","beta","beta_e"))
-#post<-extract(fit.reg.adapt)
+print(fit.reg.adapt,pars = c("hl","vy","optima","beta","beta_e"))
+post<-extract(fit.reg.adapt)
 
 ########################################################################################################
 #Hl Plot prior vs. posterior - assume posterior has been extracted using extract(model) and stored in post
 
-hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.25))
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.75))
 #hl.sims<-data.frame(hl.sims[hl.sims<3])
 names(hl.sims)<-"prior.hl.sims"
 
@@ -613,7 +605,7 @@ covariance.plot
 #Four regimes - Slope plots for adaptive model with measurement error
 #For main ms
 library(ggsci)
-#library(rethinking)
+library(rethinking)
 X<-X_with_error
 Y<-Y_with_error
 
@@ -746,44 +738,65 @@ dev.off()
 #compare(fit.reg.adapt.mlm.ve,fit.reg.adapt.mlm.ve.nc,fit.reg.adapt.mlm.vi,fit.reg.adapt.vs,fit.reg.adapt,func=PSIS)
 #compare(fit.reg.adapt.mlm.ve,fit.reg.adapt.mlm.ve.nc,fit.reg.adapt.vs,func=PSIS)
 
-library(loo) #Mlm varying effects model
+library(loo) #Varying effects model
 loo_mlm_ve <- loo(fit.reg.adapt.mlm.ve, save_psis = TRUE)
 print(loo_mlm_ve)
 plot(loo_mlm_ve) #4X6
-plot(loo_mlm_ve,label_points=TRUE) #Label outliers
 
-#library(loo) #Varying effects model
+#library(loo) #Varying slopes model
 loo_ve <- loo(fit.reg.adapt.ve, save_psis = TRUE)
 print(loo_ve)
 plot(loo_ve) #4X6
-plot(loo_ve,label_points=TRUE) #Label outliers
 
 loo_compare(loo_mlm_ve, loo_ve)
-#elpd_diff se_diff
-#model1  0.0       0.0   
-#model2 -1.1       1.3   
 
--1.1 + c(-1,1)*1.4*1.96
-
-
-#library(loo) #MLM varying intercepts model
+#library(loo) #Varying slopes model
 loo_vi <- loo(fit.reg.adapt.mlm.vi, save_psis = TRUE)
 print(loo_vi)
 plot(loo_vi) #4X6
+
+loo_compare(loo_mlm_ve, loo_ve, loo_vi)
 
 #library(loo) #Varying effects model - non-centered
 #loo_ve_nc <- loo(fit.reg.adapt.mlm.ve.nc, save_psis = TRUE)
 #print(loo_ve_nc)
 #plot(loo_ve_nc)
 
-#library(loo) #Basic model
+#library(loo) #Varying intercepts model
+loo_vi <- loo(fit.reg.adapt.mlm.vi, save_psis = TRUE)
+print(loo_vi)
+plot(loo_vi)
+
+
+
+
+library(loo) #Basic model
 loo_basic <- loo(fit.reg.adapt, save_psis = TRUE)
 print(loo_basic)
 plot(loo_basic)
 
-plot(loo_basic,label_points=TRUE) #Label outliers
+########################################################################################################
+#https://mc-stan.org/loo/articles/loo2-with-rstan.html
+library(loo) #Varying effects model - non-centered
+log_lik_1 <- extract_log_lik(fit.reg.adapt.mlm.ve, merge_chains = FALSE)
+r_eff <- relative_eff(exp(log_lik_1), cores = 2) 
+loo_1 <- loo(log_lik_1, r_eff = r_eff, cores = 2)
+print(loo_1)
+plot(loo_1)
 
-loo_compare(loo_mlm_ve, loo_ve, loo_vi, loo_basic)
+log_lik_2 <- extract_log_lik(fit.reg.adapt.ve, merge_chains = FALSE)
+r_eff <- relative_eff(exp(log_lik_2), cores = 2) 
+loo_2 <- loo(log_lik_2, r_eff = r_eff, cores = 2)
+print(loo_2)
+plot(loo_2)
+
+comp <- loo_compare(loo_1, loo_2)
+
+log_lik_vi <- extract_log_lik(fit.reg.adapt.mlm.vi, merge_chains = FALSE)
+r_eff <- relative_eff(exp(log_lik_vi), cores = 2) 
+loo_mlm_vi <- loo(log_lik_vi, r_eff = r_eff, cores = 2)
+print(loo_2)
+plot(loo_2)
 
 
 ########################################################################################################
@@ -792,14 +805,34 @@ loo_compare(loo_mlm_ve, loo_ve, loo_vi, loo_basic)
 library(bridgesampling)
 lml.fit.reg.adapt.mlm.ve<-bridge_sampler(fit.reg.adapt.mlm.ve,silent=TRUE)
 #lml.fit.reg.adapt.mlm.ve.nc<-bridge_sampler(fit.reg.adapt.mlm.ve.nc,silent=TRUE,maxiter=5000)
-lml.fit.reg.adapt.ve<-bridge_sampler(fit.reg.adapt.ve,silent=TRUE,maxiter=5000)
 #lml.fit.reg.adapt.mlm.vi<-bridge_sampler(fit.reg.adapt.mlm.vi,silent=TRUE)
+lml.fit.reg.adapt.ve<-bridge_sampler(fit.reg.adapt.ve,silent=TRUE,maxiter=5000)
 #lml.fit.reg.adapt<-bridge_sampler(fit.reg.adapt,silent=TRUE,maxiter=5000)
 
 #bridgesampling::bf(lml.fit.reg.adapt.mlm.ve, lml.fit.reg.adapt.mlm.ve.nc)
+#bridgesampling::bf(lml.fit.reg.adapt.mlm.ve, lml.fit.reg.adapt.ve)
 bridgesampling::bf(lml.fit.reg.adapt.ve, lml.fit.reg.adapt.mlm.ve)
+
+
 #bridgesampling::bf(lml.fit.reg.adapt.mlm.ve, lml.fit.reg.adapt.mlm.vi)
 #bridgesampling::bf(lml.fit.reg.adapt.mlm.ve, lml.fit.reg.adapt)
+
+########################################################################################################
+#https://mc-stan.org/loo/articles/loo2-with-rstan.html
+library(loo) #Varying effects model - non-centered
+log_lik_1 <- extract_log_lik(fit.reg.adapt.mlm.ve, merge_chains = FALSE)
+r_eff <- relative_eff(exp(log_lik_1), cores = 2) 
+loo_1 <- loo(log_lik_1, r_eff = r_eff, cores = 2)
+print(loo_1)
+plot(loo_1)
+comp <- loo_compare(loo_1, loo_2)
+
+log_ratios <- -log_lik_1
+psis_result <- psis(log_ratios)
+plot(psis_result, label_points = TRUE)
+
+comp <- loo_compare(loo_1, loo_2)
+
 
 ########################################################################################################
 #Traceplots #4X10
@@ -809,12 +842,14 @@ traceplot(fit.reg.adapt.vs,pars = c(c("hl","vy","optima","beta","beta_e")))
 ########################################################################################################
 #Prior predictive checks
 #Based on Milestone 16 - mlm with varying effects
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/")
-stanc("//Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/blouchOU_reg_adapt_mlm_ve_priorpc.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Validation Code/Model Checking/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Validation Code/Model Checking/blouchOU_reg_adapt_mlm_ve_priorpc.stan")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/chatgpt_blouchOU_reg_adapt_mlm_ve.stan")
 
 stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve_priorpc.stan")
 fit.reg.adapt.mlm.ve.priorpc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000, algorithm=c("Fixed_param"))
-
+#print(fit.reg.adapt.mlm.ve.priorpc,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e"))
+#plot(precis(fit.reg.adapt.mlm.ve.priorpc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e")))
 post<-extract(fit.reg.adapt.mlm.ve.priorpc)
 mypal <- pal_aaas("default", alpha = 1)(4)
 
@@ -842,11 +877,14 @@ priorpc.plot
 ########################################################################################################
 #Posterior predictive checks
 #Based on Milestone 16 - mlm with varying effects
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/blouchOU_reg_adapt_mlm_ve_postpc.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Validation Code/Model Checking/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Validation Code/Model Checking/blouchOU_reg_adapt_mlm_ve_postpc.stan")
+#stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/chatgpt_blouchOU_reg_adapt_mlm_ve.stan")
 
 stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve_postpc.stan")
 fit.reg.adapt.mlm.ve.postpc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
+#print(fit.reg.adapt.mlm.ve.postpc,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e","Y_sim_obs"))
+#plot(precis(fit.reg.adapt.mlm.ve.postpc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","beta_e","Y_sim_obs"))))
 post<-extract(fit.reg.adapt.mlm.ve.postpc)
 
 plot(post$Y_sim_obs[1,],dat$Y_obs)

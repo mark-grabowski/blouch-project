@@ -118,7 +118,7 @@ generated quantities {
   matrix[n_reg,1+Z_adaptive] v;
   vector<lower=0>[1+Z_adaptive] sigma;
 
-  real<lower=0> hl = lognormal_rng(log(0.25),0.75);
+  real<lower=0> hl = lognormal_rng(log(0.25),0.25);
   real<lower=0> vy = exponential_rng(20);
   real a = log(2)/hl;
   real sigma2_y = vy*(2*(log(2)/hl));
