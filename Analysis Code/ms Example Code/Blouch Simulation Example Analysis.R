@@ -728,11 +728,19 @@ slope.plot.1
 #For Main ms
 fig<-ggarrange(hl.plot, vy.plot, "",slope.plot.1, ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
 
-ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/For ms/Figures/Fig1.pdf", plot = fig, width=7, height=7 )
+ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch project - not online/For ms/Figures/Fig2-redux.pdf", plot = fig, width=7, height=7 )
 
-pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/For ms/Figures/Fig1C.pdf",   # The directory you want to save the file in
+pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch project - not online/For ms/Figures/Fig2C-redux.pdf",   # The directory you want to save the file in
     width = 3.6, # The width of the plot in inches
     height = 3.4) # The height of the plot in inches
+
+ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch project - not online/For ms/Figures/FigS3-redux.pdf", plot = fig, width=7, height=7 )
+
+pdf(file = "/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch project - not online/For ms/Figures/FigS3C-redux.pdf",   # The directory you want to save the file in
+    width = 3.6, # The width of the plot in inches
+    height = 3.4) # The height of the plot in inches
+
+
 covariance.plot
 dev.off()
 
