@@ -130,7 +130,7 @@ model {
   matrix[N,n_reg] optima_matrix;
   vector[n_reg+Z_adaptive] optima_beta = append_row(optima,beta);
   //hl ~ lognormal(log(0.25),0.25);
-  target += lognormal_lpdf(hl|log(0.25),0.25);
+  target += lognormal_lpdf(hl|log(0.25),0.75);
   //vy ~ exponential(20);
   target += exponential_lpdf(vy|20);
   //z ~ normal(0,1);

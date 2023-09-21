@@ -127,7 +127,7 @@ model {
   real sigma2_y = vy*(2*(log(2)/hl));
   matrix[N,n_reg] optima_matrix;
   //hl ~ lognormal(log(0.25),0.25);
-  target += lognormal_lpdf(hl|log(0.25),0.25);
+  target += lognormal_lpdf(hl|log(0.25),0.75);
   //vy ~ exponential(5);
   target += exponential_lpdf(vy|20);
   //L_Rho ~ lkj_corr_cholesky(2);
