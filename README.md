@@ -1,4 +1,4 @@
 # blouch
-This is the testing branch for the Blouch Project from Grabowski (in revision)
+This is the github site for the Blouch Project
 
 
