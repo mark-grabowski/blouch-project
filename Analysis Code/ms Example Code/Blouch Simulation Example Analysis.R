@@ -226,7 +226,7 @@ library(ggpubr)
 library(MASS)
 library(rstan)
 library(phytools)
-library(rethinking)
+#library(rethinking)
 #For execution on a local, multicore CPU with excess RAM we recommend calling
 options(mc.cores = parallel::detectCores())
 #options(mc.cores = 8)
@@ -309,7 +309,7 @@ sigma2_y<-vy*(2*(log(2)/hl));
 
 vX0<-0
 vY0 <- 0
-Sxx<-10 #Look at effects
+sigma2_x<-matrix(1,1,1)
 
 ts<-ts_fxn(phy)
 ta<-ts[[1]]
@@ -317,8 +317,7 @@ tij<-ts[[2]]
 T_term<-ts[[3]]
 tja<-ts[[4]]
 
-X<-fastBM(phy,a=vX0,sig2=Sxx,internal=FALSE) #Simulate X BM variable on tree, with scaling 10
-sigma2_x<-matrix(1,1,1)
+X<-fastBM(phy,a=vX0,sig2=sigma2_x[1,1],internal=FALSE) #Simulate X BM variable on tree, with scaling 10
 Z_adaptive<-1
 names(X)<-phy$tip.label
 phenogram(phy,X,spread.labels=TRUE,spread.cost=c(1,0)) #Plot X data
@@ -359,7 +358,7 @@ X_with_error<-X+rnorm(N,0,0.01)
 #Make trdata file
 trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
 ############################################################################################################
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/R Setup Code/blouch.prep.R")
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/R Setup Code/blouch.prep.alt.R")
 dat<-blouch.reg.adapt.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_adaptive=1,"regimes")
 
 ############################################################################################################
@@ -409,7 +408,7 @@ lm.allometric$coefficients
 #library(ggsci)
 #library(rethinking)
 
-alpha.sims<-rnorm(100,lm.allometric$coefficients[1],1.25)
+alpha.sims<-rnorm(100,lm.allometric$coefficients[1],1)
 beta.sims<-rnorm(n=100,lm.allometric$coefficients[2],0.25)
 
 df<-data.frame(Y=dat$Y_obs,X=dat$X_obs[,1])
@@ -526,7 +525,7 @@ post<-extract(fit.reg.adapt.ve)
 ########################################################################################################
 #Hl Plot prior vs. posterior - assume posterior has been extracted using extract(model) and stored in post
 
-hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.25))
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=log(0.25),sdlog=0.75))
 #hl.sims<-data.frame(hl.sims[hl.sims<3])
 names(hl.sims)<-"prior.hl.sims"
 
@@ -617,8 +616,9 @@ library(ggsci)
 X<-X_with_error
 Y<-Y_with_error
 
-optima.sims<-rnorm(100,1.89,1.5)
-beta.sims<-rnorm(100, 0.5,0.25)
+optima.sims<-rnorm(100,lm.allometric$coefficients[1],1)
+beta.sims<-rnorm(n=100,lm.allometric$coefficients[2],0.25)
+
 
 optima.post<-post$optima
 beta.post<-data.frame(post$beta)
@@ -656,15 +656,15 @@ names(mu.mean.22)<-"mu.mean.22"
 
 
 
-mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
 
 
 mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
 mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
 
-mu.CI.21 <- apply( mu.21 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.22 <- apply( mu.22 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.21 <- apply( mu.21 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.22 <- apply( mu.22 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
 
 mu.CI.21<-data.frame(t(data.frame(mu.CI.21)),x.seq)
 mu.CI.22<-data.frame(t(data.frame(mu.CI.22)),x.seq)
@@ -798,7 +798,7 @@ loo_compare(loo_mlm_ve, loo_ve, loo_vi, loo_basic)
 ########################################################################################################
 #Bayes Factors
 library(bridgesampling)
-lml.fit.reg.adapt.mlm.ve<-bridge_sampler(fit.reg.adapt.mlm.ve,silent=TRUE)
+lml.fit.reg.adapt.mlm.ve<-bridge_sampler(fit.reg.adapt.mlm.ve,silent=TRUE,maxiter=5000)
 #lml.fit.reg.adapt.mlm.ve.nc<-bridge_sampler(fit.reg.adapt.mlm.ve.nc,silent=TRUE,maxiter=5000)
 lml.fit.reg.adapt.ve<-bridge_sampler(fit.reg.adapt.ve,silent=TRUE,maxiter=5000)
 #lml.fit.reg.adapt.mlm.vi<-bridge_sampler(fit.reg.adapt.mlm.vi,silent=TRUE)
@@ -812,15 +812,17 @@ bridgesampling::bf(lml.fit.reg.adapt.ve, lml.fit.reg.adapt.mlm.ve)
 ########################################################################################################
 #Traceplots #4X10
 traceplot(fit.reg.adapt.mlm.ve,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta"))
-traceplot(fit.reg.adapt.vs,pars = c(c("hl","vy","optima","beta","beta_e")))
+traceplot(fit.reg.adapt.ve,pars = c(c("hl","vy","optima","beta","beta_e")))
 
 ########################################################################################################
 #Prior predictive checks
-#Based on Milestone 16 - mlm with varying effects
+#Based on Milestone 16 - mlm with varying effects 
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/")
-stanc("//Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/blouchOU_reg_adapt_mlm_ve_priorpc.stan")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/blouchOU_reg_adapt_ve_priorpc.stan")
 
-stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve_priorpc.stan")
+stan_model <- stan_model("blouchOU_reg_adapt_ve_priorpc.stan")
+
+#stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve_priorpc.stan")
 fit.reg.adapt.mlm.ve.priorpc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000, algorithm=c("Fixed_param"))
 
 post<-extract(fit.reg.adapt.mlm.ve.priorpc)
@@ -844,16 +846,17 @@ priorpc.plot<-ggplot()+
   scale_color_manual(name="Regimes",values=mypal,labels=c('OU1', 'OU2', 'OU3', 'OU4'))
 
 
-priorpc.plot
+priorpc.plot #4X5
 
 
 ########################################################################################################
 #Posterior predictive checks
 #Based on Milestone 16 - mlm with varying effects
 setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/blouchOU_reg_adapt_mlm_ve_postpc.stan")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Validation Code/Model Checking/blouchOU_reg_adapt_ve_postpc.stan")
 
-stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve_postpc.stan")
+stan_model <- stan_model("blouchOU_reg_adapt_ve_postpc.stan")
+#stan_model <- stan_model("blouchOU_reg_adapt_mlm_ve_postpc.stan")
 fit.reg.adapt.mlm.ve.postpc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
 post<-extract(fit.reg.adapt.mlm.ve.postpc)
 

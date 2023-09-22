@@ -215,14 +215,13 @@ concat.factor <- function(...){
 #Script to Run Empirical Analysis
 library(devtools)
 library(ape)
-library(slouch)
 library(rstan)
 library(treeplyr)
 library(ggplot2)
 library(ggsci)
 library(MASS)
 library(ggpubr)
-library(rethinking)
+#library(rethinking)
 #For execution on a local, multicore CPU with excess RAM we recommend calling
 options(mc.cores = parallel::detectCores())
 #options(mc.cores = 8)
@@ -247,8 +246,8 @@ rstan_options(auto_write = TRUE)
 ########################################################################################################
 #Load Data
 
-cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/Sharable Data/cervidae_renamed.tre")
-cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch - not online/Sharable Data/updated_mean_dat_no_OL_BGS_MG.csv")
+cervid.tree<-read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch project - not online/Sharable Data/cervidae_renamed.tre")
+cervid.dataset<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch project - not online/Sharable Data/updated_mean_dat_no_OL_BGS_MG.csv")
 
 #Remove Muntiacus_atherodes, Elaphodus_cephalophus - rudamentary and female Rangifer. 
 cervid.dataset<-filter(cervid.dataset,Genus_Species != "Sinomegaloceros_yabei" & ! Genus_Species =="Alces_alces_gigas"  & ! Genus_Species == "Muntiacus_truongsonensis" & ! Genus_Species ==  "Mazama_temama"& ! Genus_Species ==  "Muntiacus_feae" & ! Genus_Species ==  "Muntiacus_atherodes" & ! Genus_Species ==  "Elaphodus_cephalophus")
@@ -322,7 +321,8 @@ regimes_tip <- cervid.trdata.BGS$dat$BGS
 trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_obs,Y_error,X_obs,X_error)))
 ############################################################################################################
 #Test Blouch prep code - Regimes + Adaptive Model
-source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/R Setup Code/blouch.prep.R")
+source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/R Setup Code/blouch.prep.alt.R")
+#Using alternative version with geiger::ratematrix for sigma.X.estimate - not needed in this analysis
 dat<-blouch.reg.direct.prep(trdata,"Y_obs","Y_error","X_obs","X_error",1,"BGS")
 
 ############################################################################################################
@@ -332,7 +332,7 @@ lm.allometric$coefficients
 
 #Prior vs. Posterior Plot
 library(ggsci)
-library(rethinking)
+#library(rethinking)
 
 alpha.sims<-rnorm(100,lm.allometric$coefficients[1],0.75)
 beta.sims<-rnorm(n=100,lm.allometric$coefficients[2],1.75)
@@ -388,8 +388,8 @@ slope.plot
 #beta_bar ~ normal(6.304451,1.75);
   
 #Combination of regime model with multitrait direct effect model with measurement error and correlated varying effects - non-centered
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_mlm_ve_nc.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_mlm_ve_nc.stan")
 #setwd("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/")
 #stanc("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/Other computers/My MacBook Pro/Documents/Academic/Research/Current Projects/Blouch project/R1 blouch-testing branch/Stan Models Milestones/Testing Versions/blouchOU_reg.stan")
 
@@ -397,7 +397,7 @@ stan_model <- stan_model("blouchOU_reg_direct_mlm_ve_nc.stan")
 #fit.reg.direct.mlm.ve.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =4000)
 fit.reg.direct.mlm.ve.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =4000,control = list(adapt_delta = 0.99))
 print(fit.reg.direct.mlm.ve.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta","Z"))
-plot(precis(fit.reg.direct.mlm.ve.nc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))
+#plot(precis(fit.reg.direct.mlm.ve.nc,depth=3,pars = c("hl","vy","optima_bar","beta_bar","Rho","sigma","optima","beta")))
 post<-extract(fit.reg.direct.mlm.ve.nc)
 
 ########################################################################################################
@@ -409,13 +409,13 @@ post<-extract(fit.reg.direct.mlm.ve.nc)
 #optima_beta ~ normal(-1.179507,0.75);
 #beta ~ normal(6.304451,1.75);
 
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_ve.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_ve.stan")
 
 stan_model <- stan_model("blouchOU_reg_direct_ve.stan")
 fit.reg.direct.ve<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =4000)
 print(fit.reg.direct.ve,pars = c("hl","vy","optima","beta"))
-plot(precis(fit.reg.direct.ve,depth=3,pars = c("hl","vy","optima","beta")))
+#plot(precis(fit.reg.direct.ve,depth=3,pars = c("hl","vy","optima","beta")))
 post<-extract(fit.reg.direct.ve)
 
 ########################################################################################################
@@ -448,14 +448,14 @@ post<-extract(fit.reg.direct.ve)
 #optima_beta ~ normal(-1.179507,0.75);
 #beta ~ normal(6.304451,1.5);
 
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_mlm_vi_nc.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/blouchOU_reg_direct_mlm_vi_nc.stan")
 
 stan_model <- stan_model("blouchOU_reg_direct_mlm_vi_nc.stan")
 #First run
 fit.reg.direct.mlm.vi.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2,control = list(adapt_delta = 0.99))
 print(fit.reg.direct.mlm.vi.nc,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
-plot(precis(fit.reg.direct.mlm.vi.nc,depth=2,pars = c("hl","vy","optima","optima_bar","sigma")))
+#plot(precis(fit.reg.direct.mlm.vi.nc,depth=2,pars = c("hl","vy","optima","optima_bar","sigma")))
 
 post<-extract(fit.reg.direct.mlm.vi.nc)
 ########################################################################################################
@@ -467,8 +467,8 @@ post<-extract(fit.reg.direct.mlm.vi.nc)
 #optima ~ normal(-1.179507,0.75);
 #beta ~ normal(6.304451,1.5);
 
-setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/")
-stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch/Stan Models Milestones/Finished Versions/blouchOU_reg_direct.stan")
+setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/")
+stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch project/blouch-testing/Stan Models Milestones/Finished Versions/blouchOU_reg_direct.stan")
 stan_model <- stan_model("blouchOU_reg_direct.stan")
 
 fit.reg.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =4000,cores=2)
@@ -605,9 +605,9 @@ names(mu.mean.12)<-"mu.mean.12"
 names(mu.mean.13)<-"mu.mean.13"
 
 
-mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
 
 
 mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
@@ -694,9 +694,9 @@ names(mu.mean.12)<-"mu.mean.12"
 names(mu.mean.13)<-"mu.mean.13"
 
 
-mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
 
 
 mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
@@ -781,9 +781,9 @@ names(mu.mean.12)<-"mu.mean.12"
 names(mu.mean.13)<-"mu.mean.13"
 
 
-mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
 
 
 mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
@@ -869,9 +869,9 @@ names(mu.mean.12)<-"mu.mean.12"
 names(mu.mean.13)<-"mu.mean.13"
 
 
-mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=PI , prob=0.89 )
-mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=PI , prob=0.89 )
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
 
 
 mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)

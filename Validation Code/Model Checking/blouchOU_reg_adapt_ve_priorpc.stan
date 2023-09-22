@@ -109,43 +109,7 @@ parameters {
 }
 
 model {
-  matrix[N,N] V;
-  vector[N] mu;
-  matrix[N,N] L_v;
-  matrix[N,Z_adaptive] pred_X;
-  matrix[N,n_reg+Z_adaptive] dmX;
-  real a = log(2)/hl;
-  real sigma2_y = vy*(2*(log(2)/hl));
-  matrix[N,n_reg] optima_matrix;
-  //hl ~ lognormal(log(0.25),0.25);
-  target += lognormal_lpdf(hl|log(0.25),0.25);
-  //vy ~ exponential(20);
-  target += exponential_lpdf(vy|20);
-  //optima ~ normal(2.88,1.5);//Original 4 regimes
-    target += normal_lpdf(optima|2.88,1.5);
-  for(i in 1:(Z_adaptive)){
-    //beta[,i] ~ normal(0.31,0.25);
-    target += normal_lpdf(beta[,i]|0.31,0.25);
-  }
-  for(i in 1:(Z_adaptive)){//Given measurement error in X variable, uncomment this nested statement
-    //X[,i] ~ normal(0,1);
-    target += normal_lpdf(X[,i]|0,1);
-    //X_obs[,i] ~ normal(X[,i], X_error[,i]);
-    target += normal_lpdf(X_obs[,i]|X[,i],X_error[,i]);
-  }
-  optima_matrix = calc_optima_matrix(N, n_reg, a, t_beginning, t_end, times, reg_match, nodes);
-  pred_X = calc_dmX(a,T_term,X);//Given measurement error in X variable, uncomment this nested statement
-  //pred_X = calc_dmX(a,T_term,X_obs);//Given no measurement error in X variable, uncomment this nested statement
-  V = calc_V(a,sigma2_y,ta,tij,tja,T_term,beta,sigma2_x,Z_adaptive,n_reg);
-  L_v = cholesky_decompose(V);
-  for(i in 1:N){
-    mu[i] = optima_matrix[i,]*optima+pred_X[i,]*beta[reg_tips[i],]';
-    }
-  //Y ~ multi_normal_cholesky(mu , L_v);//Given measurement error in Y variable, uncomment this statement
-  //Y_obs ~ normal(Y,Y_error); //Given measurement error in Y variable, uncomment this statement
-  //Y_obs ~ multi_normal_cholesky(mu , L_v); //Given no measurement error in Y variable, uncomment this statement
-  target += multi_normal_cholesky_lpdf(Y | mu , L_v);
-  target += normal_lpdf(Y_obs | Y, Y_error);
+
 }
 generated quantities {
   matrix[N,N] V;
@@ -160,17 +124,21 @@ generated quantities {
   
   matrix[n_reg,Z_adaptive] beta;
   vector[n_reg] optima;
-
   
   real hl = lognormal_rng(log(0.25),0.75);
   real vy = exponential_rng(20);
   real sigma2_y = vy*(2*(log(2)/hl));
   real a = log(2)/hl;
   
-  optima ~ normal_rng(2.88,1.5);//Original 4 regimes
-  for(i in 1:(Z_adaptive)){
-    beta[,i] ~ normal_rng(0.31,0.25);
+  for(i in 1:n_reg){
+    optima[i] = normal_rng(2.8,1);
   }
+  for(i in 1:(Z_adaptive)){//Given measurement error in X variable, uncomment this nested statement
+    for(j in 1:n_reg){
+      beta[j,i] = normal_rng(0.16,0.25);  
+    }
+  }
+  
   for(i in 1:(Z_adaptive)){//Given measurement error in X variable, uncomment this nested statement
     for(j in 1:N){
       X_sim[j,i] = normal_rng(X_obs[j,i], X_error[j,i]);  

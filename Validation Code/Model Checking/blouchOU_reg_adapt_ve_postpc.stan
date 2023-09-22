@@ -120,18 +120,19 @@ model {
   matrix[N,N] L_v;
   matrix[N,Z_adaptive] pred_X;
   matrix[N,n_reg+Z_adaptive] dmX;
-  real a = log(2)/hl;
-  real sigma2_y = vy*(2*(log(2)/hl));
   matrix[N,n_reg] optima_matrix;
   //hl ~ lognormal(log(0.25),0.25);
-  target += lognormal_lpdf(hl|log(0.25),0.25);
+  target += lognormal_lpdf(hl|log(0.25),0.75);
   //vy ~ exponential(20);
   target += exponential_lpdf(vy|20);
   //optima ~ normal(2.88,1.5);//Original 4 regimes
-    target += normal_lpdf(optima|2.88,1.5);
+  real a = log(2)/hl;
+  real sigma2_y = vy*(2*(log(2)/hl));
+
+  target += normal_lpdf(optima|2.8,1);
   for(i in 1:(Z_adaptive)){
     //beta[,i] ~ normal(0.31,0.25);
-    target += normal_lpdf(beta[,i]|0.31,0.25);
+    target += normal_lpdf(beta[,i]|0.16,0.25);
   }
   for(i in 1:(Z_adaptive)){//Given measurement error in X variable, uncomment this nested statement
     //X[,i] ~ normal(0,1);
@@ -154,6 +155,9 @@ model {
   target += normal_lpdf(Y_obs | Y, Y_error);
 }
 generated quantities {
+  vector[N] Y_sim;
+  vector[N] Y_sim_obs;
+
   matrix[N,N] V;
   matrix[N,N] L_v;
   matrix[N,Z_adaptive] pred_X;

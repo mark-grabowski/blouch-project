@@ -149,7 +149,15 @@ generated quantities {
   for(i in 1:n_reg){
     optima[i] = normal_rng(-1.79247,0.25);
   }
+  
+  for(i in 1:(Z_direct)){//Given measurement error in X variable, uncomment this nested statement
+    for(j in 1:N){
+      beta[j,i] = normal_rng(0,0.25);  
+    }
+  }
+  
   for(i in 1:Z_direct){
+    for
      beta[i]= normal_rng(0,0.25);
   }
   for(i in 1:(Z_direct)){//Given measurement error in X variable, uncomment this nested statement

@@ -128,10 +128,10 @@ model {
   //vy ~ exponential(20);
   target += exponential_lpdf(vy|20);
   //optima ~ normal(2.88,1.5);//Original 4 regimes
-    target += normal_lpdf(optima|2.88,1.5);
+    target += normal_lpdf(optima|2.8,1);
   for(i in 1:(Z_adaptive)){
     //beta[,i] ~ normal(0.31,0.25);
-    target += normal_lpdf(beta[,i]|0.31,0.25);
+    target += normal_lpdf(beta[,i]|0.16,0.25);
   }
   for(i in 1:(Z_adaptive)){//Given measurement error in X variable, uncomment this nested statement
     //X[,i] ~ normal(0,1);

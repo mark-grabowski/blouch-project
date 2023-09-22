@@ -130,9 +130,9 @@ model {
   //vy ~ exponential(5);
   target += exponential_lpdf(vy|20);
     //optima_bar ~ normal(2.88,1.5);
-  target += normal_lpdf(optima_bar|2.88,1.5);
+  target += normal_lpdf(optima_bar|2.8,1);
   //beta_bar ~ normal(0.31,0.25;
-  target += normal_lpdf(beta_bar|0.31,0.25);
+  target += normal_lpdf(beta_bar|0.16,0.25);
   //Rho ~ lkj_corr(4);
   target += lkj_corr_lpdf(Rho|4);
   ab_bar[1] = optima_bar;

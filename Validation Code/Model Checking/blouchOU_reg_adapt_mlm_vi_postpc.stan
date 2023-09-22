@@ -159,6 +159,8 @@ model {
   target += normal_lpdf(Y_obs | Y, Y_error);
 }
 generated quantities {
+  vector[N] Y_sim;
+  vector[N] Y_sim_obs;
   matrix[N,N] V;
   matrix[N,Z_adaptive] pred_X;
   matrix[N,n_reg+Z_adaptive] dmX;

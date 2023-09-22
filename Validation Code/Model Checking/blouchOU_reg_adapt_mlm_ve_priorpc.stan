@@ -118,12 +118,12 @@ generated quantities {
   matrix[n_reg,1+Z_adaptive] v;
   vector<lower=0>[1+Z_adaptive] sigma;
 
-  real<lower=0> hl = lognormal_rng(log(0.25),0.25);
+  real<lower=0> hl = lognormal_rng(log(0.25),0.75);
   real<lower=0> vy = exponential_rng(20);
   real a = log(2)/hl;
   real sigma2_y = vy*(2*(log(2)/hl));
   
-  real optima_bar = normal_rng(2.88,1.5);//Original 4 regimes
+  real optima_bar = normal_rng(2.8,1);//Original 4 regimes
   vector[Z_adaptive] beta_bar;
   matrix[N,Z_adaptive] X_sim;
   vector[N] Y_sim;
@@ -132,7 +132,7 @@ generated quantities {
   matrix[n_reg,Z_adaptive] beta;
   
   for (i in 1:Z_adaptive){
-    beta_bar[i]= normal_rng(0.31,0.25); //Original 4 regimes
+    beta_bar[i]= normal_rng(0.16,0.25); //Original 4 regimes
   }
   ab_bar[1] = optima_bar;
   ab_bar[2:(Z_adaptive+1)] = beta_bar;
