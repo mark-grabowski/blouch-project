@@ -1,4 +1,4 @@
 # blouch
-This is the github site for the Blouch Project
+This is the site for the Blouch Project, which corresponds to the main R package, Blouch. Blouch is available in repository, blouch.
 
 
