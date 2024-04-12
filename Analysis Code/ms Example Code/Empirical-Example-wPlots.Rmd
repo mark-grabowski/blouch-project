@@ -1,0 +1,1427 @@
+---
+title: "Empirical Example from Grabowski (in revision)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Empirical Example}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+rm(list=ls())
+library(blouch)
+```
+
+Empirical Example from Grabowski (in revision) using data from Tsuboi et al. (2024) available at DRYAD:
+https://doi.org/10.5061/dryad.kh18932dt
+
+Tsuboi et al. (2024) collected an expansive dataset on antler size and body size and generated a new Cervidae phylogeny to test the hypothesis of Gould (1973) that the elaborate antlers of the Irish Elk were the result of a positive allometric relationship with body size. I supplemented this dataset with data on Cervidae breeding group size categories from Plard et al. (2011) and Clutton-Brock et al. (1980) to test the hypothesis that antler size is influenced by sexual selection by using breeding group size as a predictor of antler size.
+
+As formulated by Clutton-Brock et al. (1980), the specific hypothesis is that the relatively larger antlers of larger bodied deer are the result of more intense sexual selection that comes along with their tendency to live in larger breeding groups. Following Tsuboi et al. (2024) the relationship between posterior skull length and antler volume is hypothesized to be allometric and thus the direct effect model is a reasonable choice. Following Hansen (2014), as sexual selection would likely not cause an immediate change in either body size or antler volume, the multi-optima model is indicated. 
+
+The hypothesized causal relationship between these three variables is shown in the directed acyclic graph (DAG) below.
+
+```{r}
+set.seed(11)
+ggplot2::theme_set(ggdag::theme_dag())
+
+dag<-ggdag::ggdag(ggdag::dagify(
+  A ~ B,
+  P ~ B,
+  A ~ P,
+  A ~ u,
+  B ~ u,
+  P ~ u,
+  u ~ R
+  ))
+
+dag
+
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/Fig1.pdf", plot = dag, width=7, height=5 )
+
+```
+
+*Blouch* uses RStan to implement Stan. The following code enables some compiler optimizations to improve the estimation speed of the model, and is taken from: https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started
+```{r optimizations}
+options(mc.cores = parallel::detectCores())
+rstan::rstan_options(auto_write = TRUE)
+
+dotR <- file.path(Sys.getenv("HOME"), ".R")
+if (!file.exists(dotR)) dir.create(dotR)
+M <- file.path(dotR, "Makevars")
+if (!file.exists(M)) file.create(M)
+arch <- ifelse(R.version$arch == "aarch64", "arm64", "x86_64")
+cat(paste("\nCXX14FLAGS += -O3 -mtune=native -arch", arch, "-ftemplate-depth-256"),
+    file = M, sep = "\n", append = FALSE)
+```
+
+To Remove for 
+```{r}
+#source("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/My Drive/Current/Blouch/Blouch project/bloutch-testing/R Setup Code/blouch.prep.SBR2.R")
+#tree.10K<-ape::read.tree("/Users/markgrabowski/Library/CloudStorage/GoogleDrive-mark.walter.grabowski@gmail.com/My Drive/Current/Blouch/Blouch project/blouch project - for ms - SBR2/Sharable Data/10KPrimateTree.tre")
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/R/set.converge.regimes.R")
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/R/blouch.prep.R")
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/R/simulate.data.R")
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/R/simulation.helpers.R")
+#source("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/R/create.plots.R")
+##
+
+#cervidae.tree<-ape::read.nexus("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch project/blouch-testing/Sharable Data/cervidae_renamed.tre")
+#antler.data<-read.csv("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch project/blouch-testing/Sharable Data/antler_dataset.csv")
+```
+
+
+First, load the tree from Tsuboi et al. (2024) and the supplemented dataset
+```{r Load_data}
+########################################################################################################
+set.seed(10)
+
+########################################################################################################
+#For execution on a local, multicore CPU with excess RAM we recommend calling
+options(mc.cores = parallel::detectCores())
+rstan::rstan_options(auto_write = TRUE)
+
+########################################################################################################
+
+#Remove Muntiacus_atherodes, Elaphodus_cephalophus - rudamentary and female Rangifer - following Tsuboi et al. (2024)
+antler.data<-dplyr::filter(antler.data,Genus_Species != "Sinomegaloceros_yabei" & ! Genus_Species =="Alces_alces_gigas"  & ! Genus_Species == "Muntiacus_truongsonensis" & ! Genus_Species ==  "Mazama_temama"& ! Genus_Species ==  "Muntiacus_feae" & ! Genus_Species ==  "Muntiacus_atherodes" & ! Genus_Species ==  "Elaphodus_cephalophus")
+```
+
+############################################################################################################
+## Combine data and tree and paint regimes on tree.
+Next we will use the *treeplyr* package (Uyeda and Harmon, 2014) make.treedata function to combine the data and tree based on the taxa names. See https://github.com/uyedaj/treeplyr for more on this package.
+
+```{r Setup_data}
+cervid.trdata <- treeplyr::make.treedata(cervidae.tree, antler.data,name_column="Genus_Species")
+
+cervid.trdata<-dplyr::filter(cervid.trdata,!(is.na(log_ant_vol)) & !(is.na(log_psl)))
+#cervid.trdata<-dplyr::mutate(cervid.trdata,mc.log_psl=cervid.trdata$dat$log_psl-(mean(cervid.trdata$dat$log_psl)))
+
+cervid.trdata<-dplyr::mutate(cervid.trdata,me.log_ant_vol=cervid.trdata$dat$log_vol_var_est/cervid.trdata$dat$n)
+cervid.trdata<-dplyr::mutate(cervid.trdata,me.log_psl=cervid.trdata$dat$log_psl_var_est/cervid.trdata$dat$n)
+cervid.trdata<-dplyr::filter(cervid.trdata,!(is.na(me.log_ant_vol)) & !(is.na(me.log_psl)))
+
+#Mean standardize predictor
+cervid.trdata$dat$mc_log_psl<-cervid.trdata$dat$log_psl-mean(cervid.trdata$dat$log_psl)
+cervid.trdata$dat$mc_log_ant_vol<-cervid.trdata$dat$log_ant_vol-mean(cervid.trdata$dat$log_ant_vol)
+
+
+########################################################################################################
+#Main text analysis adding in BGS effect as adaptive predictor
+########################################################################################################
+cervid.trdata.BGS<-dplyr::filter(cervid.trdata,!(is.na(BGS)))
+
+#Rescale tree height to 1
+l.tree<-max(ape::branching.times(cervid.trdata.BGS$phy))
+cervid.trdata.BGS$phy$edge.length<-cervid.trdata.BGS$phy$edge.length/l.tree ## rescale tree to height 1
+max(ape::branching.times(cervid.trdata.BGS$phy))
+
+tip.label<-cervid.trdata.BGS$phy$tip.label
+phy<-cervid.trdata.BGS$phy
+#Dmat<-cophenetic(phy) #Time separating tips, same as tij matrix in Slouch/Blouch code
+
+```
+
+Next we will reconstruct the breeding group size regimes on the phylogeny using the ace function from the R package ape. Then we will calculate the most likely regime at each node using maximum likelihood estimation (Pagel 1994) and add these to the internal nodes of our phylogeny. We will use the equal-rates model (ER), the all-rates different model (ARD), and the symmetrical model (SYM), and then compare them using AICc.
+```{r Set_regimes}
+########################################################################################################
+#Regime reconstruction using ace from ape
+#reconstructed.BGS <- ape::ace(as.factor(cervid.trdata.BGS$dat$BGS), cervid.trdata.BGS$phy, type = "d")
+
+reconstructed.BGS.ER <- ape::ace(as.factor(cervid.trdata.BGS$dat$BGS), cervid.trdata.BGS$phy, type = "d", model="ER")
+reconstructed.BGS.ARD <- ape::ace(as.factor(cervid.trdata.BGS$dat$BGS), cervid.trdata.BGS$phy, type = "d", model="ARD")
+reconstructed.BGS.SYM <- ape::ace(as.factor(cervid.trdata.BGS$dat$BGS), cervid.trdata.BGS$phy, type = "d", model="SYM")
+
+AIC(reconstructed.BGS.ER)
+AIC(reconstructed.BGS.ARD)
+AIC(reconstructed.BGS.SYM)
+
+#The lowest AIC is for the equal rates model so we will use that in our analysis
+reconstructed.BGS<-reconstructed.BGS.ER
+
+internal.regimes.BGS<- apply(reconstructed.BGS$lik.anc, 
+                                     1, 
+                                     function(e) colnames(reconstructed.BGS$lik.anc)[which.max(e)])
+
+#Assign internal regimes to node.label on phylogeny - for use by Blouch prep functions
+cervid.trdata.BGS$phy$node.label<-as.factor(internal.regimes.BGS)
+
+```
+
+Now lets check if these regime placements make sense
+```{r}
+########################################################################################################
+#Check if manual setting code worked - not needed for setting regimes
+shifts.total<-unlist(list(as.factor(cervid.trdata.BGS$dat$BGS),factor(internal.regimes.BGS)))
+edge.regimes <- factor(shifts.total[cervid.trdata.BGS$phy$edge[,2]])
+print(edge.regimes)
+
+reg.colors<-ggsci::pal_aaas("default", alpha = 1)(length(unique(edge.regimes)))
+
+#For phylogeny figure - 6X6 portrait
+
+plot(cervid.trdata.BGS$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.5)
+#FigS1b.plot<-recordPlot()
+
+pdf("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS1b.pdf", width=5, height=7 )
+plot(cervid.trdata.BGS$phy,edge.color = reg.colors[edge.regimes], edge.width = 1, cex = 0.5)
+dev.off()
+```
+
+
+
+```{r Measurement_Errors}
+########################################################################################################
+#Setup Measurement Errors - for use with blouchOU_reg_direct
+N<-length(cervid.trdata.BGS$phy$tip.label)
+Z_direct<-1
+Z_X_error<-1
+Y_with_error<-cervid.trdata.BGS$dat$mc_log_ant_vol
+X_with_error<-cervid.trdata.BGS$dat$mc_log_psl
+Y_error<-sqrt(cervid.trdata.BGS$dat$me.log_ant_vol) #Standard error not variance
+X_error<-sqrt(cervid.trdata.BGS$dat$me.log_psl) #Standard error not variance
+trdata<-cervid.trdata.BGS
+regimes_tip <- cervid.trdata.BGS$dat$BGS
+
+############################################################################################################
+#Add errors to trdata file
+trdata$dat<-cbind(trdata$dat,data.frame(cbind(Y_with_error,Y_error,X_with_error,X_error)))
+```
+
+
+Let's make a simple plot of data, and look at a simple ordinary least squares regression of Y on X. The intercept and slope values will give us an idea of how to center our priors below.
+```{r}
+df<-data.frame(Y=Y_with_error,X=X_with_error)
+ols.coef<-summary(lm(Y~X,df))
+ols.coef$coefficients[c(1,2)] #Intercept and slope
+
+ols.plot<-ggplot2::ggplot(data=df,ggplot2::aes(x=X,y=Y))+
+  ggplot2::geom_point()+
+  ggplot2::geom_abline(intercept=ols.coef$coefficients[1],slope=ols.coef$coefficients[2],alpha=0.1)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())
+
+ols.plot
+
+```
+
+Below are the priors used for this first analysis. See Grabowski (in revision) for more on setting these priors.
+```{r}
+############################################################################################################
+#Set Priors
+hl.prior<-c(log(0.25),0.25)
+vy.prior<-10
+optima.prior<-c(0.05,0.75) #Informed by linear model above
+beta.prior<-c(6.304451,1.75) #Informed by linear model above
+
+```
+
+
+## Exploring Priors
+Lets simulate from our priors to check if these are reasonable values for the intercept and slope - futher below is code for looking at the priors for the other parameters in the model, in the prior vs. posterior plots section. These are the ".sims" values - the priors are based on the intercept and slope of the OLS regression above, with standard deviations set by visualizing the priors versus the data.
+
+Half-life Prior plot
+```{r}
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+names(hl.sims)<-"prior.hl.sims"
+
+hl.prior.plot<-ggplot2::ggplot()+
+  ggplot2::geom_density(ggplot2::aes(prior.hl.sims,fill="prior.hl.sims"),alpha=0.2,data=hl.sims)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  #labs(title="Prior vs. Posterior Distribution ",x="Half-life", y = "Density")+
+  ggplot2::labs(title="",x="Half-life", y = "Density")+
+  
+  #scale_fill_manual(labels=c("Posterior","Prior"))+
+  ggsci::scale_fill_npg(name="",labels=c("Prior"))
+
+hl.prior.plot
+```
+
+
+Vy Prior Plot
+```{r}
+vy.sims<-rexp(n=1000,rate=vy.prior)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+vy.prior.plot<-ggplot2::ggplot()+
+  ggplot2::geom_density(ggplot2::aes(prior.vy.sims,fill="prior.vy.sims"),alpha=0.2,data=vy.sims)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  #labs(title="Prior vs. Posterior Distribution ",x="vy", y = "Density")+
+  ggplot2::labs(title="",x="vy", y = "Density")+
+
+  #scale_fill_manual(labels=c("Posterior","Prior"))+
+  ggsci::scale_fill_npg(name="",labels=c("Prior"))
+
+
+vy.prior.plot
+
+```
+
+Prior on how shared branch lengths correspond to covariance
+```{r}
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+vy.sims<-rexp(n=1000,rate=vy.prior)
+a.sims<-log(2)/hl.sims
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims))
+mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+
+x<-seq(0,1,by=0.01)
+df<-data.frame(x)
+
+p<-ggplot2::ggplot(df,ggplot2::aes(x))
+for(i in 1:30){
+  p<-p+ggplot2::stat_function(fun=function(x,i) {sigma2_y.sims[i,] /(2 * a.sims[i,]) * ((1 - exp(-2 * a.sims[i,] * (1-(x/2)))) * exp(-a.sims[i,] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2)}
+p<-p+ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Time Since MRCA", y = "Covariance")
+p
+```
+
+
+Slope and intercept Prior Plot
+```{r}
+optima.sims<-rnorm(100,optima.prior[1],optima.prior[2])
+beta.sims<-rnorm(n=100,beta.prior[1],beta.prior[2])
+
+df<-data.frame(Y=trdata$dat$Y_with_error,X=trdata$dat$X_with_error)
+
+slope.plot.1<-ggplot2::ggplot()+
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X))+
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.15)+ #Prior
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::ylab("Y") + ggplot2::xlab("X - Direct Effect Model")+
+  ggsci::scale_color_npg()
+
+slope.plot.1
+```
+
+## Explore Priors - built in functions
+```{r}
+hl.prior.plot.code(hl.prior)
+vy.prior.plot.code(vy.prior)
+covariance.prior.direct.plot.code(hl.prior,vy.prior)
+reg.direct.prior.plot.code(trdata,optima.prior,beta.prior)
+```
+
+## Data setup for *Blouch*
+
+The first line below combines the existing trdata file from make.trdata which has regime info for the tips with the X and Y values and their errors. We will use the helper function blouch.reg.direct.prep() to setup the dat object for Stan. This function and the other helper functions included with *Blouch* require trdata files, and then the names of the columns that contain Y and (sometimes depending on the model) X data and error data. "Z_direct" is the number of predictors, with "BGS" the name of the column where the tip regime data is located. The rest are the priors we defined above. See help info for each function and other articles on github.com for functionality.
+
+```{r}
+############################################################################################################
+#Blouch code to prep data for Adaptive Regimes + Direct Effect Model
+#dat<-blouch:::blouch.reg.direct.prep(trdata,"Y_obs","Y_error","X_obs","X_error",Z_direct=1,"BGS",hl.prior,vy.prior,optima.prior,beta.prior)
+
+dat<-blouch.reg.direct.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_direct=1,"BGS",hl.prior,vy.prior,optima.prior,beta.prior)
+
+```
+
+## Running models
+First we will run the multi-optima direct effect model with varying intercepts. This will allow our intercepts (optima) to vary with the regimes, and these results will be similar to those from other OU model fitting approaches (e.g Slouch). 
+
+Now let's run the model. Stan prints out a lot of info, so lets just look at the parameter estimates here and store the posterior distribution for later use.
+
+```{r}
+#Multi-Optima Direct Effect Model - Varying Intercepts
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan")
+#rstan::stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/blouchOU_reg_direct.stan")
+#stan_model <- rstan::stan_model("blouchOU_reg_direct.stan")
+#fit.reg.direct<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+```
+
+Fig S11
+```{r Reg_Direct_Model, results='hide'}
+#Combination of regime model with multiple traits direct effect model with measurement error and varying intercepts
+fit.reg.direct<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_direct,data = dat,chains = 2,cores=2,iter =4000)
+
+```
+
+Table S7
+```{r}
+print(fit.reg.direct,pars = c("hl","vy","optima","beta"))
+post.basic<-rstan::extract(fit.reg.direct)
+```
+
+
+
+## Priors vs. posterior plots
+Lets look at the Prior versus Posterior plots of the paramter estimates for the multi-optima direct effect model first.
+
+```{r}
+########################################################################################################
+#Composite Figures
+post<-post.basic
+
+mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+mypal[2]<-palette()[1]
+
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+names(hl.sims)<-"prior.hl.sims"
+
+hl.post<-data.frame(post$hl) #Using this model's posterior
+names(hl.post)<-"post.hl.sims"
+df<-data.frame(cbind(hl.sims,hl.post))
+
+hl.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.hl.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.hl.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Half-life", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+hl.plot
+```
+
+```{r}
+########################################################################################################
+vy.sims<-rexp(n=1000,rate=vy.prior)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+vy.post<-data.frame(post$vy)
+names(vy.post)<-"post.vy.sims"
+
+df<-data.frame(cbind(vy.sims,vy.post))
+
+vy.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.vy.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.vy.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Vy", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+vy.plot
+```
+
+```{r}
+########################################################################################################
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+vy.sims<-rexp(n=1000,rate=vy.prior)
+a.sims<-log(2)/hl.sims
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims))
+#mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+x<-seq(0,1,by=0.01)
+df<-data.frame(x)
+covariance.plot<-ggplot2::ggplot(df,ggplot2::aes(x))
+for(i in 1:30){
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {sigma2_y.sims[i,] /(2 * a.sims[i,]) * ((1 - exp(-2 * a.sims[i,] * (1-(x/2)))) * exp(-a.sims[i,] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2)
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {post$sigma2_y[i] /(2 * post$a[i]) * ((1 - exp(-2 * post$a[i] * (1-(x/2)))) * exp(-post$a[i] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2,color=mypal[1])
+}
+covariance.plot<-covariance.plot+ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Time Since MRCA", y = "Covariance")+
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Prior","Posterior"))
+
+covariance.plot
+```
+
+Let's look at the Multi-optima Direct Effect Model First
+```{r}
+########################################################################################################
+#Varying intercepts
+post<-post.basic
+mypal <- ggsci::pal_aaas("default", alpha = 1)(3)
+
+optima.sims<-rnorm(100,optima.prior[1],optima.prior[2])
+beta.sims<-rnorm(n=100,beta.prior[1],beta.prior[2])
+
+optima.post<-post$optima
+beta.post<-data.frame(post$beta)
+names(beta.post)<-c("post.beta.1")
+
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post[,1]}
+mu.link.13<-function(x.seq){optima.post[,3]+x.seq*beta.post[,1]}
+
+
+x.seq <- seq(from=min(trdata$dat$X_with_error), to=max(trdata$dat$X_with_error) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+mu.13 <- sapply(x.seq , mu.link.13 )
+
+
+mu.mean.11<-colMeans(mu.11)
+mu.mean.12<-colMeans(mu.12)
+mu.mean.13<-colMeans(mu.13)
+
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+mu.mean.13<-data.frame(as.numeric(mu.mean.13))
+
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+names(mu.mean.13)<-"mu.mean.13"
+
+
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+
+
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+mu.CI.13<-data.frame(t(data.frame(mu.CI.13)),x.seq)
+
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.13)<-c("min.5.5","max.94.5","x.seq")
+
+df<-data.frame(Y=trdata$dat$Y_with_error,X=trdata$dat$X_with_error,Regimes=trdata$dat$BGS)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+df13<-data.frame(x.seq,mu.mean.13)
+
+regression.plot<-ggplot2::ggplot()+  
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=as.factor(Regimes)))+
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.05)+ #Prior
+  
+  ggplot2::geom_ribbon(data=mu.CI.11,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df11,ggplot2::aes(x=x.seq,y=mu.mean.11),linetype=1,linewidth=1,alpha=0.75,color=mypal[1])+
+  ggplot2::geom_ribbon(data=mu.CI.12,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df12,ggplot2::aes(x=x.seq,y=mu.mean.12),linetype=1,linewidth=1,alpha=0.75,color=mypal[2])+
+  ggplot2::geom_ribbon(data=mu.CI.13,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df13,ggplot2::aes(x=x.seq,y=mu.mean.13),linetype=1,linewidth=1,alpha=0.75,color=mypal[3])+
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  ggplot2::ylab("log Antler Volume (l)") + ggplot2::xlab("log Posterior Skull Length (cm)")+
+  ggplot2::scale_color_manual(name="Breeding Group \nSize",values=mypal,labels=c('1-2', '3-5', '>5'))
+
+regression.plot
+#Label points
+
+```
+
+Let's combine all four plots into one plot
+```{r}
+regression.plot<-regression.plot+ggplot2::theme(legend.position="none")
+fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS11.pdf", plot = fig, width=7, height=7 )
+fig
+```
+
+
+
+Now lets run the multi-optima adaptive model with varying effects. This will allow our intercepts (optima) and slopes to vary with the regimes, but does not allow for multilevel modeling. We will use the same priors and the sane data formatting step above to produce our "dat" file.
+```{r}
+########################################################################################################
+#Multi-Optima Direct Effect Model - Varying Effects
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan")
+#rstan::stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/blouchOU_reg_direct_ve.stan")
+#stan_model <- rstan::stan_model("blouchOU_reg_direct_ve.stan")
+#fit.reg.direct.ve<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+
+```
+
+Fig S8
+```{r non_MLM_VE}
+########################################################################################################
+#Combination of regime model with multiple traits direct effect model with measurement error and varying slopes
+
+fit.reg.direct.ve<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_direct_ve,data = dat,chains = 2,cores=2,iter =4000)
+```
+
+```{r}
+print(fit.reg.direct.ve,pars = c("hl","vy","optima","beta"))
+post.ve<-rstan::extract(fit.reg.direct.ve)
+
+```
+
+
+## Priors vs. posterior plots
+Lets look at the Prior versus Posterior plots of the paramter estimates for the multi-optima direct effect model first.
+
+```{r}
+########################################################################################################
+#Composite Figures
+post<-post.ve
+
+mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+mypal[2]<-palette()[1]
+
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+names(hl.sims)<-"prior.hl.sims"
+
+hl.post<-data.frame(post$hl) #Using this model's posterior
+names(hl.post)<-"post.hl.sims"
+df<-data.frame(cbind(hl.sims,hl.post))
+
+hl.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.hl.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.hl.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Half-life", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+hl.plot
+```
+
+```{r}
+########################################################################################################
+vy.sims<-rexp(n=1000,rate=vy.prior)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+vy.post<-data.frame(post$vy)
+names(vy.post)<-"post.vy.sims"
+
+df<-data.frame(cbind(vy.sims,vy.post))
+
+vy.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.vy.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.vy.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Vy", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+vy.plot
+```
+
+```{r}
+########################################################################################################
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+vy.sims<-rexp(n=1000,rate=vy.prior)
+a.sims<-log(2)/hl.sims
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims))
+#mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+x<-seq(0,1,by=0.01)
+df<-data.frame(x)
+covariance.plot<-ggplot2::ggplot(df,ggplot2::aes(x))
+for(i in 1:30){
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {sigma2_y.sims[i,] /(2 * a.sims[i,]) * ((1 - exp(-2 * a.sims[i,] * (1-(x/2)))) * exp(-a.sims[i,] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2)
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {post$sigma2_y[i] /(2 * post$a[i]) * ((1 - exp(-2 * post$a[i] * (1-(x/2)))) * exp(-post$a[i] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2,color=mypal[1])
+}
+covariance.plot<-covariance.plot+ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Time Since MRCA", y = "Covariance")+
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Prior","Posterior"))
+
+covariance.plot
+```
+
+Now lets look at the varying effects model
+```{r}
+########################################################################################################
+#For Fig. 2
+X<-dat$X_obs
+Y<-dat$Y_obs
+
+mypal <- ggsci::pal_aaas("default", alpha = 1)(3)
+
+optima.sims<-rnorm(100,optima.prior[1],optima.prior[2])
+beta.sims<-rnorm(n=100,beta.prior[1],beta.prior[2])
+
+optima.post<-post$optima
+beta.post<-data.frame(post$beta)
+names(beta.post)<-c("post.beta.1","post.beta.2","post.beta.3")
+
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post[,2]}
+mu.link.13<-function(x.seq){optima.post[,3]+x.seq*beta.post[,3]}
+
+
+x.seq <- seq(from=min(X), to=max(X) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+mu.13 <- sapply(x.seq , mu.link.13 )
+
+
+mu.mean.11<-colMeans(mu.11)
+mu.mean.12<-colMeans(mu.12)
+mu.mean.13<-colMeans(mu.13)
+
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+mu.mean.13<-data.frame(as.numeric(mu.mean.13))
+
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+names(mu.mean.13)<-"mu.mean.13"
+
+
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+
+
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+mu.CI.13<-data.frame(t(data.frame(mu.CI.13)),x.seq)
+
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.13)<-c("min.5.5","max.94.5","x.seq")
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+df13<-data.frame(x.seq,mu.mean.13)
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+fig3<-ggplot2::ggplot()+  
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.04)+ #Prior
+  
+  ggplot2::geom_ribbon(data=mu.CI.11,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df11,ggplot2::aes(x=x.seq,y=mu.mean.11),linetype=1,linewidth=1,alpha=0.75,color=mypal[1])+
+  ggplot2::geom_ribbon(data=mu.CI.12,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df12,ggplot2::aes(x=x.seq,y=mu.mean.12),linetype=1,linewidth=1,alpha=0.75,color=mypal[2])+
+  ggplot2::geom_ribbon(data=mu.CI.13,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df13,ggplot2::aes(x=x.seq,y=mu.mean.13),linetype=1,linewidth=1,alpha=0.75,color=mypal[3])+
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=as.factor(Regimes)))+
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank(),
+    axis.title=ggplot2::element_text(size=14)
+    )+
+  
+  ggplot2:: ylab("log Antler Volume (l)") + ggplot2::xlab("log Posterior Skull Length (cm)")+
+  ggplot2::scale_color_manual(name="Breeding \nGroup Size",values=mypal,labels=c('1-2', '3-5', '>5'))
+
+fig3
+
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/Fig3.pdf", plot = fig3, width=9, height=7 )
+
+
+```
+
+Let's combine all four plots into one plot
+```{r}
+fig3<-fig3+ggplot2::theme(legend.position="none")
+fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,fig3,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS8.pdf", plot = fig, width=7, height=7 )
+fig
+```
+
+
+Now let's run the multilevel version of those two models. As a multilevel model, information can be shared across the regimes, which can produce more accurate parameter estimates. Below are the priors used for this simulation. Here we use the non-centered version to aid in ease of calculation. See Grabowski (in revision) for more on non-centered models. We will compare these all models in terms of their predictive performance at the end.
+
+Below are the priors used for this first analysis. See Grabowski (in revision) for more on setting these priors.
+```{r}
+############################################################################################################
+#Set Priors
+hl.prior<-c(log(0.25),0.25)
+vy.prior<-10
+optima.prior<-c(0.05,0.75) #Informed by linear model
+beta.prior<-c(6.304451,1.75) #Informed by linear model
+sigma.prior<-c(0,1)
+
+```
+
+The only new prior is on sigma
+```{r}
+#sigma.prior.plot.code(sigma.prior)
+```
+
+
+```{r}
+############################################################################################################
+#Blouch code to prep data for Adaptive Regimes + Direct Effect Model
+#dat<-blouch:::blouch.reg.direct.mlm.prep(trdata,"Y_obs","Y_error","X_obs","X_error",Z_direct=1,"BGS",hl.prior,vy.prior,optima.prior,beta.prior,sigma.prior)
+dat<-blouch.reg.direct.mlm.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_direct=1,"BGS",hl.prior,vy.prior,optima.prior,beta.prior,sigma.prior)
+
+```
+
+Next we will run the multilevel multi-optima direct effect model with varying intercepts.
+```{r}
+########################################################################################################
+#Multilevel Multi-Optima Direct Effect Model - Varying Intercepts
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan")
+#rstan::stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/blouchOU_reg_direct_mlm_vi_nc.stan")
+#stan_model <- rstan::stan_model("blouchOU_reg_direct_mlm_ve_nc.stan")
+#fit.reg.direct.mlm.vi.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+
+```
+
+Fig S10/Table S6
+```{r Reg_direct_mlm}
+########################################################################################################
+#Multilevel model - multilevel optima with direct effects predictor, non-centered
+fit.reg.direct.mlm.vi.nc<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_direct_mlm_vi_nc,data = dat,chains = 2,cores=2,iter =4000,control = list(adapt_delta = 0.99))
+
+```
+
+Let's check out the results
+```{r Reg_direct_mlm}
+print(fit.reg.direct.mlm.vi.nc,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+post.mlm.vi<-rstan::extract(fit.reg.direct.mlm.vi.nc)
+```
+
+
+```{r}
+########################################################################################################
+#Composite Figures
+post<-post.mlm.vi
+
+mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+mypal[2]<-palette()[1]
+
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+names(hl.sims)<-"prior.hl.sims"
+
+hl.post<-data.frame(post$hl) #Using this model's posterior
+names(hl.post)<-"post.hl.sims"
+df<-data.frame(cbind(hl.sims,hl.post))
+
+hl.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.hl.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.hl.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Half-life", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+hl.plot
+```
+
+```{r}
+########################################################################################################
+vy.sims<-rexp(n=1000,rate=vy.prior)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+vy.post<-data.frame(post$vy)
+names(vy.post)<-"post.vy.sims"
+
+df<-data.frame(cbind(vy.sims,vy.post))
+
+vy.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.vy.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.vy.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Vy", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+vy.plot
+```
+
+```{r}
+########################################################################################################
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+vy.sims<-rexp(n=1000,rate=vy.prior)
+a.sims<-log(2)/hl.sims
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims))
+#mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+x<-seq(0,1,by=0.01)
+df<-data.frame(x)
+covariance.plot<-ggplot2::ggplot(df,ggplot2::aes(x))
+for(i in 1:30){
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {sigma2_y.sims[i,] /(2 * a.sims[i,]) * ((1 - exp(-2 * a.sims[i,] * (1-(x/2)))) * exp(-a.sims[i,] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2)
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {post$sigma2_y[i] /(2 * post$a[i]) * ((1 - exp(-2 * post$a[i] * (1-(x/2)))) * exp(-post$a[i] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2,color=mypal[1])
+}
+covariance.plot<-covariance.plot+ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Time Since MRCA", y = "Covariance")+
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Prior","Posterior"))
+
+covariance.plot
+```
+
+
+Let's look at the Multi-optima Direct Effect Model First
+```{r}
+########################################################################################################
+#Varying intercepts
+mypal <- ggsci::pal_aaas("default", alpha = 1)(3)
+
+optima.sims<-rnorm(100,optima.prior[1],optima.prior[2])
+beta.sims<-rnorm(n=100,beta.prior[1],beta.prior[2])
+
+optima.post<-post$optima
+beta.post<-data.frame(post$beta)
+names(beta.post)<-c("post.beta.1")
+
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post[,1]}
+mu.link.13<-function(x.seq){optima.post[,3]+x.seq*beta.post[,1]}
+
+
+x.seq <- seq(from=min(trdata$dat$X_with_error), to=max(trdata$dat$X_with_error) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+mu.13 <- sapply(x.seq , mu.link.13 )
+
+
+mu.mean.11<-colMeans(mu.11)
+mu.mean.12<-colMeans(mu.12)
+mu.mean.13<-colMeans(mu.13)
+
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+mu.mean.13<-data.frame(as.numeric(mu.mean.13))
+
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+names(mu.mean.13)<-"mu.mean.13"
+
+
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+
+
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+mu.CI.13<-data.frame(t(data.frame(mu.CI.13)),x.seq)
+
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.13)<-c("min.5.5","max.94.5","x.seq")
+
+df<-data.frame(Y=trdata$dat$Y_with_error,X=trdata$dat$X_with_error,Regimes=trdata$dat$BGS)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+df13<-data.frame(x.seq,mu.mean.13)
+
+regression.plot<-ggplot2::ggplot()+  
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=as.factor(Regimes)))+
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.05)+ #Prior
+  
+  ggplot2::geom_ribbon(data=mu.CI.11,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df11,ggplot2::aes(x=x.seq,y=mu.mean.11),linetype=1,linewidth=1,alpha=0.75,color=mypal[1])+
+  ggplot2::geom_ribbon(data=mu.CI.12,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df12,ggplot2::aes(x=x.seq,y=mu.mean.12),linetype=1,linewidth=1,alpha=0.75,color=mypal[2])+
+  ggplot2::geom_ribbon(data=mu.CI.13,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df13,ggplot2::aes(x=x.seq,y=mu.mean.13),linetype=1,linewidth=1,alpha=0.75,color=mypal[3])+
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  ggplot2::ylab("log Antler Volume (l)") + ggplot2::xlab("log Posterior Skull Length (cm)")+
+  ggplot2::scale_color_manual(name="Breeding Group \nSize",values=mypal,labels=c('1-2', '3-5', '>5'))
+
+regression.plot
+#Label points
+
+```
+
+
+Let's combine all four plots into one plot
+```{r}
+regression.plot<-regression.plot+ggplot2::theme(legend.position="none")
+fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS10.pdf", plot = fig, width=7, height=7 )
+fig
+```
+
+
+
+
+Now let's run the Multilevel Multi-optima Direct Effects Model with Varying Effects. This will allow our intercepts (optima) and slopes to vary with the regimes. As a multilevel model, information can be shared across the regimes, which can produce more accurate parameter estimates.
+
+```{r}
+########################################################################################################
+#Multilevel Multi-Optima Direct Effect Model - Varying Effects - Non-centered
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan")
+#rstan::stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/blouchOU_reg_direct_mlm_ve_nc.stan")
+#stan_model <- rstan::stan_model("blouchOU_reg_direct_mlm_ve_nc.stan")
+#fit.reg.direct.mlm.ve.nc<- rstan::sampling(object = stan_model,data = dat,chains = 2,iter =2000,cores=2)
+
+############################################################################################################
+```
+
+Fig S9
+```{r MLM_VE_NC}
+########################################################################################################
+#Combination of regime model with multitrait direct effect model with measurement error and correlated varying effects - non-centered
+fit.reg.direct.mlm.ve.nc<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_direct_mlm_ve_nc,data = dat,chains = 2,cores=2,iter =4000,control = list(adapt_delta = 0.99))
+
+```
+
+```{r}
+print(fit.reg.direct.mlm.ve.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho[1,2]","sigma","optima","beta"))
+post.mlm.ve<-rstan::extract(fit.reg.direct.mlm.ve.nc)
+```
+
+## Priors vs. posterior plots
+Lets look at the Prior versus Posterior plots of the paramter estimates for the multi-optima direct effect model first.
+
+```{r}
+########################################################################################################
+#Composite Figures
+post<-post.mlm.ve
+
+mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+mypal[2]<-palette()[1]
+
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+names(hl.sims)<-"prior.hl.sims"
+
+hl.post<-data.frame(post$hl) #Using this model's posterior
+names(hl.post)<-"post.hl.sims"
+df<-data.frame(cbind(hl.sims,hl.post))
+
+hl.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.hl.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.hl.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Half-life", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+hl.plot
+```
+
+```{r}
+########################################################################################################
+vy.sims<-rexp(n=1000,rate=vy.prior)
+vy.sims<-data.frame(vy.sims)
+names(vy.sims)<-"prior.vy.sims"
+
+vy.post<-data.frame(post$vy)
+names(vy.post)<-"post.vy.sims"
+
+df<-data.frame(cbind(vy.sims,vy.post))
+
+vy.plot<-ggplot2::ggplot(data=df)+
+  ggplot2::geom_density(ggplot2::aes(prior.vy.sims, fill=mypal[2]),alpha=0.2)+
+  ggplot2::geom_density(ggplot2::aes(post.vy.sims, fill=mypal[1]),alpha=0.2)+
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Vy", y = "Density")+
+  #ggsci::scale_fill_npg(name="",labels=c("Posterior","Prior"))
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Posterior","Prior"))
+
+vy.plot
+```
+
+```{r}
+########################################################################################################
+hl.sims<-data.frame(rlnorm(n=1000,meanlog=hl.prior[1],sdlog=hl.prior[2]))
+vy.sims<-rexp(n=1000,rate=vy.prior)
+a.sims<-log(2)/hl.sims
+sigma2_y.sims<-vy.sims*(2*(log(2)/hl.sims))
+#mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
+x<-seq(0,1,by=0.01)
+df<-data.frame(x)
+covariance.plot<-ggplot2::ggplot(df,ggplot2::aes(x))
+for(i in 1:30){
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {sigma2_y.sims[i,] /(2 * a.sims[i,]) * ((1 - exp(-2 * a.sims[i,] * (1-(x/2)))) * exp(-a.sims[i,] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2)
+  covariance.plot<-covariance.plot+ggplot2::stat_function(fun=function(x,i) {post$sigma2_y[i] /(2 * post$a[i]) * ((1 - exp(-2 * post$a[i] * (1-(x/2)))) * exp(-post$a[i] * x))},
+                              args=list(i=i),alpha=0.2,lwd=2,color=mypal[1])
+}
+covariance.plot<-covariance.plot+ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  ggplot2::labs(title="",x="Time Since MRCA", y = "Covariance")+
+  ggplot2::scale_fill_manual(values=mypal,name="",labels=c("Prior","Posterior"))
+
+covariance.plot
+```
+
+Now lets look at the varying effects model
+```{r}
+########################################################################################################
+#For Fig. 2
+X<-dat$X_obs
+Y<-dat$Y_obs
+
+mypal <- ggsci::pal_aaas("default", alpha = 1)(3)
+
+optima.sims<-rnorm(100,optima.prior[1],optima.prior[2])
+beta.sims<-rnorm(n=100,beta.prior[1],beta.prior[2])
+
+optima.post<-post$optima
+beta.post<-data.frame(post$beta)
+names(beta.post)<-c("post.beta.1","post.beta.2","post.beta.3")
+
+
+mu.link.11<-function(x.seq){optima.post[,1]+x.seq*beta.post[,1]}
+mu.link.12<-function(x.seq){optima.post[,2]+x.seq*beta.post[,2]}
+mu.link.13<-function(x.seq){optima.post[,3]+x.seq*beta.post[,3]}
+
+
+x.seq <- seq(from=min(X), to=max(X) , length.out=100)
+mu.11 <- sapply(x.seq , mu.link.11 )
+mu.12 <- sapply(x.seq , mu.link.12 )
+mu.13 <- sapply(x.seq , mu.link.13 )
+
+
+mu.mean.11<-colMeans(mu.11)
+mu.mean.12<-colMeans(mu.12)
+mu.mean.13<-colMeans(mu.13)
+
+
+mu.mean.11<-data.frame(as.numeric(mu.mean.11))
+mu.mean.12<-data.frame(as.numeric(mu.mean.12))
+mu.mean.13<-data.frame(as.numeric(mu.mean.13))
+
+names(mu.mean.11)<-"mu.mean.11"
+names(mu.mean.12)<-"mu.mean.12"
+names(mu.mean.13)<-"mu.mean.13"
+
+
+mu.CI.11 <- apply( mu.11 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.12 <- apply( mu.12 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+mu.CI.13 <- apply( mu.13 , MARGIN=2, FUN=rethinking::PI , prob=0.89 )
+
+
+mu.CI.11<-data.frame(t(data.frame(mu.CI.11)),x.seq)
+mu.CI.12<-data.frame(t(data.frame(mu.CI.12)),x.seq)
+mu.CI.13<-data.frame(t(data.frame(mu.CI.13)),x.seq)
+
+
+names(mu.CI.11)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.12)<-c("min.5.5","max.94.5","x.seq")
+names(mu.CI.13)<-c("min.5.5","max.94.5","x.seq")
+
+#df<-data.frame(Y=stan_sim_data$Y,X=stan_sim_data$direct_cov)
+df<-data.frame(Y=dat$Y_obs,X=dat$X_obs,Regimes=regimes_tip)
+df11<-data.frame(x.seq,mu.mean.11)
+df12<-data.frame(x.seq,mu.mean.12)
+df13<-data.frame(x.seq,mu.mean.13)
+
+#slope.prior.plot<-ggplot(data=reg.trdata$dat,aes(y=Sim1,x=X))+
+regression.plot<-ggplot2::ggplot()+  
+  ggplot2::geom_abline(intercept=optima.sims,slope=beta.sims,alpha=0.04)+ #Prior
+  
+  ggplot2::geom_ribbon(data=mu.CI.11,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df11,ggplot2::aes(x=x.seq,y=mu.mean.11),linetype=1,linewidth=1,alpha=0.75,color=mypal[1])+
+  ggplot2::geom_ribbon(data=mu.CI.12,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df12,ggplot2::aes(x=x.seq,y=mu.mean.12),linetype=1,linewidth=1,alpha=0.75,color=mypal[2])+
+  ggplot2::geom_ribbon(data=mu.CI.13,ggplot2::aes(x=x.seq,ymin=min.5.5,ymax=max.94.5),linetype=2,alpha=0.1)+
+  ggplot2::geom_line(data=df13,ggplot2::aes(x=x.seq,y=mu.mean.13),linetype=1,linewidth=1,alpha=0.75,color=mypal[3])+
+  ggplot2::geom_point(data=df,ggplot2::aes(y=Y,x=X,color=as.factor(Regimes)))+
+  
+  ggplot2::theme_bw()+
+  ggplot2::theme(
+    panel.grid.major = ggplot2::element_blank(),
+    panel.grid.minor = ggplot2::element_blank())+
+  
+  ggplot2:: ylab("log Antler Volume (l)") + ggplot2::xlab("log Posterior Skull Length (cm)")+
+  ggplot2::scale_color_manual(name="Breeding \nGroup Size",values=mypal,labels=c('1-2', '3-5', '>5'))
+
+regression.plot
+
+
+```
+
+Let's combine all four plots into one plot
+```{r}
+regression.plot<-regression.plot+ggplot2::theme(legend.position="none")
+fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS9.pdf", plot = fig, width=7, height=7 )
+fig
+```
+
+## Model Comparison using PSIS
+Lets do some model comparison using Pareto-Smoothed Importance Sampling (PSIS) from the R Package *loo* (Vehtari et al. 2023). loo estimates leave-one-out cross-validation for Bayesian analyses. Here we are looking for Pareto k values below ~0.7, which suggest the results are an accurate estimation of cross-validation. The two species with consistently high Pareto shape values across the models are *Daubentonia madagascariensis*, the sole member of the distinct lemur family, and *Tarsius bancanus*, the only tarsier included in the phylogeny – both are distinct due to their long period of independent evolution (i.e. have long single branch on the phylogeny). This leads to it being hard to predict based on other species in the tree. PSIS also provides a way to look at outliers in our analysis.
+
+We then compare the two models using the loo_compare function from the same package.
+
+```{r}
+dev.off()
+old.par <- par(mar = c(0, 0, 0, 0))
+par(old.par)
+
+############################################################################################################
+loo_mlm_ve_nc <- loo::loo(fit.reg.direct.mlm.ve.nc, save_psis = TRUE)
+print(loo_mlm_ve_nc)
+plot(loo_mlm_ve_nc)
+plot(loo_mlm_ve_nc,label_points=TRUE)
+loo_mlm_ve_nc.plot<-recordPlot()
+
+
+#library(loo) #Non-mlm varying effects model
+loo_ve <- loo::loo(fit.reg.direct.ve, save_psis = TRUE)
+print(loo_ve)
+plot(loo_ve)
+plot(loo_ve,label_points=TRUE)
+loo_ve.plot<-recordPlot()
+
+
+#library(loo) #MLM Varying intercepts model
+loo_mlm_vi_nc <- loo::loo(fit.reg.direct.mlm.vi.nc, save_psis = TRUE)
+print(loo_mlm_vi_nc)
+plot(loo_mlm_vi_nc)
+plot(loo_mlm_vi_nc,label_points=TRUE)
+loo_mlm_vi_nc.plot<-recordPlot()
+
+
+#library(loo) #Basic model
+loo_basic <- loo::loo(fit.reg.direct, save_psis = TRUE)
+print(loo_basic)
+plot(loo_basic)
+plot(loo_basic,label_points=TRUE)
+loo_basic.plot<-recordPlot()
+
+
+loo::loo_compare(loo_mlm_ve_nc, loo_ve, loo_mlm_vi_nc, loo_basic)
+2.6 + c(-1,1)*3.3*1.86 #95% interval of the difference, z-score of 1.86
+
+```
+
+Let's combine the four plots into one figure
+```{r}
+
+pdf(file="/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS7.pdf", width=10, height=8 )
+
+cowplot::plot_grid(loo_basic.plot,loo_ve.plot,loo_mlm_vi_nc.plot,loo_mlm_ve_nc.plot,labels=c("A)","B)","C)","D)"))
+#fig<-ggpubr::ggarrange(loo_mlm_ve.plot, loo_ve.plot,ncol=2,nrow=1, labels = c("A)","B)"),common.legend = TRUE,legend="top")
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Adaptive Model - Varying Effects,\n hl=",hl,sep=""))
+
+dev.off()
+
+```
+
+
+## Model Comparison using Bayes Factors
+Now lets compare our two models using Bayes Factors. Here we use the *bridgesampling* R package (Gronau et al. 2020). Looking below, we can read the results as the data is X times more likely under a model that assumes the first mode rather than second model.
+
+```{r Model_comparison_BF}
+############################################################################################################
+lml.fit.reg.direct.mlm.ve.nc<-bridgesampling::bridge_sampler(fit.reg.direct.mlm.ve.nc,silent=TRUE)
+lml.fit.reg.direct.mlm.vi.nc<-bridgesampling::bridge_sampler(fit.reg.direct.mlm.vi.nc,silent=TRUE)
+lml.fit.reg.direct.ve<-bridgesampling::bridge_sampler(fit.reg.direct.ve,silent=TRUE)
+lml.fit.reg.direct<-bridgesampling::bridge_sampler(fit.reg.direct,silent=TRUE)
+
+#bridgesampling::bf(lml.fit.reg.direct.mlm.ve, lml.fit.reg.direct.mlm.ve.nc)
+bridgesampling::bf(lml.fit.reg.direct.ve, lml.fit.reg.direct.mlm.ve.nc)
+bridgesampling::bf(lml.fit.reg.direct.ve, lml.fit.reg.direct.mlm.vi.nc)
+bridgesampling::bf(lml.fit.reg.direct.ve, lml.fit.reg.direct)
+
+```
+
+### Trace for estimated parameters
+Let's look at traceplots of our models, which give a visualization of degree of convergence.
+```{r}
+############################################################################################################
+#Trankplots/Traceplots 4X10
+rstan::traceplot(fit.reg.direct.ve,pars = c("hl","vy","optima","beta"))
+rstan::traceplot(fit.reg.direct.mlm.ve.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho[1,2]","sigma","optima","beta"))
+rstan::traceplot(fit.reg.direct.mlm.vi.nc,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+rstan::traceplot(fit.reg.direct,pars = c("hl","vy","optima","beta"))
+
+plot.emp.ve<-rstan::traceplot(fit.reg.direct.ve,pars = c("hl","vy","optima","beta"))
+plot.emp.mlm.ve<-rstan::traceplot(fit.reg.direct.mlm.ve.nc,pars = c("hl","vy","optima_bar","beta_bar","Rho[1,2]","sigma","optima","beta"))
+plot.emp.vi<-rstan::traceplot(fit.reg.direct,pars = c("hl","vy","optima","beta"))
+plot.emp.mlm.vi<-rstan::traceplot(fit.reg.direct.mlm.vi.nc,pars = c("hl","vy","optima","optima_bar","beta","sigma"))
+
+fig<-ggpubr::ggarrange(plot.emp.vi, plot.emp.ve,plot.emp.mlm.vi,plot.emp.mlm.ve,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Direct Effect - Varying Effects, hl=",hl,sep=""))
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS6.pdf", plot = fig, width=9, height=9)
+########################################################################################################
+
+
+```
+
+Now that we have our best model, lets compare the posterior distributions of slopes and other usuful stats
+```{r}
+########################################################################################################
+#Compare slopes
+df<-data.frame(post.ve$beta)
+mean(df[,1]-df[,2])
+rethinking::PI(df[,1]-df[,2],prob=0.95)
+sum((df[,1]-df[,2])<0)/4000
+sum((df[,1]-df[,2])>=0)/4000
+
+unscaled.hl<-post.ve$hl*l.tree
+mean(unscaled.hl)
+rethinking::PI(unscaled.hl,prob=0.95)
+```
+
+Combined Figure - Varying effects Model - FigS8
+```{r}
+#post<-post.ve
+############################################################################################################
+#hl.plot<-hl.prior.post.emp.plot.code(hl.prior,post)
+#vy.plot<-vy.prior.post.emp.plot.code(vy.prior,post)
+#covariance.plot<-covariance.prior.post.direct.plot.code(hl.prior,vy.prior,post)
+#regression.plot<-reg.direct.ve.prior.post.emp.plot.code(trdata,optima.prior,beta.prior,post)
+############################################################################################################
+#fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Direct Effect - Varying Effects, hl=",hl,sep=""))
+#ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS8.pdf", plot = fig, width=7, height=7 )
+########################################################################################################
+
+```
+
+Combined Figure - Multilevel - Varying effects Model - FigS9
+```{r}
+#post<-post.mlm.ve
+############################################################################################################
+#hl.plot<-hl.prior.post.emp.plot.code(hl.prior,post)
+#vy.plot<-vy.prior.post.emp.plot.code(vy.prior,post)
+#covariance.plot<-covariance.prior.post.direct.plot.code(hl.prior,vy.prior,post)
+############################################################################################################
+#regression.plot<-reg.direct.ve.prior.post.emp.plot.code(trdata,optima.prior,beta.prior,post)
+#fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Direct Effect - Varying Effects, hl=",hl,sep=""))
+#ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS9.pdf", plot = fig, width=7, height=7 )
+########################################################################################################
+
+```
+
+Combined Figure - Multilevel - Varying Intercepts Model - FigS10
+```{r}
+#post<-post.mlm.vi
+############################################################################################################
+#hl.plot<-hl.prior.post.emp.plot.code(hl.prior,post)
+#vy.plot<-vy.prior.post.emp.plot.code(vy.prior,post)
+#covariance.plot<-covariance.prior.post.direct.plot.code(hl.prior,vy.prior,post)
+#regression.plot<-reg.direct.ve.prior.post.emp.plot.code(trdata,optima.prior,beta.prior,post)
+############################################################################################################
+#fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Direct Effect - Varying Effects, hl=",hl,sep=""))
+#ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS10.pdf", plot = fig, width=7, height=7 )
+########################################################################################################
+
+```
+
+Combined Figure - Basic - Varying Intercepts Model - FigS11
+```{r}
+#post<-post.basic
+############################################################################################################
+#hl.plot<-hl.prior.post.emp.plot.code(hl.prior,post)
+#vy.plot<-vy.prior.post.emp.plot.code(vy.prior,post)
+#covariance.plot<-covariance.prior.post.direct.plot.code(hl.prior,vy.prior,post)
+#regression.plot<-reg.direct.ve.prior.post.emp.plot.code(trdata,optima.prior,beta.prior,post)
+############################################################################################################
+#fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Direct Effect - Varying Effects, hl=",hl,sep=""))
+#ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS11.pdf", plot = fig, width=7, height=7 )
+########################################################################################################
+
+```
+
+
+Prior predictive checks on best model
+```{r}
+dat<-blouch.reg.direct.prep(trdata,"Y_with_error","Y_error","X_with_error","X_error",Z_direct=1,"BGS",hl.prior,vy.prior,optima.prior,beta.prior)
+
+########################################################################################################
+#Multi-Optima Direct Effect Model - Varying Effects - Prior Predictive Check
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/") #Macbook Pro
+#rstan::stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/blouchOU_reg_direct_ve_priorpc.stan") #Macbook Pro
+#stan_model <- rstan::stan_model("blouchOU_reg_direct_ve_priorpc.stan")
+#fit.reg.direct.ve.priorpc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2, iter =2000,algorithm=c("Fixed_param"))
+
+fit.reg.direct.ve.priorpc<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_direct_ve_priorpc,data=dat,chains = 2,cores=2, iter =2000,algorithm=c("Fixed_param"))
+
+post<-rstan::extract(fit.reg.direct.ve.priorpc)
+
+num.plots<-5
+plots<-ysim.ppc.plot.code(dat,post,1:num.plots)
+plots<-gridExtra::grid.arrange(grobs=plots, ncol=5, nrow=1,common.legend=TRUE,legend="top")
+tgrob <- ggpubr::text_grob("Multi-Optima Direct Effect Model - Varying Efects - Prior PC",size = 10)
+plots.prior<-ggpubr::annotate_figure(plots,top=tgrob)
+#ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Latex Documents/Figures/Model Checking/Fig_PPC_Fig1.pdf",
+#                plot = plots, width=10, height=2)
+
+#plot(post$Y_sim_obs[1,],dat$Y_obs)
+########################################################################################################
+#Multi-Optima Direct Effect Model - Varying Effects - Posterior Predictive Check
+#setwd("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/") #Macbook Pro
+#rstan::stanc("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/R Packages - SBR2 - cloned/testing_v3/blouch/inst/stan/blouchOU_reg_direct_ve_postpc.stan") #Macbook Pro
+#stan_model <- rstan::stan_model("blouchOU_reg_direct_ve_postpc.stan")
+#fit.reg.direct.ve.postpc<- rstan::sampling(object = stan_model,data = dat,chains = 2,cores=2,iter =2000)
+#print(fit.reg.direct.ve.postpc,pars = c("hl","vy","optima","beta"))
+
+fit.reg.direct.ve.postpc<- rstan::sampling(object = blouch:::stanmodels$blouchOU_reg_direct_ve_postpc,data=dat,chains = 2,cores=2, iter =2000)
+
+
+post<-rstan::extract(fit.reg.direct.ve.postpc)
+
+num.plots<-5
+plots<-ysim.ppc.plot.code(dat,post,1:num.plots)
+plots<-gridExtra::grid.arrange(grobs=plots, ncol=5, nrow=1,common.legend=TRUE,legend="top")
+tgrob <- ggpubr::text_grob("Multi-Optima Direct Effect Model - Varying Efects - Posterior PC",size = 10)
+plots.post<-ggpubr::annotate_figure(plots,top=tgrob)
+fig<-ggpubr::ggarrange(plots.prior, plots.post,ncol=1,nrow=2, labels = c("C)","D)"),common.legend = TRUE,legend="top")
+
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS5b.pdf", plot = fig, width=9, height=5)
+
+#plot(post$Y_sim_obs[4,],dat$Y_obs)
+
+plots.prior
+plots.post
+```
+
+References
+Pagel, M (1994) Detecting correlated evolution on phylogenies: a general method for the comparative analysis of discrete characters. Proceedings of the Royal Society of London. Series B. Biological Sciences, 255, 37--445.
+
+
