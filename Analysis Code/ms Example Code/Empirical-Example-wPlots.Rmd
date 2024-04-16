@@ -1304,6 +1304,35 @@ mean(unscaled.hl)
 rethinking::PI(unscaled.hl,prob=0.95)
 ```
 
+Calculate direct causal effect of moving from smaller to larger breeding groups size - make all species have larger group sizes and all species have smaller group sizes and look at the contrast in antler size
+```{r}
+total.sp<-dat$N
+sim.log.PSL<-seq(from=min(dat$X_obs),to=max(dat$X_obs),length.out=100)
+regime<-1
+optimas<-data.frame(post$optima)
+betas<-data.frame(post$beta)
+
+sim.log.ant.vol<-sapply(sim.log.PSL,function(log.PSL){
+  rnorm(
+    n<-length(post.ve$hl),
+    mean = optimas[,regime]+log.PSL*betas[,regime],
+    sd=post.ve$sigma2_y
+    )
+})
+
+bigger<-rnorm(1000,post.ve$mu[])
+smaller
+
+plot(colMeans(sim.log.ant.vol)~sim.log.PSL)
+
+with(post.ve,sapply(1:total.sp))
+
+reg1<-sim.log.ant.vol
+reg2<-sim.log.ant.vol
+
+```
+
+
 Combined Figure - Varying effects Model - FigS8
 ```{r}
 #post<-post.ve

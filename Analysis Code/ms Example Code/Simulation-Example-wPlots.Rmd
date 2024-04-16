@@ -381,8 +381,8 @@ Lets use the non-multi-optima adaptive model with varying effects - the other mo
 First the half-life (hl):
 
 ```{r}
-post<-post.ve
-#post<-post.mlm.ve
+#post<-post.ve
+post<-post.mlm.ve
 mypal <- ggsci::pal_npg("nrc", alpha = 0.4)(2)
 mypal[2]<-palette()[1]
 
@@ -576,8 +576,13 @@ Let's combine all four plots into one plot
 ```{r}
 regression.plot<-regression.plot+ggplot2::theme(legend.position="none")
 fig<-ggpubr::ggarrange(hl.plot, vy.plot,covariance.plot,regression.plot,ncol=2,nrow=2, labels = c("A)","B)","C)","D)"),common.legend = TRUE,legend="top")
-#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Adaptive Model - Varying Effects,\n hl=",hl,sep=""))
-ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/Fig2.pdf", plot = fig, width=7, height=7 )
+#Uncommmet for for Fig2
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multi-Optima Adaptive Model with Varying Effects,\n hl=",hl,sep=""))
+#ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/Fig2.pdf", plot = fig, width=7, height=7 )
+#Uncomment for FigS3
+#fig<-ggpubr::annotate_figure(fig,top=paste("Multilevel Multi-Optima Adaptive Model with Varying Effects,\n hl=",hl,sep=""))
+ggplot2::ggsave("/Users/markgrabowski/Documents/Academic/Research/Current Projects/Blouch Project - SBR2/Blouch ms/R2/Figures/FigS3.pdf", plot = fig, width=7, height=7 )
+
 
 ```
 
